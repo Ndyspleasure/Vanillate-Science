@@ -87,7 +87,7 @@ export function toExpr(node: SNode, options: ConvertOptions = {}): Expr {
   throw new MathError("internal", "Node sintaks tidak dikenal.", { module: "convert" });
 }
 
-function convertCall(name: string, args: Expr[], node: SNode): Expr {
+export function convertCall(name: string, args: Expr[], node: SNode): Expr {
   const arity = (min: number, max = min) => {
     if (args.length < min || args.length > max) {
       throw invalidInput(`Fungsi ${name} menerima ${min === max ? min : `${min}–${max}`} argumen, tetapi diberikan ${args.length}.`, {

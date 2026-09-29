@@ -346,7 +346,7 @@ function textRaw(e: Expr, o: PrintOptions): string {
       const prefix = sign < 0 ? "-" : "";
       if (denom.length === 0 && coefDen === 1n) return prefix + n;
       const d = list(coefDen, denom);
-      const nWrapped = numer.length + (coefNum !== 1n ? 1 : 0) > 1 ? `(${n})` : n;
+      const nWrapped = n;
       const dWrapped = denom.length + (coefDen !== 1n ? 1 : 0) > 1 || (denom.length === 1 && denom[0].type === "pow" && coefDen === 1n && !(denom[0].exp.type === "num" && denom[0].exp.value.den === 2n)) ? `(${d})` : d;
       return `${prefix}${nWrapped}/${dWrapped}`;
     }

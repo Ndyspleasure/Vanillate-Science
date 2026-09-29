@@ -174,6 +174,7 @@ export function tokenize(input: string): Token[] {
         break;
       case "÷":
       case "∕":
+      case ":":
         push("op", "/", i, i + 1);
         break;
       case "(":
