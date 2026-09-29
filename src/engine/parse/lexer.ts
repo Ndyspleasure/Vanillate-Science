@@ -80,7 +80,7 @@ export function tokenize(input: string): Token[] {
     // numbers: 12, 1.5, .5, 1e-3, 2E+10
     if (/[0-9]/.test(ch) || (ch === "." && /[0-9]/.test(input[i + 1] ?? ""))) {
       const m = /^(\d*\.?\d*)(?:[eE][+-]?\d+(?![a-zA-Z_]))?/.exec(input.slice(i))!;
-      let text = m[0];
+      const text = m[0];
       // Avoid swallowing "2e" when e is Euler's number without exponent digits (handled by regex lookahead).
       if (text.endsWith(".") && !/[0-9]/.test(input[i + text.length] ?? "")) {
         // trailing dot like "2." is allowed as 2

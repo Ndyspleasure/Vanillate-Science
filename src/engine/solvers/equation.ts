@@ -135,7 +135,7 @@ function linearAttempt(L0: Expr, R0: Expr, x: string): Attempt | null {
     const nR = b2;
     const negA2 = a2.type === "num" && a2.value.isNegative();
     steps.push({
-      title: negA2 ? `Tambahkan ${toLatex(mul(neg(a2), xs))} ke kedua ruas` : `Kurangi kedua ruas dengan ${toLatex(mul(a2, xs))}`,
+      title: negA2 ? `Tambahkan $${toLatex(mul(neg(a2), xs))}$ ke kedua ruas` : `Kurangi kedua ruas dengan $${toLatex(mul(a2, xs))}$`,
       before: eq(L, R),
       after: eq(nL, nR),
       operation: "move-variable-terms",
@@ -151,7 +151,7 @@ function linearAttempt(L0: Expr, R0: Expr, x: string): Attempt | null {
     const nR = sub(b2, b1);
     const negB1 = b1.type === "num" ? b1.value.isNegative() : constantSign(b1) === -1;
     steps.push({
-      title: negB1 ? `Tambahkan ${toLatex(neg(b1))} ke kedua ruas` : `Kurangi kedua ruas dengan ${toLatex(b1)}`,
+      title: negB1 ? `Tambahkan $${toLatex(neg(b1))}$ ke kedua ruas` : `Kurangi kedua ruas dengan $${toLatex(b1)}$`,
       before: eq(L, R),
       after: eq(nL, nR),
       operation: "move-constants",
@@ -177,7 +177,7 @@ function linearAttempt(L0: Expr, R0: Expr, x: string): Attempt | null {
     if (!isConstantExpr(A) || A.type !== "num") assumptions.push(`$${toLatex(A)} \\ne 0$`);
     const isFrac = A.type === "num" && (A.value.num === 1n || A.value.num === -1n) && !A.value.isInteger();
     steps.push({
-      title: isFrac ? `Kalikan kedua ruas dengan ${toLatex(div(ONE, A))}` : `Bagi kedua ruas dengan ${toLatex(A)}`,
+      title: isFrac ? `Kalikan kedua ruas dengan $${toLatex(div(ONE, A))}$` : `Bagi kedua ruas dengan $${toLatex(A)}$`,
       before: eq(L, R),
       after: eq(xs, sol),
       operation: "divide-coefficient",
@@ -266,7 +266,7 @@ function completingSquareSteps(a: Rational, b: Rational, c: Rational, x: string)
   if (!a.isOne()) steps.push({ title: `Bagi kedua ruas dengan a = ${a.toString()}`, after: eq(add(pow(xs, num(2)), mul(num(p), xs), num(q)), ZERO), operation: "normalize", reason: "Koefisien x² harus 1 untuk melengkapkan kuadrat." });
   steps.push({ title: "Pindahkan konstanta ke ruas kanan", after: eq(add(pow(xs, num(2)), mul(num(p), xs)), num(q.neg())), operation: "move-constant", reason: "Siapkan ruas kiri untuk dilengkapkan." });
   steps.push({
-    title: `Tambahkan (b/2a)² = ${toLatex(num(h.mul(h)))} ke kedua ruas`,
+    title: `Tambahkan (b/2a)² = $${toLatex(num(h.mul(h)))}$ ke kedua ruas`,
     after: eq(add(pow(xs, num(2)), mul(num(p), xs), num(h.mul(h))), num(rhs)),
     operation: "complete-square",
     rule: { id: "complete-square", name: "Melengkapkan kuadrat sempurna", formula: "x^2 + px + \\left(\\tfrac{p}{2}\\right)^2 = \\left(x + \\tfrac{p}{2}\\right)^2" },
@@ -275,7 +275,7 @@ function completingSquareSteps(a: Rational, b: Rational, c: Rational, x: string)
   steps.push({ title: "Tulis ruas kiri sebagai kuadrat", after: `\\left(${toLatex(shifted)}\\right)^{2} = ${toLatex(num(rhs))}`, operation: "square-form", reason: "x² + px + (p/2)² = (x + p/2)²." });
   const root = pow(num(rhs), HALF);
   steps.push({ title: "Tarik akar kedua ruas", after: `${toLatex(shifted)} = \\pm ${toLatex(root)}`, operation: "sqrt-both", rule: { id: "even-root", name: "Sifat akar kuadrat", formula: "u^2 = c \\iff u = \\pm\\sqrt{c}" }, reason: "Kuadrat suatu bilangan sama dengan c berarti bilangan itu ±√c." });
-  steps.push({ title: "Isolasi x", after: `${toLatex(xs)} = ${toLatex(num(h.neg()))} \\pm ${toLatex(root)}`, operation: "isolate", reason: `Kurangi kedua ruas dengan ${toLatex(num(h))}.` });
+  steps.push({ title: "Isolasi x", after: `${toLatex(xs)} = ${toLatex(num(h.neg()))} \\pm ${toLatex(root)}`, operation: "isolate", reason: `Kurangi kedua ruas dengan $${toLatex(num(h))}$.` });
   return steps;
 }
 
@@ -302,7 +302,7 @@ function quadraticAttempt(L: Expr, R: Expr, P0: Poly, x: string): Attempt {
   const sqrtD = isRationalSquare(D);
   if (c.isZero()) {
     const r2 = num(b.neg().div(a));
-    steps.push({ title: `Faktorkan ${toLatex(xs)} keluar`, after: eq(mul(xs, add(mul(num(a), xs), num(b))), ZERO), operation: "factor-gcf", rule: { id: "distributive", name: "Sifat distributif", formula: "ax^2 + bx = x(ax + b)" }, reason: "Setiap suku memuat x." });
+    steps.push({ title: `Faktorkan $${toLatex(xs)}$ keluar`, after: eq(mul(xs, add(mul(num(a), xs), num(b))), ZERO), operation: "factor-gcf", rule: { id: "distributive", name: "Sifat distributif", formula: "ax^2 + bx = x(ax + b)" }, reason: "Setiap suku memuat x." });
     steps.push({ title: "Gunakan sifat perkalian nol", after: `${toLatex(xs)} = 0 \\ \\lor\\ ${toLatex(add(mul(num(a), xs), num(b)))} = 0`, operation: "zero-product", rule: { id: "zero-product", name: "Sifat perkalian nol", formula: "pq = 0 \\iff p = 0 \\lor q = 0" }, reason: "Hasil kali bernilai nol jika salah satu faktornya nol." });
     steps.push({ title: "Selesaikan masing-masing faktor", after: `${toLatex(xs)}_{1} = 0,\\quad ${toLatex(xs)}_{2} = ${toLatex(r2)}`, operation: "solve-factors", reason: "Setiap faktor linear diselesaikan." });
     method = { name: "Faktorisasi (faktor persekutuan x)", description: "Keluarkan x sebagai faktor persekutuan lalu gunakan sifat perkalian nol." };
@@ -321,7 +321,8 @@ function quadraticAttempt(L: Expr, R: Expr, P0: Poly, x: string): Attempt {
     steps.push(...f.steps);
     const factorLatex = f.factors.map((fc) => `${toLatex(fc.factor)} = 0`).join(" \\ \\lor\\ ");
     steps.push({ title: "Gunakan sifat perkalian nol", after: factorLatex, operation: "zero-product", rule: { id: "zero-product", name: "Sifat perkalian nol", formula: "pq = 0 \\iff p = 0 \\lor q = 0" }, reason: "Hasil kali bernilai nol jika salah satu faktornya nol." });
-    roots = formula.roots;
+    // Same order as the final answers (ascending), so x₁/x₂ labels agree everywhere.
+    roots = [...formula.roots].sort((a, b) => evalReal(a.expr!) - evalReal(b.expr!));
     steps.push({ title: "Selesaikan setiap faktor", after: roots.map((r, i) => `${toLatex(xs)}_{${i + 1}} = ${toLatex(r.expr!)}`).join(",\\quad "), operation: "solve-factors", reason: "Setiap faktor linear diselesaikan secara terpisah." });
     method = { name: "Faktorisasi", description: "Diskriminan merupakan kuadrat sempurna sehingga polinomial dapat difaktorkan atas bilangan rasional." };
     alternatives.push({ name: "Rumus kuadratik (rumus ABC)", description: "Substitusi koefisien ke rumus ABC.", steps: formula.steps });
@@ -361,7 +362,7 @@ function polynomialAttempt(L: Expr, R: Expr, P0: Poly, x: string): Attempt {
   if (nonzero.length === 2 && nonzero[0].k === 0) {
     const n = nonzero[1].k;
     const rhs = nonzero[0].c.neg().div(nonzero[1].c);
-    steps.push({ title: `Isolasi ${toLatex(pow(xs, num(n)))}`, after: eq(pow(xs, num(n)), num(rhs)), operation: "isolate-power", reason: "Hanya ada satu suku yang memuat x." });
+    steps.push({ title: `Isolasi $${toLatex(pow(xs, num(n)))}$`, after: eq(pow(xs, num(n)), num(rhs)), operation: "isolate-power", reason: "Hanya ada satu suku yang memuat x." });
     const roots: EqRoot[] = [];
     // all n complex roots: r^(1/n) * exp(2 pi i k / n)
     const mag = Math.pow(Math.abs(rhs.toNumber()), 1 / n);
@@ -409,7 +410,7 @@ function polynomialAttempt(L: Expr, R: Expr, P0: Poly, x: string): Attempt {
     if (fp.degree === 1) roots.push({ expr: div(num(fp.coeff(0).neg()), num(fp.coeff(1))), multiplicity });
     else if (fp.degree === 2) {
       const q = quadraticFormulaSteps(fp.coeff(2), fp.coeff(1), fp.coeff(0), x);
-      steps.push({ title: `Selesaikan faktor kuadrat ${toLatex(factor)} = 0`, after: q.roots.map((r) => `${toLatex(xs)} = ${toLatex(r.expr!)}`).join(",\\ "), operation: "solve-quadratic-factor", reason: "Faktor kuadrat diselesaikan dengan rumus ABC.", substeps: q.steps });
+      steps.push({ title: `Selesaikan faktor kuadrat $${toLatex(factor)} = 0$`, after: q.roots.map((r) => `${toLatex(xs)} = ${toLatex(r.expr!)}`).join(",\\ "), operation: "solve-quadratic-factor", reason: "Faktor kuadrat diselesaikan dengan rumus ABC.", substeps: q.steps });
       for (const r of q.roots) roots.push({ ...r, multiplicity: (r.multiplicity ?? 1) * multiplicity });
     } else {
       const nr = numericRoots(fp);
@@ -512,10 +513,10 @@ function rationalAttempt(L: Expr, R: Expr, x: string, depth: number): Attempt | 
     after: eq(N, ZERO),
     operation: "multiply-lcd",
     rule: { id: "mul-both", name: "Sifat perkalian kesamaan", formula: "\\frac{p}{q} = 0 \\iff p = 0,\\ q \\ne 0" },
-    reason: `Semua pecahan digabung dengan penyebut ${toLatex(denom)}; pecahan bernilai nol tepat ketika pembilangnya nol (dan penyebut tidak nol).`,
+    reason: `Semua pecahan digabung dengan penyebut $${toLatex(denom)}$; pecahan bernilai nol tepat ketika pembilangnya nol (dan penyebut tidak nol).`,
   });
   const inner = solveCore(N, ZERO, x, depth + 1);
-  steps.push({ title: `Selesaikan ${toLatex(N)} = 0`, after: inner.roots.length ? inner.roots.map((r) => `${toLatex(xs)} = ${r.expr ? toLatex(r.expr) : formatComplex(r.approx!.re, r.approx!.im)}`).join(",\\ ") : inner.status === "all" ? "\\text{semua bilangan real}" : "\\text{tidak ada solusi}", operation: "solve-numerator", reason: inner.method.name, substeps: inner.steps });
+  steps.push({ title: `Selesaikan $${toLatex(N)} = 0$`, after: inner.roots.length ? inner.roots.map((r) => `${toLatex(xs)} = ${r.expr ? toLatex(r.expr) : formatComplex(r.approx!.re, r.approx!.im)}`).join(",\\ ") : inner.status === "all" ? "\\text{semua bilangan real}" : "\\text{tidak ada solusi}", operation: "solve-numerator", reason: inner.method.name, substeps: inner.steps });
   const rejected: Attempt["rejected"] = [];
   const kept: EqRoot[] = [];
   for (const r of inner.roots) {
@@ -718,7 +719,7 @@ function substitutionAttempt(L: Expr, R: Expr, x: string, depth: number): Attemp
     if (!P || P.degree < 2) continue;
     const U = rawSym("u");
     const fuDisplay = substitute(fu, rawSym("__u"), U);
-    steps.push({ title: `Substitusi u = ${toLatex(cand.g)}`, before: eq(f, ZERO), after: eq(fuDisplay, ZERO), operation: "substitution", rule: { id: "substitution", name: "Metode substitusi", formula: `u = ${toLatex(cand.g)}` }, reason: "Persamaan menjadi polinomial dalam u." });
+    steps.push({ title: `Substitusi u = $${toLatex(cand.g)}$`, before: eq(f, ZERO), after: eq(fuDisplay, ZERO), operation: "substitution", rule: { id: "substitution", name: "Metode substitusi", formula: `u = ${toLatex(cand.g)}` }, reason: "Persamaan menjadi polinomial dalam u." });
     const inner = solveCore(fuDisplay, ZERO, "u", depth + 1);
     steps.push({ title: "Selesaikan persamaan dalam u", after: inner.roots.map((r) => `u = ${r.expr ? toLatex(r.expr) : formatComplex(r.approx!.re, r.approx!.im)}`).join(",\\ ") || "\\varnothing", operation: "solve-u", reason: inner.method.name, substeps: inner.steps });
     const roots: EqRoot[] = [];
@@ -729,7 +730,7 @@ function substitutionAttempt(L: Expr, R: Expr, x: string, depth: number): Attemp
       if (!isRealRoot(r)) continue;
       const uval = r.expr ?? num(Rational.fromNumber(r.approx!.re));
       const back = solveCore(cand.g, uval, x, depth + 1);
-      steps.push({ title: `Kembalikan substitusi: ${toLatex(cand.g)} = ${toLatex(uval)}`, after: back.status === "none" ? "\\text{tidak ada solusi real}" : back.roots.map((b) => `${toLatex(X(x))} = ${b.expr ? toLatex(b.expr) : formatNumber(rootValue(b).re)}${b.periodic ? ",\\ k \\in \\mathbb{Z}" : ""}`).join(",\\ "), operation: "back-substitute", reason: back.status === "none" ? back.steps.map((s) => s.reason).join(" ") || "Tidak ada nilai x yang memenuhi." : back.method.name, substeps: back.steps });
+      steps.push({ title: `Kembalikan substitusi: $${toLatex(cand.g)} = ${toLatex(uval)}$`, after: back.status === "none" ? "\\text{tidak ada solusi real}" : back.roots.map((b) => `${toLatex(X(x))} = ${b.expr ? toLatex(b.expr) : formatNumber(rootValue(b).re)}${b.periodic ? ",\\ k \\in \\mathbb{Z}" : ""}`).join(",\\ "), operation: "back-substitute", reason: back.status === "none" ? back.steps.map((s) => s.reason).join(" ") || "Tidak ada nilai x yang memenuhi." : back.method.name, substeps: back.steps });
       for (const b of back.roots) {
         roots.push(b);
         if (b.periodic) periodic = true;
@@ -737,7 +738,7 @@ function substitutionAttempt(L: Expr, R: Expr, x: string, depth: number): Attemp
       assumptions.push(...(back.assumptions ?? []));
     }
     if (periodic) notes.push("k adalah sebarang bilangan bulat (k ∈ ℤ).");
-    return { method: { name: "Metode substitusi", description: `Misalkan u = ${toLatex(cand.g)} sehingga persamaan menjadi polinomial dalam u.` }, steps, roots, status: roots.length ? "solutions" : "none", notes, assumptions };
+    return { method: { name: "Metode substitusi", description: `Misalkan u = $${toLatex(cand.g)}$ sehingga persamaan menjadi polinomial dalam u.` }, steps, roots, status: roots.length ? "solutions" : "none", notes, assumptions };
   }
   return null;
 }
@@ -914,7 +915,7 @@ function verifyRoot(L: Expr, R: Expr, x: string, r: EqRoot): VerificationCheck {
     try {
       const d = sub(substitute(L, X(x), r.expr), substitute(R, X(x), r.expr));
       if (isSymbolicallyZero(d)) {
-        return { description: `Substitusi ${toLatex(X(x))} = ${label} ke persamaan awal`, latex: `${toLatex(substitute(L, X(x), r.expr))} = ${toLatex(substitute(R, X(x), r.expr))}`, passed: true, method: "Substitusi eksak (simbolik)" };
+        return { description: `Substitusi $${toLatex(X(x))} = ${label}$ ke persamaan awal`, latex: `${toLatex(substitute(L, X(x), r.expr))} = ${toLatex(substitute(R, X(x), r.expr))}`, passed: true, method: "Substitusi eksak (simbolik)" };
       }
     } catch {
       // fall through to numeric
@@ -923,7 +924,7 @@ function verifyRoot(L: Expr, R: Expr, x: string, r: EqRoot): VerificationCheck {
   if (hasParameters(r) && r.expr) {
     const res = checkEquivalent(substitute(L, X(x), r.expr), substitute(R, X(x), r.expr));
     return {
-      description: `Substitusi ${toLatex(X(x))} = ${label} ke persamaan awal`,
+      description: `Substitusi $${toLatex(X(x))} = ${label}$ ke persamaan awal`,
       passed: res.equivalent,
       method: res.method === "symbolic" ? "Substitusi simbolik" : "Substitusi numerik (parameter diambil acak)",
       detail: res.detail,
@@ -964,7 +965,7 @@ function verifyRoot(L: Expr, R: Expr, x: string, r: EqRoot): VerificationCheck {
   }
   const passed = valid && worst <= 1e-8;
   return {
-    description: `Substitusi ${toLatex(X(x))} = ${label}${r.periodic ? " (untuk k = 0, 1, −1)" : ""} ke persamaan awal`,
+    description: `Substitusi $${toLatex(X(x))} = ${label}$${r.periodic ? " (untuk k = 0, 1, −1)" : ""} ke persamaan awal`,
     passed,
     method: "Substitusi numerik",
     detail: valid ? `Selisih relatif ruas kiri dan kanan: ${worst.toExponential(2)} (toleransi 1e-8).` : "Ruas persamaan tidak terdefinisi pada nilai ini.",
@@ -1010,7 +1011,6 @@ export function solveEquation(input: string, node: SNode, options: EquationOptio
   const x = chooseVariable(vars, options.variable);
   if (vars.size > 1) notes.push(`Diselesaikan untuk ${x}; ${[...vars].filter((v) => v !== x).join(", ")} dianggap sebagai konstanta (parameter).`);
   const attempt = solveCore(L, R, x);
-  const xs = X(x);
 
   // Deduplicate roots
   const unique: EqRoot[] = [];

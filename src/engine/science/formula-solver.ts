@@ -95,6 +95,10 @@ export function significantFigures(value: string): number {
 export function roundToSigFigs(x: number, n: number): string {
   if (x === 0 || !Number.isFinite(x)) return String(x);
   const s = x.toPrecision(Math.max(1, Math.min(21, n)));
+  if (s.includes("e") && Math.abs(x) >= 1 && Math.abs(x) < 1e15) {
+    // 1e1 → 10, 1.2e5 → 120000: plain notation reads better for moderate magnitudes.
+    return String(Number(s));
+  }
   if (s.includes("e")) {
     const [m, e] = s.split("e");
     return `${m}e${e.replace("+", "")}`;

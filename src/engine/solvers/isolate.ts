@@ -43,8 +43,9 @@ function value(e: Expr): number {
   return isNumericConstant(e) ? evalReal(e) : NaN;
 }
 
+/** Inline math for step titles ($…$ is rendered by the UI). */
 function describeTerm(e: Expr): string {
-  return toLatex(e);
+  return `$${toLatex(e)}$`;
 }
 
 const K = rawSym(PERIOD_SYMBOL);
@@ -213,7 +214,7 @@ export function isolate(L0: Expr, R0: Expr, x: string, maxBranches = 8): Isolati
           case "log": {
             const b = L.args[1] ?? num(10);
             if (argIdx !== 0) return null;
-            push(u, pow(b, R), { title: `Tulis dalam bentuk eksponen basis ${toLatex(b)}`, operation: "exponentiate", rule: rule("log-def", "Definisi logaritma", "\\log_{b} u = c \\iff u = b^{c}"), reason: "Logaritma basis b adalah invers dari b^x." });
+            push(u, pow(b, R), { title: `Tulis dalam bentuk eksponen basis $${toLatex(b)}$`, operation: "exponentiate", rule: rule("log-def", "Definisi logaritma", "\\log_{b} u = c \\iff u = b^{c}"), reason: "Logaritma basis b adalah invers dari b^x." });
             break;
           }
           case "sin":

@@ -132,7 +132,7 @@ export function simplifyRational(e: Expr): RationalSimplification | null {
     after: toLatex(result),
     operation: "cancel-common-factor",
     rule: { id: "cancel", name: "Pembatalan faktor persekutuan", formula: "\\frac{a \\cdot c}{b \\cdot c} = \\frac{a}{b},\\ c \\ne 0" },
-    reason: `Faktor persekutuan ${toLatex(G.toExpr(x))} dicoret dari pembilang dan penyebut.`,
+    reason: `Faktor persekutuan $${toLatex(G.toExpr(x))}$ dicoret dari pembilang dan penyebut.`,
     assumptions: [`${toLatex(G.toExpr(x))} \\ne 0`],
     check: checkRewrite(mul(P.toExpr(x), pow(Q.toExpr(x), MINUS_ONE)), result),
   });
@@ -364,7 +364,7 @@ export function solveEvaluateAt(input: string, node: SNode, values: Record<strin
       after: toLatex(substituteRaw(e, values)),
       operation: "substitute",
       rule: { id: "substitution", name: "Substitusi" },
-      reason: `Setiap kemunculan variabel diganti: ${subLatex.replace(/\\/g, "")}.`,
+      reason: `Setiap kemunculan variabel diganti: $${subLatex}$.`,
     },
     {
       title: "Hitung nilainya",

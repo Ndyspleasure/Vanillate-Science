@@ -67,7 +67,7 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
   // 1. Greatest common factor (content and power of x)
   let lowest = 0;
   while (poly.coeff(lowest).isZero()) lowest++;
-  let work = new Poly(poly.coeffs.slice(lowest));
+  const work = new Poly(poly.coeffs.slice(lowest));
   if (!content.isOne() || lowest > 0) {
     const gcf = mul(num(content), pow(X, num(lowest)));
     const inner = work.toExpr(x);
@@ -77,7 +77,7 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
       after: `${toLatex(gcf)}\\left(${toLatex(inner)}\\right)`,
       operation: "factor-gcf",
       rule: { id: "distributive", name: "Sifat distributif", formula: "ab + ac = a(b + c)" },
-      reason: `Setiap suku habis dibagi ${toLatex(gcf).replace(/\\/g, "")}.`,
+      reason: `Setiap suku habis dibagi $${toLatex(gcf)}$.`,
     });
   }
   if (lowest > 0) factors.push({ factor: X, multiplicity: lowest });
@@ -100,7 +100,7 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
           after: `\\left(${toLatex(sub(A, B))}\\right)\\left(${toLatex(add(A, B))}\\right)`,
           operation: "difference-of-squares",
           rule: { id: "diff-squares", name: "Selisih dua kuadrat", formula: "a^2 - b^2 = (a - b)(a + b)" },
-          reason: `${toLatex(work.toExpr(x))} = (${toLatex(A)})^2 - ${rb}^2.`,
+          reason: `$${toLatex(work.toExpr(x))} = (${toLatex(A)})^2 - ${rb}^2$.`,
         });
       }
     }
@@ -117,7 +117,7 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
           after: `\\left(${toLatex(add(A, B))}\\right)\\left(${toLatex(add(pow(A, num(2)), neg(mul(A, B)), pow(B, num(2))))}\\right)`,
           operation: "sum-difference-cubes",
           rule: { id: "cubes", name: "Jumlah/selisih pangkat tiga", formula: "a^3 \\pm b^3 = (a \\pm b)(a^2 \\mp ab + b^2)" },
-          reason: `Bentuk ${toLatex(work.toExpr(x))} = (${toLatex(A)})^3 ${b.isNegative() ? "-" : "+"} ${rb < 0n ? -rb : rb}^3.`,
+          reason: `Bentuk $${toLatex(work.toExpr(x))} = (${toLatex(A)})^3 ${b.isNegative() ? "-" : "+"} ${rb < 0n ? -rb : rb}^3$.`,
         });
       }
     }

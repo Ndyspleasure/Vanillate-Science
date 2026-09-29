@@ -119,7 +119,7 @@ export class RMatrix {
     this.assertSquare("pangkat");
     if (n < 0) return this.inverse().matrix.power(-n);
     let r = RMatrix.identity(this.rows);
-    let b: RMatrix = this;
+    let b = this.mul(RMatrix.identity(this.rows));
     let k = n;
     while (k > 0) {
       if (k & 1) r = r.mul(b);

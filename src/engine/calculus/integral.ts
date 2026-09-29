@@ -388,17 +388,17 @@ function uSubstitution(e: Expr, x: string, depth: number): IntResult | null {
     return {
       value,
       step: {
-        title: isLinear ? `Substitusi linear u = ${toLatex(u)}` : `Substitusi u = ${toLatex(u)}`,
+        title: isLinear ? `Substitusi linear $u = ${toLatex(u)}$` : `Substitusi $u = ${toLatex(u)}$`,
         before: intL(e, x),
         after: toLatex(value),
         operation: "int-u-substitution",
         rule: { id: "u-substitution", name: "Integral substitusi", formula: "\\int f(g(x))\\,g'(x)\\,dx = \\int f(u)\\,du,\\ u = g(x)" },
-        reason: isLinear ? `du = ${toLatex(du)}\\,dx sehingga dx = du / ${toLatex(du)}.` : `du = ${toLatex(du)}\\,dx muncul (sebagai faktor) di integran.`,
+        reason: isLinear ? `$du = ${toLatex(du)}\\,dx$ sehingga $dx = du / ${toLatex(du)}$.` : `$du = ${toLatex(du)}\\,dx$ muncul (sebagai faktor) di integran.`,
         substeps: [
           { title: "Tentukan u dan du", after: `u = ${toLatex(u)},\\quad du = ${toLatex(du)}\\,d${toLatex(rawSym(x))}`, operation: "define-u", reason: "Pilih u sehingga turunannya muncul di integran." },
           { title: "Tulis ulang integral dalam u", after: intL(q, U.name), operation: "rewrite-in-u", reason: "Semua bagian integran dinyatakan dalam u." },
           inner.step,
-          { title: "Kembalikan ke variabel semula", after: toLatex(value), operation: "back-substitute", reason: `Ganti u dengan ${toLatex(u)}.` },
+          { title: "Kembalikan ke variabel semula", after: toLatex(value), operation: "back-substitute", reason: `Ganti u dengan $${toLatex(u)}$.` },
         ],
       },
     };
@@ -456,7 +456,7 @@ function byParts(e: Expr, x: string, depth: number): IntResult | null {
       after: toLatex(value),
       operation: "int-by-parts",
       rule: { id: "by-parts", name: "Integral parsial", formula: "\\int u\\,dv = uv - \\int v\\,du" },
-      reason: `Pilih u = ${toLatex(u)} (urutan LIATE: Logaritma, Invers trigonometri, Aljabar, Trigonometri, Eksponensial) dan dv = ${toLatex(dv)}\\,dx.`,
+      reason: `Pilih u = $${toLatex(u)}$ (urutan LIATE: Logaritma, Invers trigonometri, Aljabar, Trigonometri, Eksponensial) dan dv = $${toLatex(dv)}\\,dx$.`,
       substeps: [
         { title: "Tentukan u, du, dv, v", after: `u = ${toLatex(u)},\\ du = ${toLatex(du)}\\,d${x},\\quad dv = ${toLatex(dv)}\\,d${x},\\ v = ${toLatex(v.value)}`, operation: "choose-parts", reason: "u diturunkan, dv diintegralkan." },
         v.step,
@@ -526,7 +526,7 @@ export function integrate(e: Expr, x: string, depth = 0): IntResult | null {
       if (!r) return null;
       const k = mul(...c);
       const value = mul(k, r.value);
-      return { value, step: { title: "Keluarkan konstanta", before: intL(e, x), after: `${toLatex(k)} ${intL(inner, x)} = ${toLatex(value)}`, operation: "int-constant-multiple", rule: { id: "constant-multiple", name: "Kelipatan konstanta", formula: "\\int c f\\,dx = c\\int f\\,dx" }, reason: `Konstanta ${toLatex(k)} dapat dikeluarkan dari integral.`, substeps: [r.step] } };
+      return { value, step: { title: "Keluarkan konstanta", before: intL(e, x), after: `${toLatex(k)} ${intL(inner, x)} = ${toLatex(value)}`, operation: "int-constant-multiple", rule: { id: "constant-multiple", name: "Kelipatan konstanta", formula: "\\int c f\\,dx = c\\int f\\,dx" }, reason: `Konstanta $${toLatex(k)}$ dapat dikeluarkan dari integral.`, substeps: [r.step] } };
     }
   }
   const t = table(e, x);

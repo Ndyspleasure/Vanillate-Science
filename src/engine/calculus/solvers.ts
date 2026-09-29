@@ -262,13 +262,13 @@ export function solveIntegral(input: string, f: Expr, inputLatex: string, option
         const l = cuts[i];
         const r = cuts[i + 1];
         const lim = (pt: number, side: "+" | "-"): LimitValue => {
-          const target: LimitTarget = Number.isFinite(pt) ? { kind: "finite", value: exactPoint(pt, lo, hi, sing) } : { kind: "inf", sign: pt > 0 ? 1 : -1 };
+          const target: LimitTarget = Number.isFinite(pt) ? { kind: "finite", value: exactPoint(pt, lo, hi) } : { kind: "inf", sign: pt > 0 ? 1 : -1 };
           return computeLimit(F, x, target, Number.isFinite(pt) ? side : undefined).value;
         };
         const leftSingular = sing.some((s) => Math.abs(s - l) < 1e-12) || !Number.isFinite(l);
         const rightSingular = sing.some((s) => Math.abs(s - r) < 1e-12) || !Number.isFinite(r);
-        const Fr: LimitValue = rightSingular ? lim(r, "-") : { kind: "finite", value: substitute(F, X, exactPoint(r, lo, hi, sing)) };
-        const Fl: LimitValue = leftSingular ? lim(l, "+") : { kind: "finite", value: substitute(F, X, exactPoint(l, lo, hi, sing)) };
+        const Fr: LimitValue = rightSingular ? lim(r, "-") : { kind: "finite", value: substitute(F, X, exactPoint(r, lo, hi)) };
+        const Fl: LimitValue = leftSingular ? lim(l, "+") : { kind: "finite", value: substitute(F, X, exactPoint(l, lo, hi)) };
         steps.push({ title: `Bagian [${formatNumber(l, 6)}, ${formatNumber(r, 6)}]`, after: `\\lim F(${x})\\big|_{\\text{atas}} = ${limitValueLatex(Fr)},\\quad \\lim F(${x})\\big|_{\\text{bawah}} = ${limitValueLatex(Fl)}`, operation: "improper-part", reason: "Hitung limit antiturunan di ujung-ujung yang singular." });
         if (Fr.kind === "inf" || Fl.kind === "inf") {
           divergent = `Limit antiturunan di ujung interval tak hingga, sehingga integral divergen.`;
@@ -324,7 +324,7 @@ export function solveIntegral(input: string, f: Expr, inputLatex: string, option
   });
 }
 
-function exactPoint(v: number, lo: Expr, hi: Expr, _sing: number[]): Expr {
+function exactPoint(v: number, lo: Expr, hi: Expr): Expr {
   if (Math.abs(evalReal(lo) - v) < 1e-12) return lo;
   if (Math.abs(evalReal(hi) - v) < 1e-12) return hi;
   const r = Rational.fromNumber(Number(v.toPrecision(15)));

@@ -384,7 +384,7 @@ export function solveInequality(input: string, node: SNode, options: { variable?
   for (let i = 0; i < ops.length; i++) {
     const r = solveSingle(operands[i], operands[i + 1], ops[i] as Ineq, x);
     if (ops.length > 1) {
-      steps.push({ title: `Bagian ${i + 1}: ${toLatex(operands[i])} ${REL_LATEX[ops[i]]} ${toLatex(operands[i + 1])}`, after: unionLatex(r.intervals), operation: "part", reason: r.method, substeps: r.steps });
+      steps.push({ title: `Bagian ${i + 1}: $${toLatex(operands[i])} ${REL_LATEX[ops[i]]} ${toLatex(operands[i + 1])}$`, after: unionLatex(r.intervals), operation: "part", reason: r.method, substeps: r.steps });
     } else steps.push(...r.steps);
     if (r.table) tables.push(r.table);
     method = r.method;
@@ -437,7 +437,7 @@ export function solveInequality(input: string, node: SNode, options: { variable?
   for (const e of edges) {
     const truth = holds(e);
     const claim = inSolution(e);
-    checks.push({ description: `Periksa titik batas ${toLatex(rawSym(x))} = ${formatNumber(e, 8)}`, passed: truth === claim, method: "Pengujian numerik titik batas", detail: truth ? "Titik batas memenuhi (termasuk)." : "Titik batas tidak memenuhi (tidak termasuk)." });
+    checks.push({ description: `Periksa titik batas $${toLatex(rawSym(x))} = ${formatNumber(e, 8)}$`, passed: truth === claim, method: "Pengujian numerik titik batas", detail: truth ? "Titik batas memenuhi (termasuk)." : "Titik batas tidak memenuhi (tidak termasuk)." });
   }
   const numberLine = result.length && operands.length === 2 && vars.size === 1
     ? { kind: "function" as const, variable: x, functions: [{ expr: toText(sub(operands[0], operands[1])), label: `f(${x}) = ${toText(sub(operands[0], operands[1]))}` }], points: edges.map((e) => ({ x: e, y: 0, label: formatNumber(e, 5) })) }

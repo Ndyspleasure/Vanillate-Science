@@ -424,7 +424,7 @@ export function computeLimit(e: Expr, x: string, t: LimitTarget, dir?: "+" | "-"
           after: `\\frac{\\left(${toLatex(G.toExpr(x))}\\right)\\left(${toLatex(Pn.toExpr(x))}\\right)}{\\left(${toLatex(G.toExpr(x))}\\right)\\left(${toLatex(Qn.toExpr(x))}\\right)} = ${toLatex(reduced)}`,
           operation: "factor-cancel",
           rule: { id: "factor-cancel", name: "Faktorisasi dan pencoretan", formula: "\\frac{(x-a)p(x)}{(x-a)q(x)} = \\frac{p(x)}{q(x)},\\ x \\ne a" },
-          reason: `Faktor ${toLatex(G.toExpr(x))} bernilai 0 di titik limit, tetapi boleh dicoret karena x ≠ a selama x mendekati a.`,
+          reason: `Faktor $${toLatex(G.toExpr(x))}$ bernilai 0 di titik limit, tetapi boleh dicoret karena x ≠ a selama x mendekati a.`,
         });
         const inner = computeLimit(reduced, x, t, dir, depth + 1, seen);
         return { value: inner.value, steps: [...steps, ...inner.steps], method: "Faktorisasi dan pencoretan" };
@@ -496,7 +496,7 @@ function rationalAtInfinity(P: Poly, Q: Poly, x: string, t: LimitTarget & { kind
   const m = Q.degree;
   const X = rawSym(x);
   steps.push({
-    title: `Bagi pembilang dan penyebut dengan ${toLatex(pow(X, num(m)))}`,
+    title: `Bagi pembilang dan penyebut dengan $${toLatex(pow(X, num(m)))}$`,
     before: limL(e, x, t),
     after: `\\lim \\frac{${toLatex(expand(div(P.toExpr(x), pow(X, num(m)))))}}{${toLatex(expand(div(Q.toExpr(x), pow(X, num(m)))))}}`,
     operation: "divide-highest-power",

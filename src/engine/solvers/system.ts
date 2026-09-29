@@ -133,7 +133,7 @@ export function solveLinearSystem(input: string, eqs: Array<{ L: Expr; R: Expr }
   const checks: VerificationCheck[] = [];
   let status: "unique" | "none" | "infinite";
   const freeVars = vars.filter((_, j) => !res.pivots.includes(j));
-  let solutionExprs: Record<string, Expr> = {};
+  const solutionExprs: Record<string, Expr> = {};
   if (inconsistent) {
     status = "none";
     steps.push({ title: "Baris kontradiksi ditemukan", after: "0 = c \\ne 0", operation: "inconsistent", reason: "Terdapat baris [0 … 0 | c] dengan c ≠ 0, sehingga sistem tidak konsisten." });

@@ -49,6 +49,15 @@ function valueText(e: Expr): { latex: string; text: string; approx?: string } {
   return { latex: toLatex(e), text: toText(e), approx: formatNumber(v, 12) };
 }
 
+/** Terminating decimals as decimals (273.15, not 5463/20); other values as exact LaTeX. */
+function decLatex(e: Expr): string {
+  if (e.type === "num" && e.value.hasTerminatingDecimal()) {
+    const t = e.value.toFixedString(20);
+    return t.includes(".") ? t.replace(/0+$/, "").replace(/\.$/, "") : t;
+  }
+  return toLatex(e);
+}
+
 export function solveUnitConversion(valueText_: string, fromText: string, toText_: string): Solution {
   const value = num(parseQuantity(valueText_));
   const from = parseUnit(fromText);
@@ -65,8 +74,8 @@ export function solveUnitConversion(valueText_: string, fromText: string, toText
   const si = toSI(value, from);
   const siUnit = dimToString(from.dim);
   if (from.offset || to.offset) {
-    steps.push({ title: "Ubah ke kelvin (skala mutlak)", after: `T_{\\mathrm{K}} = ${toLatex(value)} \\times ${toLatex(from.factor)} + ${toLatex(from.offset ?? num(0))} = ${valueText(si).latex}\\ \\mathrm{K}`, operation: "to-si", rule: { id: "affine-temperature", name: "Konversi suhu (afin)", formula: "T_{\\mathrm{K}} = T_{^{\\circ}\\mathrm{C}} + 273.15,\\quad T_{\\mathrm{K}} = (T_{^{\\circ}\\mathrm{F}} + 459.67)\\cdot\\tfrac{5}{9}" }, reason: "Skala suhu berbeda titik nolnya, sehingga ada penambahan (offset), bukan hanya perkalian." });
-    steps.push({ title: "Ubah ke satuan tujuan", after: `\\frac{${valueText(si).latex} - ${toLatex(to.offset ?? num(0))}}{${toLatex(to.factor)}} = ${valueText(result).latex}`, operation: "from-si", reason: "Kebalikan dari rumus konversi satuan tujuan." });
+    steps.push({ title: "Ubah ke kelvin (skala mutlak)", after: `T_{\\mathrm{K}} = ${decLatex(value)} \\times ${decLatex(from.factor)} + ${decLatex(from.offset ?? num(0))} = ${valueText(si).latex}\\ \\mathrm{K}`, operation: "to-si", rule: { id: "affine-temperature", name: "Konversi suhu (afin)", formula: "T_{\\mathrm{K}} = T_{^{\\circ}\\mathrm{C}} + 273.15,\\quad T_{\\mathrm{K}} = (T_{^{\\circ}\\mathrm{F}} + 459.67)\\cdot\\tfrac{5}{9}" }, reason: "Skala suhu berbeda titik nolnya, sehingga ada penambahan (offset), bukan hanya perkalian." });
+    steps.push({ title: "Ubah ke satuan tujuan", after: `\\frac{${valueText(si).latex} - ${decLatex(to.offset ?? num(0))}}{${decLatex(to.factor)}} = ${valueText(result).latex}`, operation: "from-si", reason: "Kebalikan dari rumus konversi satuan tujuan." });
   } else {
     steps.push({ title: "Kalikan dengan faktor konversi ke satuan SI", after: `${toLatex(value)}\\ ${from.latex} \\times ${toLatex(from.factor)} = ${valueText(si).latex}\\ (\\text{SI: ${siUnit}})`, operation: "to-si", rule: { id: "conversion-factor", name: "Faktor konversi", formula: "x_{\\mathrm{SI}} = x \\cdot f_{\\text{asal}}" }, reason: `1 ${from.text} = ${valueText(from.factor).approx ?? valueText(from.factor).text} satuan SI.` });
     steps.push({ title: "Bagi dengan faktor konversi satuan tujuan", after: `\\frac{${valueText(si).latex}}{${toLatex(to.factor)}} = ${valueText(result).latex}\\ ${to.latex}`, operation: "from-si", rule: { id: "conversion-factor", name: "Faktor konversi", formula: "x_{\\text{tujuan}} = \\frac{x_{\\mathrm{SI}}}{f_{\\text{tujuan}}}" }, reason: `1 ${to.text} = ${valueText(to.factor).approx ?? valueText(to.factor).text} satuan SI.` });

@@ -236,6 +236,7 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
         result[i].status = "carried";
         result[i].message = `Benar terhadap langkah ${j + 1}, tetapi membawa kesalahan dari langkah ${firstErr + 1}.`;
         result[i].formula = undefined;
+        result[i].detail = "Hasil baris ini tetap salah karena kesalahan pada langkah sebelumnya.";
       }
     } catch {
       // comparison failed: keep the error status

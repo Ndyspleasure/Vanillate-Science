@@ -480,10 +480,8 @@ class Parser {
         return this.parseIdentifier();
       case "eof":
         this.fail("Ekspresi tidak lengkap.", t, "Input berakhir sebelum ekspresi selesai.");
-      // eslint-disable-next-line no-fallthrough
       case "rparen":
         this.fail("Kurung tutup ')' tidak memiliki pasangan '('.", t, `Posisi ${t.start + 1}.`);
-      // eslint-disable-next-line no-fallthrough
       default:
         if (t.type === "op") {
           this.fail(`Operator '${t.value}' tidak dapat berada di sini.`, t, `Operator '${t.value}' pada posisi ${t.start + 1} tidak memiliki operand di sebelah kiri.`);

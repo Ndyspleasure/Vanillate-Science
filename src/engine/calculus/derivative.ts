@@ -78,7 +78,7 @@ export function differentiate(e: Expr, x: string, depth = 0): DiffResult {
             after: `${toLatex(c)} \\cdot ${dOf(x, inner)} = ${toLatex(value)}`,
             operation: "diff-constant-multiple",
             rule: { id: "constant-multiple", name: "Aturan kelipatan konstanta", formula: "(c f)' = c f'" },
-            reason: `Konstanta ${toLatex(c)} dapat dikeluarkan dari turunan.`,
+            reason: `Konstanta $${toLatex(c)}$ dapat dikeluarkan dari turunan.`,
             substeps: [d.step],
           },
         };
@@ -99,7 +99,7 @@ export function differentiate(e: Expr, x: string, depth = 0): DiffResult {
             after: `\\frac{${toLatex(df.value)} \\cdot ${wrapLatex(g)} - ${wrapLatex(f)} \\cdot ${wrapLatex(dg.value)}}{${wrapLatex(g)}^{2}} = ${toLatex(value)}`,
             operation: "diff-quotient",
             rule: { id: "quotient", name: "Aturan hasil bagi", formula: "\\left(\\frac{f}{g}\\right)' = \\frac{f'g - fg'}{g^2}", conditions: "g(x) ≠ 0" },
-            reason: `Ekspresi berbentuk pecahan f/g dengan f = ${toLatex(f)} dan g = ${toLatex(g)}.`,
+            reason: `Ekspresi berbentuk pecahan f/g dengan f = $${toLatex(f)}$ dan g = $${toLatex(g)}$.`,
             substeps: [df.step, dg.step],
           },
         };
@@ -118,7 +118,7 @@ export function differentiate(e: Expr, x: string, depth = 0): DiffResult {
           after: `${wrapLatex(df.value)} \\cdot ${wrapLatex(g)} + ${wrapLatex(f)} \\cdot ${wrapLatex(dg.value)} = ${toLatex(value)}`,
           operation: "diff-product",
           rule: { id: "product", name: "Aturan perkalian", formula: "(fg)' = f'g + fg'" },
-          reason: `Ekspresi merupakan hasil kali f = ${toLatex(f)} dan g = ${toLatex(g)}.`,
+          reason: `Ekspresi merupakan hasil kali f = $${toLatex(f)}$ dan g = $${toLatex(g)}$.`,
           substeps: [df.step, dg.step],
         },
       };
@@ -143,7 +143,7 @@ export function differentiate(e: Expr, x: string, depth = 0): DiffResult {
             after: `${toLatex(outer)} \\cdot ${dOf(x, e.base)} = ${toLatex(value)}`,
             operation: "diff-chain-power",
             rule: { id: "chain-power", name: "Aturan rantai", formula: "\\frac{d}{dx}u^{n} = n u^{n-1} \\cdot u'" },
-            reason: `Fungsi luar adalah pangkat ${toLatex(n)}, fungsi dalam u = ${toLatex(e.base)}.`,
+            reason: `Fungsi luar adalah pangkat $${toLatex(n)}$, fungsi dalam u = $${toLatex(e.base)}$.`,
             substeps: [du.step],
           },
         };
@@ -164,7 +164,7 @@ export function differentiate(e: Expr, x: string, depth = 0): DiffResult {
             after: `${toLatex(outer)} \\cdot ${dOf(x, e.exp)} = ${toLatex(value)}`,
             operation: "diff-chain-exp",
             rule: { id: "chain-exp", name: "Aturan rantai", formula: isE ? "\\frac{d}{dx}e^{u} = e^{u} u'" : "\\frac{d}{dx}a^{u} = a^{u}\\ln a \\cdot u'" },
-            reason: `Fungsi dalam u = ${toLatex(e.exp)}.`,
+            reason: `Fungsi dalam u = $${toLatex(e.exp)}$.`,
             substeps: [du.step],
           },
         };
@@ -249,7 +249,7 @@ function diffFunction(e: Expr & { type: "fn" }, x: string, depth: number): DiffR
       after: `${wrapLatex(outer)} \\cdot ${dOf(x, u)} = ${toLatex(value)}`,
       operation: "diff-chain-fn",
       rule: ruleRef,
-      reason: `Fungsi luar ${e.name}, fungsi dalam u = ${toLatex(u)}. Kalikan turunan fungsi luar dengan turunan fungsi dalam.`,
+      reason: `Fungsi luar ${e.name}, fungsi dalam u = $${toLatex(u)}$. Kalikan turunan fungsi luar dengan turunan fungsi dalam.`,
       substeps: [du.step],
     },
   };

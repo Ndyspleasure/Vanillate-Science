@@ -81,7 +81,7 @@ export class Poly {
   /** Long division: this = q * d + r with deg r < deg d. */
   divmod(d: Poly): { q: Poly; r: Poly } {
     if (d.isZero()) throw new MathError("division-by-zero", "Pembagian polinomial dengan polinomial nol.", { module: "polynomial" });
-    let r: Poly = this;
+    let r = new Poly(this.coeffs);
     const q = new Array<Rational>(Math.max(0, this.degree - d.degree + 1)).fill(Rational.ZERO);
     while (!r.isZero() && r.degree >= d.degree) {
       tick("poly-div");
@@ -161,7 +161,7 @@ export class Poly {
    * factor after deflation.
    */
   rationalRoots(): { roots: Rational[]; rest: Poly } {
-    let p: Poly = this;
+    let p = new Poly(this.coeffs);
     const roots: Rational[] = [];
     // zero roots
     while (!p.isZero() && p.coeff(0).isZero()) {

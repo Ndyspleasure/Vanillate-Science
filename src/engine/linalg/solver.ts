@@ -264,7 +264,7 @@ function determinantSolution(input: string, A: Expr[][], inputLatex: string, war
   if (n >= 3 && n <= 5) {
     const cof = detExpr(A);
     alternatives.push({ name: "Ekspansi kofaktor", description: "Ekspansi Laplace sepanjang baris pertama.", steps: [{ title: "Ekspansi kofaktor baris 1", after: A[0].map((v, j) => `${j % 2 === 0 ? (j ? "+" : "") : "-"} ${wrapL(v)} M_{1${j + 1}}`).join(" ") + ` = ${toLatex(cof)}`, operation: "cofactor", rule: { id: "cofactor", name: "Ekspansi kofaktor", formula: "\\det A = \\sum_j (-1)^{1+j} a_{1j} M_{1j}" }, reason: "M₁ⱼ adalah minor (determinan submatriks tanpa baris 1 dan kolom j)." }], answers: [exactAnswer(cof)] });
-    checks.push({ description: "Bandingkan dengan metode independen (ekspansi kofaktor)", passed: isSymbolicallyZero(sub(cof, value)), method: "Perhitungan eksak independen", detail: `Kofaktor: ${toLatex(cof)}` });
+    checks.push({ description: "Bandingkan dengan metode independen (ekspansi kofaktor)", passed: isSymbolicallyZero(sub(cof, value)), method: "Perhitungan eksak independen", detail: `Kofaktor: $${toLatex(cof)}$` });
   } else if (rm) {
     const cof = rm.cofactorDeterminant();
     checks.push({ description: "Bandingkan dengan ekspansi kofaktor", passed: cof.equals((value as { value: Rational }).value), method: "Perhitungan eksak independen" });
