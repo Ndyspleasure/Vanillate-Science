@@ -2,7 +2,7 @@
 
 import { Keyboard, Loader2, Play, Square, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { SolveOutcome } from "@/engine/api";
 import { MODE_LABELS, type Mode } from "@/engine/modes";
 import type { PreviewOutcome } from "@/engine/router";
@@ -46,6 +46,7 @@ export function SolverApp({ examples = [], presetMode, placeholder = "Ketik soal
   const [shareUrl, setShareUrl] = useState<string | undefined>(undefined);
   const resultRef = useRef<HTMLDivElement>(null);
   const autoRan = useRef(false);
+  const pendingCaret = useRef<number | null>(null);
 
   // Live preview of how the input is understood (debounced, in the worker).
   useEffect(() => {
@@ -112,12 +113,19 @@ export function SolverApp({ examples = [], presetMode, placeholder = "Ketik soal
       caret = start + idx + selected.length;
     } else caret = start + text.length;
     const next = input.slice(0, start) + text + input.slice(end);
+    pendingCaret.current = caret;
     setInput(next);
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(caret, caret);
-    });
   };
+
+  // Place the caret right after the React commit (before the next keystroke can arrive).
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current;
+    if (caret === null) return;
+    pendingCaret.current = null;
+    const el = inputRef.current;
+    el?.focus();
+    el?.setSelectionRange(caret, caret);
+  }, [input]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
