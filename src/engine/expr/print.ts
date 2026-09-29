@@ -112,12 +112,6 @@ export function displayOrderFactors(factors: readonly Expr[]): Expr[] {
     const kb = displayKey(b);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
-  // Purely real constant sums read better with a positive term first: π − atan 5, not −atan 5 + π.
-  if (sorted.length > 1 && sorted.every((t) => freeSymbols(t).size === 0 && !containsSymbol(t, "i")) && isNegativeTerm(sorted[0])) {
-    const k = sorted.findIndex((t) => !isNegativeTerm(t));
-    if (k > 0) sorted.unshift(...sorted.splice(k, 1));
-  }
-  return sorted;
 }
 
 // ---------------------------------------------------------------------------

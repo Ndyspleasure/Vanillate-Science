@@ -12,7 +12,7 @@ import { toExpr } from "./parse/convert";
 import { previewInput, solve, type PreviewOutcome, type SolveOptions, type SolveOutcome } from "./router";
 import { solveFormula, type FormulaSolveInput } from "./science/formula-solver";
 import { solveUnitConversion } from "./units/convert";
-import { TOOLS, type Values } from "./forms";
+import { normalizeNumber, TOOLS, type Values } from "./forms";
 import { safeCheckWork, type WorkCheckResult } from "./verify-work";
 
 export type EngineRequest =
@@ -122,10 +122,13 @@ export function handleRequest(req: EngineRequest): EngineResponse {
       return solve(req.input, req.options);
     case "preview":
       return previewInput(req.input, req.options);
-    case "formula":
-      return outcome(`${req.input.formulaId}: ${req.input.solveFor}`, "formula", () => solveFormula(req.input));
+    case "formula": {
+      // Accept "3,5" and "1.250.000" style inputs like the other forms.
+      const values = Object.fromEntries(Object.entries(req.input.values).map(([k, q]) => [k, { ...q, value: normalizeNumber(q.value) }]));
+      return outcome(`${req.input.formulaId}: ${req.input.solveFor}`, "formula", () => solveFormula({ ...req.input, values }));
+    }
     case "units":
-      return outcome(`${req.value} ${req.from} → ${req.to}`, "units", () => solveUnitConversion(req.value, req.from, req.to));
+      return outcome(`${req.value} ${req.from} → ${req.to}`, "units", () => solveUnitConversion(normalizeNumber(req.value), req.from, req.to));
     case "tool": {
       const def = TOOLS[req.tool];
       if (!def) return { ok: false, error: new MathError("unsupported", `Kalkulator '${req.tool}' tidak dikenal.`, { module: "api" }).toJSON(), input: req.tool };

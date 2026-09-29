@@ -9,7 +9,7 @@ describe("tool forms", () => {
       if (!r.ok) throw new Error(`${id}: ${JSON.stringify((r as { error: unknown }).error)}`);
       if (!("solution" in r)) throw new Error("expected solution");
       expect(r.solution.answers.length).toBeGreaterThan(0);
-      expect(["verified", "verified-numeric", "partial"]).toContain(r.solution.verification.status);
+      expect(["verified", "verified-numeric"]).toContain(r.solution.verification.status);
       expect(() => structuredClone(r)).not.toThrow();
     });
   }
@@ -91,5 +91,16 @@ describe("api", () => {
     const para = sample({ kind: "parametric", exprs: ["cos(t)"], yExprs: ["sin(t)"], variable: "t", range: [0, 1], samples: 2 });
     if (para.ok) expect(para.curves[0].points[5]).toBeCloseTo(Math.sin(1));
     expect(sample({ kind: "function", exprs: ["x"], variable: "x", range: [1, 0], samples: 5 }).ok).toBe(false);
+  });
+});
+
+describe("api number normalisation", () => {
+  it("formula and unit inputs accept decimal commas", () => {
+    const f = handleRequest({ type: "formula", input: { formulaId: "hukum-ohm", solveFor: "V", values: { I: { value: "0,5" }, R: { value: "10" } } } });
+    expect(f.ok).toBe(true);
+    if (f.ok && "solution" in f) expect(f.solution.answers[0].text).toContain("5");
+    const u = handleRequest({ type: "units", value: "2,5", from: "km", to: "m" });
+    expect(u.ok).toBe(true);
+    if (u.ok && "solution" in u) expect(u.solution.answers[0].text).toContain("2500");
   });
 });

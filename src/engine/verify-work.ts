@@ -24,8 +24,14 @@ import { differentiate } from "./calculus/derivative";
 import { chooseVariable, solveCore, type EqRoot } from "./solvers/equation";
 import { PERIOD_SYMBOL } from "./solvers/isolate";
 import { formatNumber } from "./steps/format";
+import type { Expr } from "./expr/types";
 
-export type LineStatus = "ok" | "error" | "unparseable" | "unchecked";
+/**
+ * ok: consistent with the problem · error: changes the answer (first place a mistake enters)
+ * carried: follows correctly from the previous line but inherits an earlier mistake
+ * unparseable / unchecked: could not be read / could not be compared.
+ */
+export type LineStatus = "ok" | "error" | "carried" | "unparseable" | "unchecked";
 
 export interface LineCheck {
   index: number;
@@ -33,7 +39,10 @@ export interface LineCheck {
   latex?: string;
   status: LineStatus;
   message: string;
+  /** Plain-text explanation. */
   detail?: string;
+  /** LaTeX shown with the explanation (e.g. the correct derivative). */
+  formula?: string;
 }
 
 export interface WorkCheckResult {
@@ -101,11 +110,15 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
   const first = p.statements[0];
   const lines = rawLines.map((l) => l.trim()).filter((l) => l.length > 0);
   const result: LineCheck[] = [];
+  /** Comparable value of each line (by index in `result`), used to detect carried errors. */
+  const reprs: unknown[] = [];
+  let same: (a: unknown, b: unknown) => boolean = () => false;
   let mode: WorkCheckResult["mode"];
   const problemLatex = p.statements.map((s) => syntaxToLatex(s)).join(",\\ ");
 
   if (first.k === "deriv") {
     mode = "derivative";
+    same = (a, b) => checkEquivalent(a as Expr, b as Expr).equivalent;
     const f = toExpr(first.expr);
     const x = first.variable || chooseVariable(freeSymbols(f));
     let ref = f;
@@ -115,7 +128,8 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
         const n = parse(line).statements[0];
         const e = n.k === "rel" ? toExpr(n.operands[1]) : toExpr(n);
         const eq = checkEquivalent(e, ref);
-        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Setara dengan turunan yang benar." : "Tidak sama dengan turunan yang benar.", detail: eq.equivalent ? eq.detail : `${eq.detail} Turunan yang benar: ${toLatex(ref)}.` });
+        reprs[result.length] = e;
+        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Setara dengan turunan yang benar." : "Tidak sama dengan turunan yang benar.", detail: eq.detail, formula: eq.equivalent ? undefined : `\\text{Turunan yang benar: } ${toLatex(ref)}` });
       } catch (e) {
         result.push({ index: i, input: line, status: "unparseable", message: "Baris tidak dapat dibaca.", detail: isMathError(e) ? e.message : String(e) });
       }
@@ -124,6 +138,7 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
     mode = "integral";
     const f = toExpr(first.expr);
     const x = first.variable || chooseVariable(freeSymbols(f));
+    same = (a, b) => checkEquivalent(differentiate(a as Expr, x).value, differentiate(b as Expr, x).value).equivalent;
     lines.forEach((line, i) => {
       try {
         const n = parse(line.replace(/\+\s*C\s*$/i, "").replace(/\+\s*c\s*$/, "")).statements[0];
@@ -139,7 +154,8 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
         const F = n.k === "rel" ? toExpr(n.operands[1]) : toExpr(n);
         const dF = differentiate(F, x).value;
         const eq = checkEquivalent(dF, f);
-        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Turunan baris ini sama dengan integran: antiturunan benar." : "Turunan baris ini tidak sama dengan integran.", detail: eq.equivalent ? eq.detail : `d/d${x} baris ini = ${toLatex(dF)}; seharusnya ${toLatex(f)}.` });
+        reprs[result.length] = F;
+        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Turunan baris ini sama dengan integran: antiturunan benar." : "Turunan baris ini tidak sama dengan integran.", detail: eq.detail, formula: eq.equivalent ? undefined : `\\frac{d}{d${x}}\\left(\\text{baris ini}\\right) = ${toLatex(dF)} \\neq ${toLatex(f)}` });
       } catch (e) {
         result.push({ index: i, input: line, status: "unparseable", message: "Baris tidak dapat dibaca.", detail: isMathError(e) ? e.message : String(e) });
       }
@@ -149,18 +165,23 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
     const vars = new Set([...freeSymbols(toExpr(first.operands[0])), ...freeSymbols(toExpr(first.operands[1]))]);
     const x = chooseVariable(vars);
     const ref = solutionSet([first], x);
+    same = (a, b) => compareSets(a as SolutionSet, b as SolutionSet).same;
     lines.forEach((line, i) => {
       try {
         const statements = parse(splitAlternatives(line)).statements;
         const got = solutionSet(statements, x);
         const cmp = compareSets(ref, got);
+        reprs[result.length] = got;
         const latex = statements.map((s) => syntaxToLatex(s)).join(" \\lor ");
         if (cmp.same) {
           result.push({ index: i, input: line, latex, status: "ok", message: "Himpunan penyelesaian tetap sama.", detail: ref.periodic ? "Solusi periodik dibandingkan pada nilai-nilai utama." : `HP = {${ref.values.map((v) => formatNumber(v, 8)).join(", ")}}` });
         } else {
           const parts: string[] = [];
-          if (cmp.missing.length) parts.push(`kehilangan solusi ${cmp.missing.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} (misalnya karena membagi dengan ekspresi yang bisa bernilai nol, atau lupa tanda ± saat menarik akar)`);
-          if (cmp.extra.length) parts.push(`muncul solusi baru ${cmp.extra.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} yang tidak memenuhi persamaan awal (misalnya akibat mengkuadratkan kedua ruas atau salah operasi)`);
+          const fmtSet = (vals: number[]) => (vals.length ? vals.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ") : "tidak ada solusi");
+          if (cmp.missing.length && cmp.extra.length) {
+            parts.push(`mengubah penyelesaian: seharusnya ${fmtSet(ref.values)}, tetapi baris ini memberi ${fmtSet(got.values)}. Periksa operasi pada langkah ini (penjabaran kurung, tanda saat pindah ruas, atau pembagian)`);
+          } else if (cmp.missing.length) parts.push(`kehilangan solusi ${cmp.missing.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} (misalnya karena membagi dengan ekspresi yang bisa bernilai nol, atau lupa tanda ± saat menarik akar)`);
+          else if (cmp.extra.length) parts.push(`muncul solusi baru ${cmp.extra.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} yang tidak memenuhi persamaan awal (misalnya akibat mengkuadratkan kedua ruas atau salah operasi)`);
           if (!parts.length) parts.push("kedua persamaan tidak setara");
           result.push({ index: i, input: line, latex, status: "error", message: "Langkah ini mengubah himpunan penyelesaian.", detail: `Baris ini ${parts.join("; ")}.` });
         }
@@ -173,11 +194,13 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
   } else {
     mode = "expression";
     const ref = toExpr(first.k === "rel" ? first.operands[0] : first);
+    same = (a, b) => checkEquivalent(a as Expr, b as Expr).equivalent;
     lines.forEach((line, i) => {
       try {
         const n = parse(line).statements[0];
         const e = n.k === "rel" ? toExpr(n.operands[n.operands.length - 1]) : toExpr(n);
         const eq = checkEquivalent(e, ref);
+        reprs[result.length] = e;
         let detail = eq.detail;
         if (!eq.equivalent && eq.counterexample) {
           const env = eq.counterexample;
@@ -191,11 +214,39 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
       }
     });
   }
+  // Unsupported intermediate forms (e.g. "x sin x − ∫ sin x dx") are "unchecked", not unreadable.
+  for (const r of result) {
+    if (r.status === "unparseable" && /belum didukung/i.test(r.detail ?? "")) {
+      r.status = "unchecked";
+      r.message = "Langkah perantara ini belum dapat diperiksa otomatis.";
+    }
+  }
+  // Carried errors: a wrong line that follows correctly from the previous readable line.
+  let firstErr = -1;
+  for (let i = 0; i < result.length; i++) {
+    if (result[i].status !== "error") continue;
+    if (firstErr < 0) {
+      firstErr = i;
+      continue;
+    }
+    let j = i - 1;
+    while (j >= 0 && reprs[j] === undefined) j--;
+    try {
+      if (j >= 0 && reprs[i] !== undefined && same(reprs[j], reprs[i])) {
+        result[i].status = "carried";
+        result[i].message = `Benar terhadap langkah ${j + 1}, tetapi membawa kesalahan dari langkah ${firstErr + 1}.`;
+        result[i].formula = undefined;
+      }
+    } catch {
+      // comparison failed: keep the error status
+    }
+  }
   const firstErrorLine = result.find((r) => r.status === "error");
   const finalCorrect = result.length > 0 && result[result.length - 1].status === "ok";
   const okCount = result.filter((r) => r.status === "ok").length;
+  const carried = result.filter((r) => r.status === "carried").length;
   const summary = firstErrorLine
-    ? `Kesalahan pertama ada di langkah ${firstErrorLine.index + 1}. ${okCount} dari ${result.length} langkah benar.`
+    ? `Kesalahan pertama ada di langkah ${firstErrorLine.index + 1}.${carried ? ` ${carried} langkah berikutnya dikerjakan dengan benar tetapi mewarisi kesalahan tersebut.` : ""} ${okCount} dari ${result.length} langkah sesuai dengan soal.`
     : result.length === 0
       ? "Belum ada langkah untuk diperiksa."
       : result.every((r) => r.status === "ok")

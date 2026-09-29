@@ -141,3 +141,25 @@ describe("regressions (UI integration)", () => {
     if (!r.ok && r.error.span) expect("sederhanakan (x + 1".slice(r.error.span.start, r.error.span.end)).toBe("(");
   });
 });
+
+describe("regressions: complex exponents (bug: i inside exponents was replaced by 1)", () => {
+  const cases: Array<[string, string]> = [
+    ["e^(i pi)", "-1"],
+    ["e^(i*pi) + 1", "0"],
+    ["e^(i*pi/2)", "i"],
+    ["i^i", "e^(-pi/2)"],
+    ["2^i", "cos(ln(2)) + sin(ln(2))*i"],
+    ["sin(i)", "sinh(1)*i"],
+    ["cos(pi + i)", "-cosh(1)"],
+    ["i^2023", "-i"],
+    ["1/(1+i)^3", "-1/4 - i/4"],
+  ];
+  for (const [input, expected] of cases) {
+    it(input, () => {
+      const r = solve(input);
+      if (!r.ok) throw new Error(r.error.message);
+      expect(r.solution.answers[0].text).toBe(expected);
+      expect(r.solution.verification.status).toBe("verified");
+    });
+  }
+});

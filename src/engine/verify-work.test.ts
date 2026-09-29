@@ -34,3 +34,25 @@ describe("verify my work", () => {
     expect(r.lines.map((l) => l.status)).toEqual(["unchecked", "ok"]);
   });
 });
+
+describe("verify my work — carried errors", () => {
+  it("marks later lines that follow from a wrong line as carried", () => {
+    const r = checkWork("3(x - 2) = 2x + 4", ["3x - 2 = 2x + 4", "x - 2 = 4", "x = 6"]);
+    expect(r.lines.map((l) => l.status)).toEqual(["error", "carried", "carried"]);
+    expect(r.firstError).toBe(0);
+    expect(r.lines[0].detail).toMatch(/seharusnya x = 10/);
+    expect(r.summary).toMatch(/mewarisi/);
+  });
+  it("a second independent mistake is still an error", () => {
+    const r = checkWork("2x + 5 = 15", ["2x = 20", "x = 4"]);
+    expect(r.lines.map((l) => l.status)).toEqual(["error", "error"]);
+  });
+  it("carried errors in expression rewriting and antiderivatives", () => {
+    const r = checkWork("(x + 1)^2", ["x^2 + x + 1", "x^2 + (x + 1)"]);
+    expect(r.lines.map((l) => l.status)).toEqual(["error", "carried"]);
+    const i = checkWork("integral x cos(x)", ["x sin(x) - cos(x) + C", "x sin(x) + cos(x) + C"]);
+    expect(i.lines.map((l) => l.status)).toEqual(["error", "ok"]);
+    const nested = checkWork("integral x cos(x)", ["x sin(x) - integral sin(x)", "x sin(x) + cos(x) + C"]);
+    expect(nested.lines[0].status).toBe("unchecked");
+  });
+});

@@ -47,8 +47,9 @@ export function numberLatex(s: string): string {
 
 export function formatComplex(re: number, im: number, digits = DEFAULT_DIGITS): string {
   if (Math.abs(im) < 1e-14 * Math.max(1, Math.abs(re))) return formatNumber(re, digits);
-  if (Math.abs(re) < 1e-14 * Math.max(1, Math.abs(im))) return `${formatNumber(im, digits)}i`;
-  return `${formatNumber(re, digits)} ${im < 0 ? "-" : "+"} ${formatNumber(Math.abs(im), digits)}i`;
+  const imPart = (v: number) => (Math.abs(v - 1) < 1e-15 ? "i" : `${formatNumber(v, digits)}i`);
+  if (Math.abs(re) < 1e-14 * Math.max(1, Math.abs(im))) return im < 0 ? `-${imPart(-im)}` : imPart(im);
+  return `${formatNumber(re, digits)} ${im < 0 ? "-" : "+"} ${imPart(Math.abs(im))}`;
 }
 
 /** True when the exact expression is a plain terminating decimal (no approximation needed). */
