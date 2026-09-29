@@ -329,7 +329,7 @@ function textRaw(e: Expr, o: PrintOptions): string {
       const terms = displayOrderTerms(e.terms, o.mainVariable);
       let s = textPrec(terms[0], PREC.add, o);
       for (const t of terms.slice(1)) {
-        if (isNegativeTerm(t)) s += ` - ${textPrec(negateTerm(t), PREC.mul + 0.5, o)}`;
+        if (isNegativeTerm(t)) s += ` - ${textPrec(negateTerm(t), PREC.add + 0.5, o)}`;
         else s += ` + ${textPrec(t, PREC.add, o)}`;
       }
       return s;

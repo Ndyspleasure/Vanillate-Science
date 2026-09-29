@@ -16,12 +16,20 @@ export function formatNumber(x: number, digits = DEFAULT_DIGITS): string {
   if (!Number.isFinite(x)) return x > 0 ? "∞" : "-∞";
   if (x === 0) return "0";
   const abs = Math.abs(x);
-  if (abs >= 1e15 || abs < 1e-6) {
+  const exponent = Math.floor(Math.log10(abs));
+  if (exponent >= Math.max(digits, 15) || exponent < -6) {
     const [m, e] = x.toExponential(digits - 1).split("e");
     return `${trimZeros(m)}e${e.replace("+", "")}`;
   }
+  if (exponent >= digits) {
+    // integers with more digits than requested precision: round, keep plain notation
+    return Math.round(x).toString();
+  }
   const s = x.toPrecision(digits);
-  if (s.includes("e")) return formatNumber(Number(s), digits);
+  if (s.includes("e")) {
+    const [m, e] = x.toExponential(digits - 1).split("e");
+    return `${trimZeros(m)}e${e.replace("+", "")}`;
+  }
   return trimZeros(s);
 }
 
