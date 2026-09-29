@@ -55,8 +55,10 @@ export function canonicalFunctionName(name: string): string {
 /** Split identifier words into atomic identifiers ("xy" -> x, y; "sinx" -> sin, x). */
 function splitWords(tokens: Token[], warnings: string[]): Token[] {
   const out: Token[] = [];
-  for (const t of tokens) {
-    if (t.type !== "ident" || WHOLE_WORDS.has(t.value) || t.end - t.start === 1) {
+  for (let idx = 0; idx < tokens.length; idx++) {
+    const t = tokens[idx];
+    const afterUnderscore = idx > 0 && tokens[idx - 1].type === "underscore" && !t.spaceBefore;
+    if (t.type !== "ident" || WHOLE_WORDS.has(t.value) || t.end - t.start === 1 || afterUnderscore) {
       out.push(t);
       continue;
     }
