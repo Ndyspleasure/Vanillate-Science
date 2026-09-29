@@ -39,6 +39,18 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    // The default Vercel production URL always forwards to the canonical domain.
+    // Preview deployments use other hostnames and are unaffected.
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "vanillate-science.vercel.app" }],
+        destination: "https://science.vanillate.id/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

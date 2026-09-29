@@ -15,10 +15,10 @@ Aplikasi ini adalah proyek Next.js standar tanpa database, tanpa layanan ekstern
 
 ## Variabel lingkungan (semuanya opsional)
 
-| Nama                      | Kegunaan                                                                                                                    | Bawaan                                                                                        |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`    | URL kanonis untuk metadata, sitemap, robots, Open Graph, JSON-LD. Isi dengan domain final, misalnya `https://vanillate.id`. | `https://$VERCEL_PROJECT_PRODUCTION_URL` (otomatis dari Vercel), lalu `http://localhost:3000` |
-| `NEXT_PUBLIC_APP_VERSION` | Versi yang ditampilkan di footer dan `/api/health`                                                                          | `1.0.0`                                                                                       |
+| Nama                      | Kegunaan                                                                                                                            | Bawaan                                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`    | URL kanonis untuk metadata, sitemap, robots, Open Graph, JSON-LD. Isi dengan domain final, misalnya `https://science.vanillate.id`. | `https://$VERCEL_PROJECT_PRODUCTION_URL` (otomatis dari Vercel), lalu `http://localhost:3000` |
+| `NEXT_PUBLIC_APP_VERSION` | Versi yang ditampilkan di footer dan `/api/health`                                                                                  | `1.0.0`                                                                                       |
 
 `VERCEL_GIT_COMMIT_SHA` dan `VERCEL_PROJECT_PRODUCTION_URL` dibaca otomatis (System Environment Variables Vercel aktif secara bawaan). Tidak ada API key atau secret yang perlu dimasukkan.
 
@@ -61,3 +61,7 @@ npm run start   # PORT=3000 bawaan
 ```
 
 Dapat dijalankan di platform Node.js mana pun (Docker, VPS). Set `NEXT_PUBLIC_SITE_URL` saat build.
+
+## Domain produksi
+
+Situs produksi: **https://science.vanillate.id**. `next.config.ts` mengalihkan (308, path & query dipertahankan) semua permintaan ke `vanillate-science.vercel.app` menuju domain tersebut; URL preview deployment tidak terpengaruh.
