@@ -751,3 +751,17 @@ Sebuah pekerjaan dianggap selesai ketika:
 Tujuan akhir bukan sekadar menyelesaikan ticket.
 
 Tujuan akhir adalah membangun **mesin matematika dan sains yang dapat dipercaya, dapat dijelaskan, dapat diverifikasi, dan dapat berkembang dari tingkat dasar hingga tingkat ahli.**
+
+---
+
+## Lampiran — Catatan Proyek Vanillate Science
+
+Ringkasan teknis untuk sesi pengembangan berikutnya (detail di `docs/`):
+
+- **Stack**: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript strict · Tailwind CSS v4 · KaTeX. Baca `AGENTS.md`: API Next.js versi ini berbeda dari data pelatihan — rujuk `node_modules/next/dist/docs/`.
+- **Mesin matematika**: `src/engine` (tanpa dependensi UI, aritmetika rasional BigInt). Pintu masuk tunggal: `src/engine/api.ts` (`handleRequest`), dijalankan di Web Worker `src/workers/engine.worker.ts` melalui `src/lib/engine-client.ts`. Lihat `docs/ENGINE.md`.
+- **Halaman kalkulator** dibangkitkan dari registri `src/lib/calculators.ts`; rumus sains di `src/engine/science/formulas.ts`; formulir terstruktur di `src/engine/forms.ts`.
+- **Konvensi teks**: matematika di dalam teks polos (judul/alasan/deskripsi langkah) ditulis `$…$` dan dirender oleh `components/MathText.tsx`; ada tes yang menolak LaTeX mentah di luar `$…$`.
+- **Perintah**: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e` (butuh build), `npm run check`.
+- **Tes wajib**: setiap contoh di registri kalkulator, panduan, dan formulir harus terselesaikan dengan status `verified`/`verified-numeric`; setiap bug matematika → tes regresi di `src/engine/router.test.ts`.
+- **Deploy**: Vercel tanpa konfigurasi (lihat `docs/DEPLOYMENT.md`); CI di `.github/workflows/ci.yml`.
