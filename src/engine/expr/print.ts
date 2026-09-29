@@ -4,7 +4,7 @@
  * terms are shown by descending degree and constants last.
  */
 import { Rational } from "../core/rational";
-import { rawMul, rawNum, rawPow, freeSymbols, exprKey, type Expr } from "./types";
+import { rawMul, rawNum, rawPow, freeSymbols, containsSymbol, exprKey, type Expr } from "./types";
 
 export interface PrintOptions {
   /** Custom LaTeX for symbols, e.g. { E_k: "E_k" }. */
@@ -53,10 +53,16 @@ function termDegree(t: Expr, main?: string): number {
 }
 
 export function displayOrderTerms(terms: readonly Expr[], main?: string): Expr[] {
-  return [...terms].sort((a, b) => {
+  const sorted = [...terms].sort((a, b) => {
     const ca = freeSymbols(a).size === 0;
     const cb = freeSymbols(b).size === 0;
     if (ca !== cb) return ca ? 1 : -1;
+    if (ca && cb) {
+      // constant complex numbers read as a + bi: real part first
+      const ia = containsSymbol(a, "i");
+      const ib = containsSymbol(b, "i");
+      if (ia !== ib) return ia ? 1 : -1;
+    }
     const na = a.type === "num";
     const nb = b.type === "num";
     if (na !== nb) return na ? 1 : -1;
@@ -67,6 +73,12 @@ export function displayOrderTerms(terms: readonly Expr[], main?: string): Expr[]
     const kb = displayKey(b);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
+  // Purely real constant sums read better with a positive term first: π − atan 5, not −atan 5 + π.
+  if (sorted.length > 1 && sorted.every((t) => freeSymbols(t).size === 0 && !containsSymbol(t, "i")) && isNegativeTerm(sorted[0])) {
+    const k = sorted.findIndex((t) => !isNegativeTerm(t));
+    if (k > 0) sorted.unshift(...sorted.splice(k, 1));
+  }
+  return sorted;
 }
 
 function displayKey(e: Expr): string {
@@ -100,6 +112,12 @@ export function displayOrderFactors(factors: readonly Expr[]): Expr[] {
     const kb = displayKey(b);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
+  // Purely real constant sums read better with a positive term first: π − atan 5, not −atan 5 + π.
+  if (sorted.length > 1 && sorted.every((t) => freeSymbols(t).size === 0 && !containsSymbol(t, "i")) && isNegativeTerm(sorted[0])) {
+    const k = sorted.findIndex((t) => !isNegativeTerm(t));
+    if (k > 0) sorted.unshift(...sorted.splice(k, 1));
+  }
+  return sorted;
 }
 
 // ---------------------------------------------------------------------------

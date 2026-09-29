@@ -23,8 +23,12 @@ import { solveDivisors, solveGcdLcm, solveIsPrime, solveModInverse, solveModPow,
 import { solveDerivative, solveExtrema, solveImplicit, solveIntegral, solveLimit, solveTaylor } from "./calculus/solvers";
 import { containsList, solveMatrixProblem } from "./linalg/solver";
 import { solveDescriptive, solveRegression } from "./stats/descriptive";
+import { solveSum } from "./solvers/sum";
 
-export type Mode = "auto" | "simplify" | "expand" | "factor" | "derivative" | "integral" | "extrema" | "taylor" | "isprime" | "divisors" | "statistics";
+import type { Mode } from "./modes";
+
+export type { Mode };
+export { MODE_LABELS } from "./modes";
 
 export interface SolveOptions {
   mode?: Mode;
@@ -40,7 +44,7 @@ const PREFIXES: Array<[RegExp, Mode]> = [
   [/^(jabarkan|expand|uraikan|ekspansi|kalikan)\b[:\s]*/i, "expand"],
   [/^(faktorkan|factor|faktorisasi|factorize|faktor)\b[:\s]*/i, "factor"],
   [/^(turunan|turunkan|derivative|derive|diferensialkan|differentiate)\b(\s+(dari|of))?[:\s]*/i, "derivative"],
-  [/^(integralkan|integrate|antiturunan|integral\s+dari|integral\s+of)\b[:\s]*/i, "integral"],
+  [/^(integralkan|integrate|antiturunan)\b[:\s]*/i, "integral"],
   [/^(titik\s+kritis|titik\s+stasioner|nilai\s+ekstrem|ekstrem|extrema|maksimum\s+dan\s+minimum)\b(\s+(dari|of))?[:\s]*/i, "extrema"],
   [/^(deret\s+taylor|deret\s+maclaurin|taylor|maclaurin)\b(\s+(dari|of))?[:\s]*/i, "taylor"],
   [/^(apakah\s+prima|uji\s+prima|is\s+prime|prima\??)\b[:\s]*/i, "isprime"],
@@ -63,6 +67,11 @@ function preprocess(input: string, options: SolveOptions): { text: string; mode:
         break;
       }
     }
+  }
+  if (mode === "integral" && !/^(integral|int|∫)/i.test(text)) {
+    // Let the parser read bounds such as "x^2 from 0 to 1" / "x^2 dari 0 sampai 1".
+    text = `integral ${text}`;
+    mode = "auto";
   }
   const suffix = /\s+(for|untuk|terhadap|wrt|dalam)\s+([A-Za-z](?:_?[A-Za-z0-9]+)?)\s*\.?$/i.exec(text);
   if (suffix) {
@@ -147,6 +156,12 @@ function dispatchCall(input: string, node: SNode & { k: "call" }, warnings: stri
       const order = a[3] ? Number(integerArg(a[3], "Orde")) : 5;
       return solveTaylor(input, f, v, center, order, warnings);
     }
+    case "sum": {
+      if (a.length !== 4) throw invalidInput("Format notasi sigma: sum(suku, indeks, batas_bawah, batas_atas).", { module: "router", hint: "Contoh: sum(k^2, k, 1, n) atau sum(1/k, k, 1, 10)" });
+      const k = variableOf(a[1]);
+      if (!k) throw invalidInput("Argumen kedua sum() harus variabel indeks, misalnya k.", { module: "router" });
+      return solveSum(input, toExpr(a[0]), k, toExpr(a[2]), toExpr(a[3], { allowInfinity: true }), syntaxToLatex(node), warnings);
+    }
     case "solve": {
       const target = a[0];
       const v = variableOf(a[1]) ?? variable;
@@ -208,8 +223,30 @@ function tupleNumbers(n: SNode): Rational[] | null {
   return vals.every((v) => v !== null) ? (vals as Rational[]) : null;
 }
 
+/** Re-express an error span (relative to the preprocessed text) in terms of the raw input. */
+function shiftSpan(e: unknown, input: string, text: string): unknown {
+  if (!(e instanceof MathError) || !e.span) return e;
+  const p = input.indexOf(text);
+  return new MathError(e.kind, e.message, {
+    module: e.module,
+    operation: e.operation,
+    cause: e.causeText,
+    hint: e.hint,
+    details: e.details,
+    span: p >= 0 ? { start: e.span.start + p, end: e.span.end + p } : undefined,
+  });
+}
+
 function route(input: string, options: SolveOptions): Solution {
   const { text, mode, variable } = preprocess(input, options);
+  try {
+    return routeText(input, text, mode, variable);
+  } catch (e) {
+    throw shiftSpan(e, input, text);
+  }
+}
+
+function routeText(input: string, text: string, mode: Mode, variable: string | undefined): Solution {
   if (!text) throw invalidInput("Input kosong.", { module: "router", hint: "Masukkan soal, misalnya 2x + 5 = 15." });
   const parsed = parse(text);
   const warnings = parsed.warnings;
@@ -314,6 +351,27 @@ function route(input: string, options: SolveOptions): Solution {
     return solveSimplify(input, node, warnings);
   }
   return solveSimplify(input, node, warnings);
+}
+
+
+export type PreviewOutcome = { ok: true; latex: string; mode: Mode; variable?: string; warnings: string[] } | { ok: false; error: SerializedMathError };
+
+/** Parse only (no solving): LaTeX preview of how the input is understood. Never throws. */
+export function previewInput(input: string, options: SolveOptions = {}): PreviewOutcome {
+  try {
+    return withBudget({ timeMs: 500 }, () => {
+      const { text, mode, variable } = preprocess(input, options);
+      if (!text) throw invalidInput("Input kosong.", { module: "router" });
+      try {
+        const parsed = parse(text);
+        return { ok: true as const, latex: parsed.statements.map((s) => syntaxToLatex(s)).join(",\\quad "), mode, variable, warnings: parsed.warnings };
+      } catch (e) {
+        throw shiftSpan(e, input, text);
+      }
+    });
+  } catch (e) {
+    return { ok: false, error: toSerializedError(e, "parser") };
+  }
 }
 
 /** Solve a problem. Never throws: failures are returned as structured errors. */

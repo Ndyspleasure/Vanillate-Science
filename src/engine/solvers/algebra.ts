@@ -386,7 +386,7 @@ export function solveEvaluateAt(input: string, node: SNode, values: Record<strin
     kind: "simplify",
     title: "Nilai ekspresi",
     input,
-    inputLatex: `${inputLatex}\quad\text{untuk}\ ${subLatex}`,
+    inputLatex: `${inputLatex}\\quad\\text{untuk}\\ ${subLatex}`,
     answers: [exactAnswer(result, "Nilai")],
     method: { name: "Substitusi", description: "Ganti variabel dengan nilainya lalu hitung secara eksak." },
     steps,

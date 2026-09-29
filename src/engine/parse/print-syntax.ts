@@ -78,6 +78,11 @@ export function syntaxToLatex(n: SNode, divStyle: "frac" | "div" = "frac"): stri
       if (n.name === "log2") return `\\log_{2}\\left(${args[0]}\\right)`;
       if (n.name === "binomial") return `\\binom{${args[0]}}{${args[1]}}`;
       if (n.name === "factorial") return `${args[0]}!`;
+      if (n.name === "nPr" || n.name === "perm") return `{}^{${args[0]}}P_{${args[1]}}`;
+      if (n.name === "sum" && args.length === 4) {
+        const body = n.args[0].k === "bin" && (n.args[0].op === "+" || n.args[0].op === "-") ? `\\left(${args[0]}\\right)` : args[0];
+        return `\\sum_{${args[1]}=${args[2]}}^{${args[3] === "inf" ? "\\infty" : args[3]}} ${body}`;
+      }
       const cmd = LATEX_FN[n.name] ?? `\\operatorname{${n.name}}`;
       return `${cmd}\\left(${args.join(", ")}\\right)`;
     }
@@ -114,11 +119,13 @@ export function syntaxToLatex(n: SNode, divStyle: "frac" | "div" = "frac"): stri
     case "integral": {
       const v = n.variable || "x";
       const bounds = n.lower && n.upper ? `_{${rec(n.lower)}}^{${rec(n.upper)}}` : "";
-      return `\\int${bounds} ${rec(n.expr)} \\, d${v}`;
+      const body = n.expr.k === "bin" && (n.expr.op === "+" || n.expr.op === "-") ? `\\left(${rec(n.expr)}\\right)` : rec(n.expr);
+      return `\\int${bounds} ${body} \\, d${v}`;
     }
     case "limit": {
       const dir = n.direction ? `^{${n.direction}}` : "";
-      return `\\lim_{${symbolToLatex(n.variable)} \\to ${rec(n.to)}${dir}} ${rec(n.expr)}`;
+      const body = n.expr.k === "bin" && (n.expr.op === "+" || n.expr.op === "-") ? `\\left(${rec(n.expr)}\\right)` : rec(n.expr);
+      return `\\lim_{${symbolToLatex(n.variable)} \\to ${rec(n.to)}${dir}} ${body}`;
     }
   }
   return "";

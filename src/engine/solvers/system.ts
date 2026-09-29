@@ -172,10 +172,6 @@ export function solveLinearSystem(input: string, eqs: Array<{ L: Expr; R: Expr }
     const cr = cramer(A, b, vars);
     if (cr) alternatives.push(cr);
   }
-  const plot = vars.length === 2 && status !== "none"
-    ? undefined
-    : undefined;
-  void plot;
   return makeSolution({
     kind: "system",
     title: `Sistem persamaan linear (${eqs.length} persamaan, ${n} variabel)`,

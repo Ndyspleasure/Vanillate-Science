@@ -28,9 +28,14 @@ export const SPECIAL_FUNCTIONS = new Set(["sqrt", "cbrt", "root", "nthroot", "ex
 export const COMMANDS = new Set([
   "diff", "derivative", "turunan", "integrate", "integral", "int", "limit", "lim",
   "det", "inv", "inverse", "invers", "transpose", "rank", "rref", "trace", "eigen", "eigenvalues", "eigenvectors",
-  "dot", "cross", "norm", "solve", "simplify", "expand", "factor", "taylor", "series", "sum", "product",
-  "mean", "median", "mode", "variance", "stdev", "isprime", "primefactors", "divisors", "tobase", "partialfractions",
+  "dot", "cross", "norm", "solve", "simplify", "expand", "factor", "taylor", "series", "sum",
+  "mean", "median", "mode", "variance", "stdev", "isprime", "primefactors", "divisors", "extrema", "implicit", "modinv", "modpow",
 ]);
+
+/** Connector words for natural-language bounds: "integral from 0 to 1 of x^2", "lim x menuju 0". */
+export const CONNECTOR_WORDS = new Set(["from", "to", "of", "dari", "sampai", "hingga", "menuju", "mendekati"]);
+const UPPER_CONNECTORS = new Set(["to", "sampai", "hingga"]);
+const LIMIT_ARROWS = new Set(["to", "menuju", "mendekati"]);
 
 const GREEK_NAMES = [
   "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi",
@@ -42,7 +47,28 @@ const FUNCTION_WORDS = new Set([...Object.keys(KNOWN_FUNCTIONS), ...Object.keys(
 const CONSTANT_WORDS = new Set(["pi", "inf", "infinity"]);
 /** Words that may be recognised inside a longer word ("sinx" = sin x). */
 const GREEDY_WORDS = [...FUNCTION_WORDS, "pi", ...GREEK_NAMES.filter((g) => g.length >= 3)].sort((a, b) => b.length - a.length);
-const WHOLE_WORDS = new Set([...FUNCTION_WORDS, ...CONSTANT_WORDS, ...GREEK_NAMES, ...COMMANDS, "for", "untuk", "d"]);
+const WHOLE_WORDS = new Set([...FUNCTION_WORDS, ...CONSTANT_WORDS, ...GREEK_NAMES, ...COMMANDS, ...CONNECTOR_WORDS, "for", "untuk", "d"]);
+
+function editDistance(a: string, b: string): number {
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array<number>(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++) dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return dp[a.length][b.length];
+}
+
+function suggestName(word: string): string | null {
+  let best: string | null = null;
+  let bestD = 3;
+  for (const c of [...FUNCTION_WORDS, ...COMMANDS]) {
+    const d = editDistance(word.toLowerCase(), c.toLowerCase());
+    if (d < bestD) {
+      bestD = d;
+      best = c;
+    }
+  }
+  return best;
+}
 
 export function isFunctionName(name: string): boolean {
   return FUNCTION_WORDS.has(name);
@@ -75,6 +101,15 @@ function splitWords(tokens: Token[], warnings: string[]): Token[] {
       const m = /^[A-Za-z][0-9]*/.exec(w.slice(p))!;
       pieces.push(m[0]);
       p += m[0].length;
+    }
+    const next = tokens[idx + 1];
+    if (w.length >= 4 && pieces.length > 1 && !FUNCTION_WORDS.has(pieces[pieces.length - 1]) && next?.type === "lparen" && !next.spaceBefore) {
+      const guess = suggestName(w);
+      throw invalidInput(`Fungsi atau perintah '${w}' tidak dikenal.`, {
+        module: "parser",
+        span: { start: t.start, end: t.end },
+        hint: guess ? `Mungkin maksud Anda '${guess}(…)'?` : "Lihat daftar fungsi yang didukung di halaman Panduan.",
+      });
     }
     if (pieces.length === 1 && /^[A-Za-z][0-9]+$/.test(pieces[0])) {
       warnings.push(`'${w}' ditafsirkan sebagai variabel ${w[0]} dengan indeks ${w.slice(1)}. Gunakan ${w[0]}^${w.slice(1)} untuk pangkat.`);
@@ -147,6 +182,9 @@ class Parser {
         if (t.type === "rparen") this.fail("Kurung tutup ')' tidak memiliki pasangan '('.", t, `Posisi ${t.start + 1}.`);
         if (t.type === "rbracket") this.fail("Kurung siku ']' tidak memiliki pasangan '['.", t);
         if (t.type === "rbrace") this.fail("Kurung kurawal '}' tidak memiliki pasangan '{'.", t);
+        if (t.type === "ident" && CONNECTOR_WORDS.has(t.value)) {
+          this.fail(`Kata '${t.value}' hanya dapat dipakai untuk batas integral atau limit.`, t, undefined, "Contoh: integral from 0 to 1 of x^2, integral x^2 dari 0 sampai 1, lim x menuju 0 sin(x)/x");
+        }
         this.fail("Token tak terduga.", t, `'${t.value}' pada posisi ${t.start + 1} tidak dapat ditafsirkan di sini.`);
       }
       skipSeparators();
@@ -212,7 +250,7 @@ class Parser {
     if (t.type === "number" || t.type === "lparen" || t.type === "sqrt") return true;
     if (t.type === "bar") return this.absDepth === 0;
     if (t.type === "ident") {
-      if (t.value === "for" || t.value === "untuk") return false;
+      if (t.value === "for" || t.value === "untuk" || CONNECTOR_WORDS.has(t.value)) return false;
       if (this.integralStop > 0 && this.isDifferentialAt(this.pos)) return false;
       return true;
     }
@@ -226,7 +264,7 @@ class Parser {
     if (!t || t.type !== "ident" || t.value !== "d" || !v || v.type !== "ident") return false;
     if (!/^[A-Za-z]$|^[a-z]+$/.test(v.value) || isFunctionName(v.value)) return false;
     const after = this.tokens[pos + 2];
-    return !after || TERMINATORS.has(after.type) || (after.type === "op" && (after.value === "+" || after.value === "-"));
+    return !after || TERMINATORS.has(after.type) || (after.type === "op" && (after.value === "+" || after.value === "-")) || (after.type === "ident" && CONNECTOR_WORDS.has(after.value));
   }
 
   private parseMultiplicative(): SNode {
@@ -480,6 +518,16 @@ class Parser {
     const word = t.value;
     const start = t.start;
 
+    if (CONNECTOR_WORDS.has(word)) {
+      this.fail(`Kata '${word}' hanya dapat dipakai untuk batas integral atau limit.`, t, undefined, "Contoh: integral from 0 to 1 of x^2, integral x^2 dari 0 sampai 1, lim x menuju 0 sin(x)/x");
+    }
+
+    // School notation C(n, r) and P(n, r) with integer literals: combinations / permutations.
+    if ((word === "C" || word === "P") && this.isIntegerPairCall()) {
+      this.warnings.push(`${word}(…) ditafsirkan sebagai ${word === "C" ? "kombinasi (nCr)" : "permutasi (nPr)"}.`);
+      return this.parseFunction({ ...t, value: word === "C" ? "nCr" : "nPr" });
+    }
+
     // d/dx f  and  d^n/dx^n f
     if (word === "d" && (this.isOp(this.peek(), "/") || this.isOp(this.peek(), "^"))) {
       const save = this.pos;
@@ -526,6 +574,80 @@ class Parser {
     const sub = this.parseSubscript();
     if (sub !== null) name = `${name}_${sub}`;
     return { k: "sym", name, span: this.span(start) };
+  }
+
+  private isIntegerPairCall(): boolean {
+    const [a, b, c, d, e] = [0, 1, 2, 3, 4].map((k) => this.peek(k));
+    const int = (x: Token) => x.type === "number" && /^\d+$/.test(x.value);
+    return a.type === "lparen" && !a.spaceBefore && int(b) && c.type === "comma" && int(d) && e.type === "rparen";
+  }
+
+  private isWord(t: Token, words: Set<string>): boolean {
+    return t.type === "ident" && words.has(t.value);
+  }
+
+  /** True when an upper-bound connector ("to", "sampai") follows before the end of the statement. */
+  private hasUpperConnector(): boolean {
+    let depth = 0;
+    for (let p = this.pos + 1; p < this.tokens.length; p++) {
+      const t = this.tokens[p];
+      if (t.type === "lparen" || t.type === "lbracket" || t.type === "lbrace") depth++;
+      else if (t.type === "rparen" || t.type === "rbracket" || t.type === "rbrace") depth--;
+      else if (depth === 0 && (t.type === "comma" || t.type === "semicolon" || t.type === "newline" || t.type === "eof" || t.type === "rel")) return false;
+      else if (depth === 0 && this.isWord(t, UPPER_CONNECTORS)) return true;
+      if (depth < 0) return false;
+    }
+    return false;
+  }
+
+  /** "from a to b" / "dari a sampai b" → [a, b], or null when absent. */
+  private parseWordBounds(beforeIntegrand: boolean): [SNode, SNode] | null {
+    const w = this.peek();
+    if (!this.isWord(w, new Set(["from", "dari"])) || !this.hasUpperConnector()) return null;
+    const save = this.pos;
+    this.next();
+    const lower = this.parseAdditive();
+    const kw = this.peek();
+    if (!this.isWord(kw, UPPER_CONNECTORS)) {
+      if (beforeIntegrand) {
+        // "integral dari x^2 dari 0 sampai 1": the first "dari" means "of".
+        this.pos = save;
+        return null;
+      }
+      this.fail("Diharapkan 'to' atau 'sampai' setelah batas bawah.", kw, undefined, "Contoh: integral from 0 to 1 of x^2");
+    }
+    this.next();
+    let upper: SNode;
+    if (beforeIntegrand && !this.hasWordAhead(new Set(["of", "dari"]))) {
+      // No "of" separator: the upper bound is a single term ("dari 0 sampai 1 x^2").
+      const s0 = this.peek().start;
+      upper = this.parseUnaryTerm();
+      if (!TERMINATORS.has(this.peek().type)) this.warnings.push(`Batas atas dibaca sebagai '${this.source.slice(s0, upper.span.end)}'. Gunakan 'of'/'dari' atau tanda kurung untuk batas yang lebih rumit, misalnya integral from 0 to (pi/2) of sin(x).`);
+    } else upper = this.parseAdditive();
+    return [lower, upper];
+  }
+
+  private parseUnaryTerm(): SNode {
+    const t = this.peek();
+    if (this.isOp(t, "-")) {
+      this.next();
+      const arg = this.parsePower();
+      return { k: "neg", arg, span: this.span(t.start) };
+    }
+    return this.parsePower();
+  }
+
+  private hasWordAhead(words: Set<string>): boolean {
+    let depth = 0;
+    for (let p = this.pos; p < this.tokens.length; p++) {
+      const t = this.tokens[p];
+      if (t.type === "lparen" || t.type === "lbracket" || t.type === "lbrace") depth++;
+      else if (t.type === "rparen" || t.type === "rbracket" || t.type === "rbrace") depth--;
+      else if (depth === 0 && (t.type === "comma" || t.type === "semicolon" || t.type === "newline" || t.type === "eof" || t.type === "rel")) return false;
+      else if (depth === 0 && this.isWord(t, words)) return true;
+      if (depth < 0) return false;
+    }
+    return false;
   }
 
   private parenHasArrow(): boolean {
@@ -650,6 +772,11 @@ class Parser {
       upper = this.parseBound();
     }
     if ((lower && !upper) || (!lower && upper)) this.fail("Integral tentu membutuhkan batas bawah dan batas atas.", t, undefined, "Contoh: ∫_0^1 x^2 dx");
+    if (!lower) {
+      const wb = this.parseWordBounds(true);
+      if (wb) [lower, upper] = wb;
+    }
+    if (this.isWord(this.peek(), new Set(["of", "dari"]))) this.next();
     this.integralStop++;
     let variable = "";
     let expr: SNode;
@@ -673,6 +800,10 @@ class Parser {
       variable = this.next().value;
     } else {
       this.warnings.push("Diferensial (misalnya dx) tidak ditulis; variabel integrasi ditentukan otomatis.");
+    }
+    if (!lower) {
+      const wb = this.parseWordBounds(false);
+      if (wb) [lower, upper] = wb;
     }
     return { k: "integral", expr, variable, lower, upper, span: this.span(start) };
   }
@@ -740,9 +871,10 @@ class Parser {
       const v = this.next();
       if (v.type !== "ident") this.fail("Variabel limit tidak valid.", v, undefined, "Contoh: lim x->0 sin(x)/x");
       variable = v.value;
-      if (this.peek().type !== "arrow") this.fail("Diharapkan '->' pada notasi limit.", this.peek(), undefined, "Contoh: lim x->0 sin(x)/x");
+      if (this.peek().type !== "arrow" && !this.isWord(this.peek(), LIMIT_ARROWS)) this.fail("Diharapkan '->' pada notasi limit.", this.peek(), undefined, "Contoh: lim x->0 sin(x)/x");
       this.next();
       to = parseTarget();
+      if (this.isWord(this.peek(), new Set(["of", "dari"]))) this.next();
     }
     if (TERMINATORS.has(this.peek().type)) this.fail("Limit membutuhkan ekspresi.", this.peek(), undefined, "Contoh: lim x->0 sin(x)/x");
     const expr = this.parseAdditive();

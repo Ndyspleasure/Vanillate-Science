@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { solve } from "./router";
+import { previewInput, solve } from "./router";
 
 function ok(input: string) {
   const r = solve(input);
@@ -18,7 +18,7 @@ const GOLDEN: Array<[string, string, string]> = [
   ["sin(pi/6)", "arithmetic", "1/2"],
   ["12 : 4", "arithmetic", "3"],
   ["15% * 200", "arithmetic", "30"],
-  ["(1 + 2i)(3 - i)", "complex", "5*i + 5"],
+  ["(1 + 2i)(3 - i)", "complex", "5 + 5*i"],
   ["2x + 5 = 15", "equation", "5"],
   ["x^2 - 5x + 6 = 0", "equation", "2"],
   ["selesaikan 3x - 7 = 11", "equation", "6"],
@@ -93,5 +93,51 @@ describe("router error handling", () => {
     const s = ok("x^2 - 2 = 0");
     expect(() => structuredClone(s)).not.toThrow();
     expect(JSON.parse(JSON.stringify(s)).answers.length).toBe(s.answers.length);
+  });
+});
+
+describe("regressions (UI integration)", () => {
+  it("LaTeX strings contain real backslashes (no JS escape loss)", () => {
+    const r = solve("x^2 + 1, x = 3");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.solution.inputLatex).toContain("\\quad\\text{untuk}");
+      expect(r.solution.inputLatex).not.toMatch(/\t/);
+    }
+    const p = previewInput("x + y = 1; x - y = 3");
+    expect(p.ok && p.latex).toContain("\\quad");
+  });
+
+  it("natural-language bounds and school notation", () => {
+    const cases: Array<[string, string]> = [
+      ["integral from 0 to 1 of x^2", "1/3"],
+      ["integral x^2 dari 0 sampai 1", "1/3"],
+      ["integral dari 0 sampai 1 x^2 + 1", "4/3"],
+      ["integral x^2 dx from 0 to 2", "8/3"],
+      ["integrate x^2 from 0 to 3", "9"],
+      ["lim x menuju 0 sin(x)/x", "1"],
+      ["C(5, 2)", "10"],
+      ["nPr(5, 2)", "20"],
+      ["extrema(x^3 - 3x)", "(-1, 2)"],
+    ];
+    for (const [input, expected] of cases) {
+      const r = solve(input);
+      if (!r.ok) throw new Error(`${input}: ${r.error.message}`);
+      expect(r.solution.answers[0].text, input).toBe(expected);
+    }
+  });
+
+  it("unknown function names are rejected with a suggestion instead of being split", () => {
+    const r = solve("sine(x)");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.hint).toContain("sin");
+    const r2 = solve("x from 2");
+    expect(r2.ok).toBe(false);
+  });
+
+  it("error spans point into the raw input even after a command prefix", () => {
+    const r = solve("sederhanakan (x + 1");
+    expect(r.ok).toBe(false);
+    if (!r.ok && r.error.span) expect("sederhanakan (x + 1".slice(r.error.span.start, r.error.span.end)).toBe("(");
   });
 });

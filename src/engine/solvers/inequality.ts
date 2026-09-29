@@ -81,6 +81,18 @@ function setBuilderLatex(ivs: Interval[], x: string): string {
     .join(" \\ \\lor\\ ");
 }
 
+function setBuilderText(ivs: Interval[], x: string): string {
+  return ivs
+    .map((iv) => {
+      if (iv.lo && iv.hi && iv.lo.value === iv.hi.value) return `${x} = ${pointText(iv.lo)}`;
+      if (!iv.lo && !iv.hi) return `${x} ∈ ℝ`;
+      if (!iv.lo) return `${x} ${iv.hiClosed ? "≤" : "<"} ${pointText(iv.hi!)}`;
+      if (!iv.hi) return `${x} ${iv.loClosed ? "≥" : ">"} ${pointText(iv.lo)}`;
+      return `${pointText(iv.lo)} ${iv.loClosed ? "≤" : "<"} ${x} ${iv.hiClosed ? "≤" : "<"} ${pointText(iv.hi)}`;
+    })
+    .join(" atau ");
+}
+
 function satisfies(v: number, op: Ineq): boolean {
   switch (op) {
     case "<":
@@ -386,7 +398,7 @@ export function solveInequality(input: string, node: SNode, options: { variable?
   const answers: Answer[] = [
     { label: "Himpunan penyelesaian", latex: unionLatex(result), text: result.length ? result.map(intervalText).join(" ∪ ") : "∅", exact: result.every((iv) => (!iv.lo || iv.lo.expr) && (!iv.hi || iv.hi.expr)) },
   ];
-  if (result.length) answers.push({ label: "Notasi pembentuk himpunan", latex: setBuilderLatex(result, x), text: setBuilderLatex(result, x).replace(/\\le/g, "≤").replace(/\\ge/g, "≥").replace(/\\/g, ""), exact: true });
+  if (result.length) answers.push({ label: "Notasi pembentuk himpunan", latex: setBuilderLatex(result, x), text: setBuilderText(result, x), exact: true });
 
   // Verification: random points inside and outside solution intervals
   const checks: VerificationCheck[] = [];

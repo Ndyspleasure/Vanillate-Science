@@ -42,13 +42,13 @@ describe("quadratic equations", () => {
   });
   it("uses the quadratic formula for irrational roots", () => {
     const s = solve("x^2 - 2x - 1 = 0");
-    expect(s.answers.map((a) => a.text)).toEqual(["-sqrt(2) + 1", "sqrt(2) + 1"]);
+    expect(s.answers.map((a) => a.text)).toEqual(["1 - sqrt(2)", "sqrt(2) + 1"]);
     expect(s.verification.status).toBe("verified");
   });
   it("reports complex roots when D < 0", () => {
     const s = solve("x^2 + 2x + 5 = 0");
     expect(s.answers[0].text).toMatch(/tidak ada penyelesaian real/);
-    expect(s.answers.slice(1).map((a) => a.text)).toEqual(expect.arrayContaining(["-2*i - 1", "2*i - 1"]));
+    expect(s.answers.slice(1).map((a) => a.text)).toEqual(expect.arrayContaining(["-1 - 2*i", "-1 + 2*i"]));
     expect(s.verification.checks.every((c) => c.passed)).toBe(true);
   });
   it("handles double roots", () => {
