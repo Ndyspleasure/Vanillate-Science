@@ -14,7 +14,13 @@
  */
 import { tick } from "../core/budget";
 import { domainError, MathError } from "../core/errors";
-import { factorInteger, extractPower, perfectPower, factorial as bigFactorial, binomial as bigBinomial } from "../core/numtheory";
+import {
+  factorInteger,
+  extractPower,
+  perfectPower,
+  factorial as bigFactorial,
+  binomial as bigBinomial,
+} from "../core/numtheory";
 import { bigGcd, bigLcm, bitLength, Rational } from "../core/rational";
 import { evalReal } from "./evaluate";
 import {
@@ -39,7 +45,8 @@ import {
 export function num(v: Rational | number | bigint | string): Expr {
   if (v instanceof Rational) return rawNum(v);
   if (typeof v === "bigint") return rawNum(Rational.of(v));
-  if (typeof v === "number") return rawNum(Number.isInteger(v) ? Rational.of(v) : Rational.fromNumber(v));
+  if (typeof v === "number")
+    return rawNum(Number.isInteger(v) ? Rational.of(v) : Rational.fromNumber(v));
   const parsed = v.includes("/") ? parseFraction(v) : Rational.parseDecimal(v);
   if (!parsed) throw new Error(`Invalid numeric literal ${v}`);
   return rawNum(parsed);
@@ -136,7 +143,11 @@ export function mul(...factors: Expr[]): Expr {
 }
 
 function buildProduct(input: readonly Expr[], depth: number): Expr {
-  if (depth > 20) throw new MathError("internal", "Penyederhanaan perkalian tidak konvergen.", { module: "simplify", operation: "product" });
+  if (depth > 20)
+    throw new MathError("internal", "Penyederhanaan perkalian tidak konvergen.", {
+      module: "simplify",
+      operation: "product",
+    });
   let coef = Rational.ONE;
   const groups = new Map<string, { base: Expr; exps: Expr[]; original: Expr }>();
   const queue: Expr[] = [...input];
@@ -187,7 +198,7 @@ function buildProduct(input: readonly Expr[], depth: number): Expr {
   for (const [, rads] of byIndex) {
     if (rads.length < 2) continue;
     let prod = 1n;
-    for (const r of rads) prod *= ((r as { base: { value: Rational } }).base.value).num;
+    for (const r of rads) prod *= (r as { base: { value: Rational } }).base.value.num;
     const merged = pow(rawNum(Rational.of(prod)), (rads[0] as { exp: Expr }).exp);
     const rest = result.filter((f) => !rads.includes(f));
     return buildProduct([rawNum(coef), ...rest, merged], depth + 1);
@@ -231,7 +242,7 @@ function numericRadical(b: Rational, k: Rational): Expr {
   // |b|^(r/q) = (n^r d^(q-r))^(1/q) / d  (rationalized)
   const n = absB.num;
   const d = absB.den;
-  if ((bitLength(n) * r + bitLength(d) * (q - r)) > MAX_RADICAL_BITS) {
+  if (bitLength(n) * r + bitLength(d) * (q - r) > MAX_RADICAL_BITS) {
     const radical = rawPow(rawNum(absB), rawNum(fracPart));
     return finishRadical(coef, radical, extra);
   }
@@ -337,11 +348,23 @@ export function pow(base: Expr, exp: Expr): Expr {
   }
   if (base.type === "sym" && base.name === "e") {
     if (exp.type === "fn" && exp.name === "ln") return exp.args[0];
-    if (exp.type === "mul" && exp.factors.length === 2 && exp.factors[0].type === "num" && exp.factors[1].type === "fn" && exp.factors[1].name === "ln") {
+    if (
+      exp.type === "mul" &&
+      exp.factors.length === 2 &&
+      exp.factors[0].type === "num" &&
+      exp.factors[1].type === "fn" &&
+      exp.factors[1].name === "ln"
+    ) {
       return pow(exp.factors[1].args[0], exp.factors[0]);
     }
   }
-  if (base.type === "fn" && base.name === "abs" && exp.type === "num" && exp.value.isInteger() && exp.value.num % 2n === 0n) {
+  if (
+    base.type === "fn" &&
+    base.name === "abs" &&
+    exp.type === "num" &&
+    exp.value.isInteger() &&
+    exp.value.num % 2n === 0n
+  ) {
     return pow(base.args[0], exp);
   }
   return rawPow(base, exp);
@@ -355,7 +378,10 @@ export const neg = (a: Expr): Expr => mul(MINUS_ONE, a);
 export const sub = (a: Expr, b: Expr): Expr => add(a, neg(b));
 export const div = (a: Expr, b: Expr): Expr => {
   if (b.type === "num" && b.value.isZero()) {
-    throw new MathError("division-by-zero", "Pembagian dengan nol tidak terdefinisi.", { module: "simplify", operation: "divide" });
+    throw new MathError("division-by-zero", "Pembagian dengan nol tidak terdefinisi.", {
+      module: "simplify",
+      operation: "divide",
+    });
   }
   return mul(a, pow(b, MINUS_ONE));
 };
@@ -371,7 +397,13 @@ export const ln = (a: Expr): Expr => fn("ln", a);
 export function piMultiple(e: Expr): Rational | null {
   if (e.type === "num" && e.value.isZero()) return Rational.ZERO;
   if (e.type === "sym" && e.name === "pi") return Rational.ONE;
-  if (e.type === "mul" && e.factors.length === 2 && e.factors[0].type === "num" && e.factors[1].type === "sym" && e.factors[1].name === "pi") {
+  if (
+    e.type === "mul" &&
+    e.factors.length === 2 &&
+    e.factors[0].type === "num" &&
+    e.factors[1].type === "sym" &&
+    e.factors[1].name === "pi"
+  ) {
     return e.factors[0].value;
   }
   return null;
@@ -442,24 +474,66 @@ function inverseTables() {
   return invTrigTables;
 }
 
-const ODD_FUNCTIONS = new Set(["sin", "tan", "cot", "csc", "asin", "atan", "acot", "acsc", "sinh", "tanh", "coth", "csch", "asinh", "atanh"]);
+const ODD_FUNCTIONS = new Set([
+  "sin",
+  "tan",
+  "cot",
+  "csc",
+  "asin",
+  "atan",
+  "acot",
+  "acsc",
+  "sinh",
+  "tanh",
+  "coth",
+  "csch",
+  "asinh",
+  "atanh",
+]);
 const EVEN_FUNCTIONS = new Set(["cos", "sec", "cosh", "sech"]);
 
 export const KNOWN_FUNCTIONS: Record<string, { min: number; max: number }> = {
-  sin: { min: 1, max: 1 }, cos: { min: 1, max: 1 }, tan: { min: 1, max: 1 },
-  cot: { min: 1, max: 1 }, sec: { min: 1, max: 1 }, csc: { min: 1, max: 1 },
-  asin: { min: 1, max: 1 }, acos: { min: 1, max: 1 }, atan: { min: 1, max: 1 },
-  acot: { min: 1, max: 1 }, asec: { min: 1, max: 1 }, acsc: { min: 1, max: 1 },
-  sinh: { min: 1, max: 1 }, cosh: { min: 1, max: 1 }, tanh: { min: 1, max: 1 },
-  coth: { min: 1, max: 1 }, sech: { min: 1, max: 1 }, csch: { min: 1, max: 1 },
-  asinh: { min: 1, max: 1 }, acosh: { min: 1, max: 1 }, atanh: { min: 1, max: 1 },
-  ln: { min: 1, max: 1 }, log: { min: 1, max: 2 }, abs: { min: 1, max: 1 },
-  sign: { min: 1, max: 1 }, floor: { min: 1, max: 1 }, ceil: { min: 1, max: 1 },
-  round: { min: 1, max: 1 }, factorial: { min: 1, max: 1 }, gamma: { min: 1, max: 1 },
-  atan2: { min: 2, max: 2 }, mod: { min: 2, max: 2 }, min: { min: 1, max: 50 },
-  max: { min: 1, max: 50 }, gcd: { min: 2, max: 50 }, lcm: { min: 2, max: 50 },
-  binomial: { min: 2, max: 2 }, re: { min: 1, max: 1 }, im: { min: 1, max: 1 },
-  conj: { min: 1, max: 1 }, arg: { min: 1, max: 1 },
+  sin: { min: 1, max: 1 },
+  cos: { min: 1, max: 1 },
+  tan: { min: 1, max: 1 },
+  cot: { min: 1, max: 1 },
+  sec: { min: 1, max: 1 },
+  csc: { min: 1, max: 1 },
+  asin: { min: 1, max: 1 },
+  acos: { min: 1, max: 1 },
+  atan: { min: 1, max: 1 },
+  acot: { min: 1, max: 1 },
+  asec: { min: 1, max: 1 },
+  acsc: { min: 1, max: 1 },
+  sinh: { min: 1, max: 1 },
+  cosh: { min: 1, max: 1 },
+  tanh: { min: 1, max: 1 },
+  coth: { min: 1, max: 1 },
+  sech: { min: 1, max: 1 },
+  csch: { min: 1, max: 1 },
+  asinh: { min: 1, max: 1 },
+  acosh: { min: 1, max: 1 },
+  atanh: { min: 1, max: 1 },
+  ln: { min: 1, max: 1 },
+  log: { min: 1, max: 2 },
+  abs: { min: 1, max: 1 },
+  sign: { min: 1, max: 1 },
+  floor: { min: 1, max: 1 },
+  ceil: { min: 1, max: 1 },
+  round: { min: 1, max: 1 },
+  factorial: { min: 1, max: 1 },
+  gamma: { min: 1, max: 1 },
+  atan2: { min: 2, max: 2 },
+  mod: { min: 2, max: 2 },
+  min: { min: 1, max: 50 },
+  max: { min: 1, max: 50 },
+  gcd: { min: 2, max: 50 },
+  lcm: { min: 2, max: 50 },
+  binomial: { min: 2, max: 2 },
+  re: { min: 1, max: 1 },
+  im: { min: 1, max: 1 },
+  conj: { min: 1, max: 1 },
+  arg: { min: 1, max: 1 },
 };
 
 /** Safe numeric sign of a constant expression, or null when too close to zero to decide. */
@@ -502,10 +576,14 @@ export function fn(name: string, ...args: Expr[]): Expr {
   tick("simplify-function");
   const spec = KNOWN_FUNCTIONS[name];
   if (spec && (args.length < spec.min || args.length > spec.max)) {
-    throw new MathError("invalid-input", `Fungsi ${name} menerima ${spec.min === spec.max ? spec.min : `${spec.min}–${spec.max}`} argumen, tetapi diberikan ${args.length}.`, {
-      module: "simplify",
-      operation: "function",
-    });
+    throw new MathError(
+      "invalid-input",
+      `Fungsi ${name} menerima ${spec.min === spec.max ? spec.min : `${spec.min}–${spec.max}`} argumen, tetapi diberikan ${args.length}.`,
+      {
+        module: "simplify",
+        operation: "function",
+      },
+    );
   }
   const a = args[0];
 
@@ -553,7 +631,11 @@ export function fn(name: string, ...args: Expr[]): Expr {
       }
       // inverse compositions: sin(asin(x)) = x (valid on the domain of asin)
       if (a.type === "fn" && a.args.length === 1) {
-        if ((name === "sin" && a.name === "asin") || (name === "cos" && a.name === "acos") || (name === "tan" && a.name === "atan")) {
+        if (
+          (name === "sin" && a.name === "asin") ||
+          (name === "cos" && a.name === "acos") ||
+          (name === "tan" && a.name === "atan")
+        ) {
           return a.args[0];
         }
       }
@@ -604,7 +686,10 @@ export function fn(name: string, ...args: Expr[]): Expr {
     case "log": {
       const base = args[1] ?? rawNum(Rational.of(10));
       if (base.type === "num" && (!base.value.isPositive() || base.value.isOne())) {
-        throw domainError("Basis logaritma harus positif dan tidak sama dengan 1.", { module: "simplify", operation: "log" });
+        throw domainError("Basis logaritma harus positif dan tidak sama dengan 1.", {
+          module: "simplify",
+          operation: "log",
+        });
       }
       if (a.type === "num" && !a.value.isPositive()) {
         throw domainError(`log(${a.value.toString()}) tidak terdefinisi pada bilangan real.`, {
@@ -626,7 +711,13 @@ export function fn(name: string, ...args: Expr[]): Expr {
     case "abs": {
       if (a.type === "num") return rawNum(a.value.abs());
       if (a.type === "fn" && a.name === "abs") return a;
-      if (a.type === "pow" && a.exp.type === "num" && a.exp.value.isInteger() && a.exp.value.num % 2n === 0n) return a;
+      if (
+        a.type === "pow" &&
+        a.exp.type === "num" &&
+        a.exp.value.isInteger() &&
+        a.exp.value.num % 2n === 0n
+      )
+        return a;
       if (a.type === "mul" && a.factors[0].type === "num") {
         const rest = a.factors.length === 2 ? a.factors[1] : rawMul(a.factors.slice(1));
         return mul(rawNum(a.factors[0].value.abs()), fn("abs", rest));
@@ -645,15 +736,26 @@ export function fn(name: string, ...args: Expr[]): Expr {
     case "ceil":
     case "round": {
       if (a.type === "num") {
-        const v = name === "floor" ? a.value.floor() : name === "ceil" ? a.value.ceil() : a.value.round();
+        const v =
+          name === "floor" ? a.value.floor() : name === "ceil" ? a.value.ceil() : a.value.round();
         return rawNum(Rational.of(v));
       }
       if (isConstantExpr(a)) {
         const v = evalReal(a);
         if (Number.isFinite(v)) {
-          const target = name === "floor" ? Math.floor(v) : name === "ceil" ? Math.ceil(v) : Math.sign(v) * Math.round(Math.abs(v));
-          const distance = Math.min(Math.abs(v - Math.floor(v)), Math.abs(Math.ceil(v) - v), Math.abs(Math.abs(v) - Math.floor(Math.abs(v)) - 0.5));
-          if (distance > 1e-9 * Math.max(1, Math.abs(v)) && Math.abs(v) < 1e15) return rawNum(Rational.of(target));
+          const target =
+            name === "floor"
+              ? Math.floor(v)
+              : name === "ceil"
+                ? Math.ceil(v)
+                : Math.sign(v) * Math.round(Math.abs(v));
+          const distance = Math.min(
+            Math.abs(v - Math.floor(v)),
+            Math.abs(Math.ceil(v) - v),
+            Math.abs(Math.abs(v) - Math.floor(Math.abs(v)) - 0.5),
+          );
+          if (distance > 1e-9 * Math.max(1, Math.abs(v)) && Math.abs(v) < 1e15)
+            return rawNum(Rational.of(target));
         }
       }
       break;
@@ -690,7 +792,11 @@ export function fn(name: string, ...args: Expr[]): Expr {
     case "mod": {
       const b = args[1];
       if (a.type === "num" && b.type === "num") {
-        if (b.value.isZero()) throw new MathError("division-by-zero", "mod dengan pembagi 0 tidak terdefinisi.", { module: "simplify", operation: "mod" });
+        if (b.value.isZero())
+          throw new MathError("division-by-zero", "mod dengan pembagi 0 tidak terdefinisi.", {
+            module: "simplify",
+            operation: "mod",
+          });
         const q = a.value.div(b.value).floor();
         return rawNum(a.value.sub(b.value.mul(Rational.of(q))));
       }

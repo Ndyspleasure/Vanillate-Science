@@ -51,12 +51,21 @@ export function isSymbolicallyZero(e: Expr): boolean {
   }
 }
 
-export function checkEquivalent(a: Expr, b: Expr, options: EquivalenceOptions = {}): EquivalenceResult {
+export function checkEquivalent(
+  a: Expr,
+  b: Expr,
+  options: EquivalenceOptions = {},
+): EquivalenceResult {
   let diff: Expr | null = null;
   try {
     diff = sub(a, b);
     if (isSymbolicallyZero(diff)) {
-      return { equivalent: true, method: "symbolic", detail: "Selisih kedua ekspresi disederhanakan menjadi 0.", samples: 0 };
+      return {
+        equivalent: true,
+        method: "symbolic",
+        detail: "Selisih kedua ekspresi disederhanakan menjadi 0.",
+        samples: 0,
+      };
     }
   } catch {
     diff = null;
@@ -64,11 +73,20 @@ export function checkEquivalent(a: Expr, b: Expr, options: EquivalenceOptions = 
   return numericEquivalence(a, b, options);
 }
 
-export function numericEquivalence(a: Expr, b: Expr, options: EquivalenceOptions = {}): EquivalenceResult {
+export function numericEquivalence(
+  a: Expr,
+  b: Expr,
+  options: EquivalenceOptions = {},
+): EquivalenceResult {
   const tol = options.tolerance ?? 1e-8;
   const vars = options.variables ?? [...new Set([...freeSymbols(a), ...freeSymbols(b)])].sort();
   const rand = seededRandom(options.seed ?? 20240607);
-  const ranges: Array<[number, number]> = options.positiveOnly ? [[0.1, 3]] : [[-3, 3], [0.1, 3]];
+  const ranges: Array<[number, number]> = options.positiveOnly
+    ? [[0.1, 3]]
+    : [
+        [-3, 3],
+        [0.1, 3],
+      ];
   let valid = 0;
   let attempts = 0;
   for (const [lo, hi] of ranges) {
@@ -96,7 +114,12 @@ export function numericEquivalence(a: Expr, b: Expr, options: EquivalenceOptions
     if (valid >= 12) break;
   }
   if (vars.length === 0 && valid > 0) {
-    return { equivalent: true, method: "numeric", detail: "Nilai numerik kedua konstanta sama (toleransi relatif 1e-8).", samples: valid };
+    return {
+      equivalent: true,
+      method: "numeric",
+      detail: "Nilai numerik kedua konstanta sama (toleransi relatif 1e-8).",
+      samples: valid,
+    };
   }
   if (valid >= 6) {
     return {

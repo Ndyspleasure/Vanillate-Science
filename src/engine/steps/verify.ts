@@ -12,7 +12,12 @@ import type { VerificationCheck } from "./types";
  * Compare the final expression with an independent floating-point evaluation of the user's
  * original syntax tree at deterministic random points.
  */
-export function verifyAgainstInput(node: SNode, result: Expr, vars: string[], description = "Bandingkan hasil dengan soal asli pada titik-titik uji"): VerificationCheck {
+export function verifyAgainstInput(
+  node: SNode,
+  result: Expr,
+  vars: string[],
+  description = "Bandingkan hasil dengan soal asli pada titik-titik uji",
+): VerificationCheck {
   const rand = seededRandom(7919);
   let valid = 0;
   let mismatch: string | null = null;
@@ -31,10 +36,25 @@ export function verifyAgainstInput(node: SNode, result: Expr, vars: string[], de
     }
   }
   if (mismatch) {
-    return { description, passed: false, method: "Evaluasi numerik independen", detail: `Nilai berbeda pada ${mismatch}.` };
+    return {
+      description,
+      passed: false,
+      method: "Evaluasi numerik independen",
+      detail: `Nilai berbeda pada ${mismatch}.`,
+    };
   }
   if (valid < 4) {
-    return { description, passed: false, method: "Evaluasi numerik independen", detail: "Tidak cukup titik uji yang valid pada domain ekspresi." };
+    return {
+      description,
+      passed: false,
+      method: "Evaluasi numerik independen",
+      detail: "Tidak cukup titik uji yang valid pada domain ekspresi.",
+    };
   }
-  return { description, passed: true, method: "Evaluasi numerik independen", detail: `Cocok pada ${valid} titik uji (toleransi relatif 1e-8).` };
+  return {
+    description,
+    passed: true,
+    method: "Evaluasi numerik independen",
+    detail: `Cocok pada ${valid} titik uji (toleransi relatif 1e-8).`,
+  };
 }

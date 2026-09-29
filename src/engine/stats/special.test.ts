@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { betaI, chiSquareCdf, chiSquareInv, erf, erfc, fCdf, fInv, gammaP, lnGamma, normalCdf, normalInv, tCdf, tInv } from "./special";
+import {
+  betaI,
+  chiSquareCdf,
+  chiSquareInv,
+  erf,
+  erfc,
+  fCdf,
+  fInv,
+  gammaP,
+  lnGamma,
+  normalCdf,
+  normalInv,
+  tCdf,
+  tInv,
+} from "./special";
 
 // Reference values: standard tables / high-precision computations (Wolfram|Alpha, R).
 describe("special functions", () => {

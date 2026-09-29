@@ -7,7 +7,14 @@
  *   starts a fresh worker.
  * - When Web Workers are unavailable, the engine is loaded on the main thread instead.
  */
-import type { EngineRequest, EngineResponse, PreviewOutcome, SampleOutcome, SolveOutcome, WorkOutcome } from "@/engine/api";
+import type {
+  EngineRequest,
+  EngineResponse,
+  PreviewOutcome,
+  SampleOutcome,
+  SolveOutcome,
+  WorkOutcome,
+} from "@/engine/api";
 import type { SerializedMathError } from "@/engine/core/errors";
 
 interface Pending {
@@ -20,7 +27,12 @@ let workerBroken = false;
 let nextId = 1;
 const pending = new Map<number, Pending>();
 
-function engineError(kind: SerializedMathError["kind"], title: string, message: string, hint?: string): SerializedMathError {
+function engineError(
+  kind: SerializedMathError["kind"],
+  title: string,
+  message: string,
+  hint?: string,
+): SerializedMathError {
   return { kind, title, message, hint, module: "client", timestamp: new Date().toISOString() };
 }
 
@@ -36,7 +48,9 @@ function getWorker(): Worker | null {
   if (workerBroken || typeof window === "undefined" || typeof Worker === "undefined") return null;
   if (worker) return worker;
   try {
-    worker = new Worker(new URL("../workers/engine.worker.ts", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("../workers/engine.worker.ts", import.meta.url), {
+      type: "module",
+    });
   } catch {
     workerBroken = true;
     return null;
@@ -51,7 +65,14 @@ function getWorker(): Worker | null {
   worker.onerror = () => {
     worker?.terminate();
     worker = null;
-    failAll(engineError("internal", "Kesalahan internal solver", "Mesin perhitungan berhenti secara tidak terduga.", "Coba lagi. Jika masalah berlanjut, muat ulang halaman."));
+    failAll(
+      engineError(
+        "internal",
+        "Kesalahan internal solver",
+        "Mesin perhitungan berhenti secara tidak terduga.",
+        "Coba lagi. Jika masalah berlanjut, muat ulang halaman.",
+      ),
+    );
   };
   return worker;
 }
@@ -64,11 +85,26 @@ export function cancelEngine() {
   failAll(engineError("timeout", "Dibatalkan", "Perhitungan dibatalkan."));
 }
 
-export function runEngine(req: Extract<EngineRequest, { type: "check-work" }>, options?: { timeoutMs?: number }): Promise<WorkOutcome>;
-export function runEngine(req: Extract<EngineRequest, { type: "sample" }>, options?: { timeoutMs?: number }): Promise<SampleOutcome>;
-export function runEngine(req: Extract<EngineRequest, { type: "preview" }>, options?: { timeoutMs?: number }): Promise<PreviewOutcome>;
-export function runEngine(req: EngineRequest, options?: { timeoutMs?: number }): Promise<SolveOutcome>;
-export async function runEngine(req: EngineRequest, options: { timeoutMs?: number } = {}): Promise<EngineResponse> {
+export function runEngine(
+  req: Extract<EngineRequest, { type: "check-work" }>,
+  options?: { timeoutMs?: number },
+): Promise<WorkOutcome>;
+export function runEngine(
+  req: Extract<EngineRequest, { type: "sample" }>,
+  options?: { timeoutMs?: number },
+): Promise<SampleOutcome>;
+export function runEngine(
+  req: Extract<EngineRequest, { type: "preview" }>,
+  options?: { timeoutMs?: number },
+): Promise<PreviewOutcome>;
+export function runEngine(
+  req: EngineRequest,
+  options?: { timeoutMs?: number },
+): Promise<SolveOutcome>;
+export async function runEngine(
+  req: EngineRequest,
+  options: { timeoutMs?: number } = {},
+): Promise<EngineResponse> {
   const timeoutMs = options.timeoutMs ?? 15000;
   const w = getWorker();
   if (!w) {
@@ -83,7 +119,12 @@ export async function runEngine(req: EngineRequest, options: { timeoutMs?: numbe
       cancelEngine();
       resolve({
         ok: false,
-        error: engineError("timeout", "Waktu komputasi habis", `Perhitungan melebihi batas ${Math.round(timeoutMs / 1000)} detik dan dihentikan.`, "Sederhanakan soal, kecilkan angka/derajat, atau pecah soal menjadi beberapa bagian."),
+        error: engineError(
+          "timeout",
+          "Waktu komputasi habis",
+          `Perhitungan melebihi batas ${Math.round(timeoutMs / 1000)} detik dan dihentikan.`,
+          "Sederhanakan soal, kecilkan angka/derajat, atau pecah soal menjadi beberapa bagian.",
+        ),
         input: "",
       } as EngineResponse);
     }, timeoutMs);

@@ -48,7 +48,8 @@ export function numberLatex(s: string): string {
 export function formatComplex(re: number, im: number, digits = DEFAULT_DIGITS): string {
   if (Math.abs(im) < 1e-14 * Math.max(1, Math.abs(re))) return formatNumber(re, digits);
   const imPart = (v: number) => (Math.abs(v - 1) < 1e-15 ? "i" : `${formatNumber(v, digits)}i`);
-  if (Math.abs(re) < 1e-14 * Math.max(1, Math.abs(im))) return im < 0 ? `-${imPart(-im)}` : imPart(im);
+  if (Math.abs(re) < 1e-14 * Math.max(1, Math.abs(im)))
+    return im < 0 ? `-${imPart(-im)}` : imPart(im);
   return `${formatNumber(re, digits)} ${im < 0 ? "-" : "+"} ${imPart(Math.abs(im))}`;
 }
 
@@ -58,13 +59,18 @@ function isPlainDecimal(e: Expr): boolean {
 }
 
 /** Build an Answer from an exact expression, adding a decimal approximation when useful. */
-export function exactAnswer(e: Expr, label?: string, options: PrintOptions & { digits?: number } = {}): Answer {
+export function exactAnswer(
+  e: Expr,
+  label?: string,
+  options: PrintOptions & { digits?: number } = {},
+): Answer {
   const latex = toLatex(e, options);
   const text = toText(e, options);
   let approx: string | undefined;
   if (freeSymbols(e).size === 0 && !isPlainDecimal(e)) {
     const v = evalComplex(e);
-    if (Number.isFinite(v.re) && Number.isFinite(v.im)) approx = formatComplex(v.re, v.im, options.digits ?? DEFAULT_DIGITS);
+    if (Number.isFinite(v.re) && Number.isFinite(v.im))
+      approx = formatComplex(v.re, v.im, options.digits ?? DEFAULT_DIGITS);
   } else if (e.type === "num" && !e.value.isInteger()) {
     approx = e.value.toFixedString(12);
   }
@@ -72,7 +78,12 @@ export function exactAnswer(e: Expr, label?: string, options: PrintOptions & { d
   return { label, latex, text, approx, exact: true };
 }
 
-export function approxAnswer(value: number, label?: string, digits = DEFAULT_DIGITS, unit?: string): Answer {
+export function approxAnswer(
+  value: number,
+  label?: string,
+  digits = DEFAULT_DIGITS,
+  unit?: string,
+): Answer {
   const s = formatNumber(value, digits);
   return { label, latex: numberLatex(s), text: s, exact: false, unit };
 }
@@ -83,14 +94,26 @@ export function rationalLatex(r: Rational): string {
   return `${r.isNegative() ? "-" : ""}\\frac{${n}}{${r.den}}`;
 }
 
-export function aggregateVerification(checks: VerificationCheck[], emptySummary = "Tidak ada verifikasi otomatis untuk soal ini."): Verification {
+export function aggregateVerification(
+  checks: VerificationCheck[],
+  emptySummary = "Tidak ada verifikasi otomatis untuk soal ini.",
+): Verification {
   if (checks.length === 0) return { status: "unverified", summary: emptySummary, checks };
   const failed = checks.filter((c) => !c.passed);
   if (failed.length === checks.length) {
-    return { status: "failed", summary: "Verifikasi gagal: hasil tidak dapat dikonfirmasi. Jangan gunakan hasil ini sebagai jawaban final.", checks };
+    return {
+      status: "failed",
+      summary:
+        "Verifikasi gagal: hasil tidak dapat dikonfirmasi. Jangan gunakan hasil ini sebagai jawaban final.",
+      checks,
+    };
   }
   if (failed.length > 0) {
-    return { status: "partial", summary: `${checks.length - failed.length} dari ${checks.length} pemeriksaan lulus.`, checks };
+    return {
+      status: "partial",
+      summary: `${checks.length - failed.length} dari ${checks.length} pemeriksaan lulus.`,
+      checks,
+    };
   }
   const numericOnly = checks.every((c) => /numerik|numeric/i.test(c.method));
   const status: VerificationStatus = numericOnly ? "verified-numeric" : "verified";

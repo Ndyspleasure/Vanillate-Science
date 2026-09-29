@@ -48,7 +48,9 @@ describe("quadratic equations", () => {
   it("reports complex roots when D < 0", () => {
     const s = solve("x^2 + 2x + 5 = 0");
     expect(s.answers[0].text).toMatch(/tidak ada penyelesaian real/);
-    expect(s.answers.slice(1).map((a) => a.text)).toEqual(expect.arrayContaining(["-1 - 2*i", "-1 + 2*i"]));
+    expect(s.answers.slice(1).map((a) => a.text)).toEqual(
+      expect.arrayContaining(["-1 - 2*i", "-1 + 2*i"]),
+    );
     expect(s.verification.checks.every((c) => c.passed)).toBe(true);
   });
   it("handles double roots", () => {
@@ -174,13 +176,23 @@ describe("algebra", () => {
     expect(s.assumptions.join(" ")).toMatch(/x \\ne 1/);
   });
   it("expands and factors", () => {
-    expect(solveExpand("(x+2)(x+3)", parse("(x+2)(x+3)").statements[0]).answers[0].text).toBe("x^2 + 5*x + 6");
+    expect(solveExpand("(x+2)(x+3)", parse("(x+2)(x+3)").statements[0]).answers[0].text).toBe(
+      "x^2 + 5*x + 6",
+    );
     const f = solveFactor("x^2 + 5x + 6", parse("x^2 + 5x + 6").statements[0]);
     expect(f.answers[0].text).toBe("(x + 2)*(x + 3)");
     expect(f.verification.status).toBe("verified");
-    expect(solveFactor("6x^2 + x - 2", parse("6x^2 + x - 2").statements[0]).answers[0].text).toBe("(2*x - 1)*(3*x + 2)");
-    expect(solveFactor("x^3 - 8", parse("x^3 - 8").statements[0]).answers[0].text).toBe("(x - 2)*(x^2 + 2*x + 4)");
-    expect(solveFactor("2x^3 - 8x", parse("2x^3 - 8x").statements[0]).answers[0].text).toBe("2*x*(x - 2)*(x + 2)");
-    expect(solveFactor("x^2 - y^2", parse("x^2 - y^2").statements[0]).answers[0].text).toBe("(x - y)*(x + y)");
+    expect(solveFactor("6x^2 + x - 2", parse("6x^2 + x - 2").statements[0]).answers[0].text).toBe(
+      "(2*x - 1)*(3*x + 2)",
+    );
+    expect(solveFactor("x^3 - 8", parse("x^3 - 8").statements[0]).answers[0].text).toBe(
+      "(x - 2)*(x^2 + 2*x + 4)",
+    );
+    expect(solveFactor("2x^3 - 8x", parse("2x^3 - 8x").statements[0]).answers[0].text).toBe(
+      "2*x*(x - 2)*(x + 2)",
+    );
+    expect(solveFactor("x^2 - y^2", parse("x^2 - y^2").statements[0]).answers[0].text).toBe(
+      "(x - y)*(x + y)",
+    );
   });
 });

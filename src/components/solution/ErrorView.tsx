@@ -13,7 +13,9 @@ export function ErrorView({ error, input }: { error: SerializedMathError; input?
           {span && input && (
             <p className="overflow-x-auto rounded-md bg-surface px-3 py-2 font-mono text-sm">
               <span>{input.slice(0, span.start)}</span>
-              <mark className="rounded bg-bad/20 px-0.5 text-bad underline decoration-wavy">{input.slice(span.start, Math.max(span.end, span.start + 1)) || " "}</mark>
+              <mark className="rounded bg-bad/20 px-0.5 text-bad underline decoration-wavy">
+                {input.slice(span.start, Math.max(span.end, span.start + 1)) || " "}
+              </mark>
               <span>{input.slice(Math.max(span.end, span.start + 1))}</span>
             </p>
           )}

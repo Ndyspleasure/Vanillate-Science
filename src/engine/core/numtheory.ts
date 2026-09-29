@@ -117,7 +117,10 @@ function pollardBrent(n: bigint): bigint {
  */
 export function factorInteger(n: bigint): Array<[bigint, number]> {
   n = bigAbs(n);
-  if (n === 0n) throw new MathError("domain-error", "0 tidak memiliki faktorisasi prima.", { module: "numtheory" });
+  if (n === 0n)
+    throw new MathError("domain-error", "0 tidak memiliki faktorisasi prima.", {
+      module: "numtheory",
+    });
   const result = new Map<bigint, number>();
   const add = (p: bigint, k = 1) => result.set(p, (result.get(p) ?? 0) + k);
   for (const p of SMALL_PRIMES) {
@@ -223,8 +226,18 @@ export function extendedGcd(a: bigint, b: bigint): { g: bigint; x: bigint; y: bi
 }
 
 export function factorial(n: number): bigint {
-  if (!Number.isInteger(n) || n < 0) throw new MathError("domain-error", "Faktorial hanya terdefinisi untuk bilangan bulat tak negatif.", { module: "numtheory", operation: "factorial" });
-  if (n > 5000) throw new MathError("limit-exceeded", "Faktorial terlalu besar untuk dihitung secara eksak (maks 5000!).", { module: "numtheory", operation: "factorial" });
+  if (!Number.isInteger(n) || n < 0)
+    throw new MathError(
+      "domain-error",
+      "Faktorial hanya terdefinisi untuk bilangan bulat tak negatif.",
+      { module: "numtheory", operation: "factorial" },
+    );
+  if (n > 5000)
+    throw new MathError(
+      "limit-exceeded",
+      "Faktorial terlalu besar untuk dihitung secara eksak (maks 5000!).",
+      { module: "numtheory", operation: "factorial" },
+    );
   let r = 1n;
   for (let i = 2; i <= n; i++) r *= BigInt(i);
   return r;
@@ -233,7 +246,10 @@ export function factorial(n: number): bigint {
 export function binomial(n: bigint, k: bigint): bigint {
   if (k < 0n || n < 0n || k > n) return 0n;
   if (k > n - k) k = n - k;
-  if (k > 100000n) throw new MathError("limit-exceeded", "Koefisien binomial terlalu besar.", { module: "numtheory" });
+  if (k > 100000n)
+    throw new MathError("limit-exceeded", "Koefisien binomial terlalu besar.", {
+      module: "numtheory",
+    });
   let r = 1n;
   for (let i = 1n; i <= k; i++) {
     r = (r * (n - k + i)) / i;
@@ -253,7 +269,8 @@ export function divisors(n: bigint): bigint[] {
       pk *= p;
     }
     divs = next;
-    if (divs.length > 100000) throw new MathError("limit-exceeded", "Terlalu banyak pembagi.", { module: "numtheory" });
+    if (divs.length > 100000)
+      throw new MathError("limit-exceeded", "Terlalu banyak pembagi.", { module: "numtheory" });
   }
   return divs.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }

@@ -82,15 +82,20 @@ function solutionSet(nodes: SNode[], x: string): SolutionSet {
     for (const r of att.roots) {
       if (r.periodic) periodic = true;
       const v = rootValue(r);
-      if (v !== null && !values.some((w) => Math.abs(w - v) <= 1e-9 * Math.max(1, Math.abs(v)))) values.push(v);
+      if (v !== null && !values.some((w) => Math.abs(w - v) <= 1e-9 * Math.max(1, Math.abs(v))))
+        values.push(v);
     }
   }
   return { all, values: values.sort((a, b) => a - b), periodic };
 }
 
-function compareSets(ref: SolutionSet, got: SolutionSet): { same: boolean; missing: number[]; extra: number[] } {
+function compareSets(
+  ref: SolutionSet,
+  got: SolutionSet,
+): { same: boolean; missing: number[]; extra: number[] } {
   if (ref.all || got.all) return { same: ref.all === got.all, missing: [], extra: [] };
-  const has = (arr: number[], v: number) => arr.some((w) => Math.abs(w - v) <= 1e-7 * Math.max(1, Math.abs(v)));
+  const has = (arr: number[], v: number) =>
+    arr.some((w) => Math.abs(w - v) <= 1e-7 * Math.max(1, Math.abs(v)));
   const missing = ref.values.filter((v) => !has(got.values, v));
   const extra = got.values.filter((v) => !has(ref.values, v));
   return { same: missing.length === 0 && extra.length === 0, missing, extra };
@@ -129,40 +134,101 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
         const e = n.k === "rel" ? toExpr(n.operands[1]) : toExpr(n);
         const eq = checkEquivalent(e, ref);
         reprs[result.length] = e;
-        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Setara dengan turunan yang benar." : "Tidak sama dengan turunan yang benar.", detail: eq.detail, formula: eq.equivalent ? undefined : `\\text{Turunan yang benar: } ${toLatex(ref)}` });
+        result.push({
+          index: i,
+          input: line,
+          latex: syntaxToLatex(n),
+          status: eq.equivalent ? "ok" : "error",
+          message: eq.equivalent
+            ? "Setara dengan turunan yang benar."
+            : "Tidak sama dengan turunan yang benar.",
+          detail: eq.detail,
+          formula: eq.equivalent ? undefined : `\\text{Turunan yang benar: } ${toLatex(ref)}`,
+        });
       } catch (e) {
-        result.push({ index: i, input: line, status: "unparseable", message: "Baris tidak dapat dibaca.", detail: isMathError(e) ? e.message : String(e) });
+        result.push({
+          index: i,
+          input: line,
+          status: "unparseable",
+          message: "Baris tidak dapat dibaca.",
+          detail: isMathError(e) ? e.message : String(e),
+        });
       }
     });
   } else if (first.k === "integral" && !first.lower) {
     mode = "integral";
     const f = toExpr(first.expr);
     const x = first.variable || chooseVariable(freeSymbols(f));
-    same = (a, b) => checkEquivalent(differentiate(a as Expr, x).value, differentiate(b as Expr, x).value).equivalent;
+    same = (a, b) =>
+      checkEquivalent(differentiate(a as Expr, x).value, differentiate(b as Expr, x).value)
+        .equivalent;
     lines.forEach((line, i) => {
       try {
         const n = parse(line.replace(/\+\s*C\s*$/i, "").replace(/\+\s*c\s*$/, "")).statements[0];
         if (n.k === "integral") {
           if (n.variable && n.variable !== x) {
-            result.push({ index: i, input: line, latex: syntaxToLatex(n), status: "unchecked", message: `Integral dalam variabel ${n.variable} (langkah substitusi).`, detail: "Langkah substitusi tidak dapat dibandingkan langsung; periksa hasil akhirnya dalam variabel semula." });
+            result.push({
+              index: i,
+              input: line,
+              latex: syntaxToLatex(n),
+              status: "unchecked",
+              message: `Integral dalam variabel ${n.variable} (langkah substitusi).`,
+              detail:
+                "Langkah substitusi tidak dapat dibandingkan langsung; periksa hasil akhirnya dalam variabel semula.",
+            });
             return;
           }
           const eq = checkEquivalent(toExpr(n.expr), f);
-          result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Integran ditulis ulang secara setara." : "Integran berubah nilainya.", detail: eq.detail });
+          result.push({
+            index: i,
+            input: line,
+            latex: syntaxToLatex(n),
+            status: eq.equivalent ? "ok" : "error",
+            message: eq.equivalent
+              ? "Integran ditulis ulang secara setara."
+              : "Integran berubah nilainya.",
+            detail: eq.detail,
+          });
           return;
         }
         const F = n.k === "rel" ? toExpr(n.operands[1]) : toExpr(n);
         const dF = differentiate(F, x).value;
         const eq = checkEquivalent(dF, f);
         reprs[result.length] = F;
-        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : "error", message: eq.equivalent ? "Turunan baris ini sama dengan integran: antiturunan benar." : "Turunan baris ini tidak sama dengan integran.", detail: eq.detail, formula: eq.equivalent ? undefined : `\\frac{d}{d${x}}\\left(\\text{baris ini}\\right) = ${toLatex(dF)} \\neq ${toLatex(f)}` });
+        result.push({
+          index: i,
+          input: line,
+          latex: syntaxToLatex(n),
+          status: eq.equivalent ? "ok" : "error",
+          message: eq.equivalent
+            ? "Turunan baris ini sama dengan integran: antiturunan benar."
+            : "Turunan baris ini tidak sama dengan integran.",
+          detail: eq.detail,
+          formula: eq.equivalent
+            ? undefined
+            : `\\frac{d}{d${x}}\\left(\\text{baris ini}\\right) = ${toLatex(dF)} \\neq ${toLatex(f)}`,
+        });
       } catch (e) {
-        result.push({ index: i, input: line, status: "unparseable", message: "Baris tidak dapat dibaca.", detail: isMathError(e) ? e.message : String(e) });
+        result.push({
+          index: i,
+          input: line,
+          status: "unparseable",
+          message: "Baris tidak dapat dibaca.",
+          detail: isMathError(e) ? e.message : String(e),
+        });
       }
     });
-  } else if (first.k === "rel" && p.statements.length === 1 && first.ops.length === 1 && first.ops[0] === "=") {
+  } else if (
+    first.k === "rel" &&
+    p.statements.length === 1 &&
+    first.ops.length === 1 &&
+    first.ops[0] === "="
+  ) {
     mode = "equation";
-    const vars = new Set([...freeSymbols(toExpr(first.operands[0])), ...freeSymbols(toExpr(first.operands[1]))]);
+    const vars = new Set([
+      ...freeSymbols(toExpr(first.operands[0])),
+      ...freeSymbols(toExpr(first.operands[1])),
+    ]);
     const x = chooseVariable(vars);
     const ref = solutionSet([first], x);
     same = (a, b) => compareSets(a as SolutionSet, b as SolutionSet).same;
@@ -174,21 +240,61 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
         reprs[result.length] = got;
         const latex = statements.map((s) => syntaxToLatex(s)).join(" \\lor ");
         if (cmp.same) {
-          result.push({ index: i, input: line, latex, status: "ok", message: "Himpunan penyelesaian tetap sama.", detail: ref.periodic ? "Solusi periodik dibandingkan pada nilai-nilai utama." : `HP = {${ref.values.map((v) => formatNumber(v, 8)).join(", ")}}` });
+          result.push({
+            index: i,
+            input: line,
+            latex,
+            status: "ok",
+            message: "Himpunan penyelesaian tetap sama.",
+            detail: ref.periodic
+              ? "Solusi periodik dibandingkan pada nilai-nilai utama."
+              : `HP = {${ref.values.map((v) => formatNumber(v, 8)).join(", ")}}`,
+          });
         } else {
           const parts: string[] = [];
-          const fmtSet = (vals: number[]) => (vals.length ? vals.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ") : "tidak ada solusi");
+          const fmtSet = (vals: number[]) =>
+            vals.length
+              ? vals.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")
+              : "tidak ada solusi";
           if (cmp.missing.length && cmp.extra.length) {
-            parts.push(`mengubah penyelesaian: seharusnya ${fmtSet(ref.values)}, tetapi baris ini memberi ${fmtSet(got.values)}. Periksa operasi pada langkah ini (penjabaran kurung, tanda saat pindah ruas, atau pembagian)`);
-          } else if (cmp.missing.length) parts.push(`kehilangan solusi ${cmp.missing.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} (misalnya karena membagi dengan ekspresi yang bisa bernilai nol, atau lupa tanda ± saat menarik akar)`);
-          else if (cmp.extra.length) parts.push(`muncul solusi baru ${cmp.extra.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} yang tidak memenuhi persamaan awal (misalnya akibat mengkuadratkan kedua ruas atau salah operasi)`);
+            parts.push(
+              `mengubah penyelesaian: seharusnya ${fmtSet(ref.values)}, tetapi baris ini memberi ${fmtSet(got.values)}. Periksa operasi pada langkah ini (penjabaran kurung, tanda saat pindah ruas, atau pembagian)`,
+            );
+          } else if (cmp.missing.length)
+            parts.push(
+              `kehilangan solusi ${cmp.missing.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} (misalnya karena membagi dengan ekspresi yang bisa bernilai nol, atau lupa tanda ± saat menarik akar)`,
+            );
+          else if (cmp.extra.length)
+            parts.push(
+              `muncul solusi baru ${cmp.extra.map((v) => `${x} = ${formatNumber(v, 8)}`).join(", ")} yang tidak memenuhi persamaan awal (misalnya akibat mengkuadratkan kedua ruas atau salah operasi)`,
+            );
           if (!parts.length) parts.push("kedua persamaan tidak setara");
-          result.push({ index: i, input: line, latex, status: "error", message: "Langkah ini mengubah himpunan penyelesaian.", detail: `Baris ini ${parts.join("; ")}.` });
+          result.push({
+            index: i,
+            input: line,
+            latex,
+            status: "error",
+            message: "Langkah ini mengubah himpunan penyelesaian.",
+            detail: `Baris ini ${parts.join("; ")}.`,
+          });
         }
       } catch (e) {
         if (e instanceof Error && e.message === "not-equation") {
-          result.push({ index: i, input: line, status: "unchecked", message: "Baris bukan persamaan; tidak dapat dibandingkan.", detail: "Tulis setiap langkah dalam bentuk persamaan (… = …)." });
-        } else result.push({ index: i, input: line, status: "unparseable", message: "Baris tidak dapat dibaca atau diselesaikan.", detail: isMathError(e) ? e.message : String(e) });
+          result.push({
+            index: i,
+            input: line,
+            status: "unchecked",
+            message: "Baris bukan persamaan; tidak dapat dibandingkan.",
+            detail: "Tulis setiap langkah dalam bentuk persamaan (… = …).",
+          });
+        } else
+          result.push({
+            index: i,
+            input: line,
+            status: "unparseable",
+            message: "Baris tidak dapat dibaca atau diselesaikan.",
+            detail: isMathError(e) ? e.message : String(e),
+          });
       }
     });
   } else {
@@ -206,11 +312,34 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
           const env = eq.counterexample;
           const a = evalComplex(e, env);
           const b = evalComplex(ref, env);
-          detail = `Pada ${Object.entries(env).map(([k, v]) => `${k} = ${v.toPrecision(4)}`).join(", ") || "evaluasi"}: baris ini bernilai ${formatNumber(a.re, 8)}, sedangkan soal bernilai ${formatNumber(b.re, 8)}.`;
+          detail = `Pada ${
+            Object.entries(env)
+              .map(([k, v]) => `${k} = ${v.toPrecision(4)}`)
+              .join(", ") || "evaluasi"
+          }: baris ini bernilai ${formatNumber(a.re, 8)}, sedangkan soal bernilai ${formatNumber(b.re, 8)}.`;
         }
-        result.push({ index: i, input: line, latex: syntaxToLatex(n), status: eq.equivalent ? "ok" : eq.method === "inconclusive" ? "unchecked" : "error", message: eq.equivalent ? (eq.method === "symbolic" ? "Setara (terbukti simbolik)." : "Setara (diuji numerik).") : eq.method === "inconclusive" ? "Tidak dapat dipastikan." : "Tidak setara dengan soal.", detail });
+        result.push({
+          index: i,
+          input: line,
+          latex: syntaxToLatex(n),
+          status: eq.equivalent ? "ok" : eq.method === "inconclusive" ? "unchecked" : "error",
+          message: eq.equivalent
+            ? eq.method === "symbolic"
+              ? "Setara (terbukti simbolik)."
+              : "Setara (diuji numerik)."
+            : eq.method === "inconclusive"
+              ? "Tidak dapat dipastikan."
+              : "Tidak setara dengan soal.",
+          detail,
+        });
       } catch (e) {
-        result.push({ index: i, input: line, status: "unparseable", message: "Baris tidak dapat dibaca.", detail: isMathError(e) ? e.message : String(e) });
+        result.push({
+          index: i,
+          input: line,
+          status: "unparseable",
+          message: "Baris tidak dapat dibaca.",
+          detail: isMathError(e) ? e.message : String(e),
+        });
       }
     });
   }
@@ -234,7 +363,8 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
     try {
       if (j >= 0 && reprs[i] !== undefined && same(reprs[j], reprs[i])) {
         result[i].status = "carried";
-        result[i].message = `Benar terhadap langkah ${j + 1}, tetapi membawa kesalahan dari langkah ${firstErr + 1}.`;
+        result[i].message =
+          `Benar terhadap langkah ${j + 1}, tetapi membawa kesalahan dari langkah ${firstErr + 1}.`;
         result[i].formula = undefined;
         result[i].detail = "Hasil baris ini tetap salah karena kesalahan pada langkah sebelumnya.";
       }
@@ -253,10 +383,22 @@ function checkWorkInner(problem: string, rawLines: string[]): WorkCheckResult {
       : result.every((r) => r.status === "ok")
         ? `Semua ${result.length} langkah benar.`
         : `${okCount} dari ${result.length} langkah terverifikasi; sebagian tidak dapat diperiksa.`;
-  return { mode, problemLatex, lines: result, firstError: firstErrorLine ? firstErrorLine.index : null, summary, finalCorrect };
+  return {
+    mode,
+    problemLatex,
+    lines: result,
+    firstError: firstErrorLine ? firstErrorLine.index : null,
+    summary,
+    finalCorrect,
+  };
 }
 
-export function safeCheckWork(problem: string, lines: string[]): { ok: true; result: WorkCheckResult } | { ok: false; error: ReturnType<typeof toSerializedError> } {
+export function safeCheckWork(
+  problem: string,
+  lines: string[],
+):
+  | { ok: true; result: WorkCheckResult }
+  | { ok: false; error: ReturnType<typeof toSerializedError> } {
   try {
     return { ok: true, result: checkWork(problem, lines) };
   } catch (e) {

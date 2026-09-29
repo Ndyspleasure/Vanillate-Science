@@ -28,24 +28,44 @@ export class RMatrix {
     this.rows = data.length;
     this.cols = data.length ? data[0].length : 0;
     if (data.some((r) => r.length !== this.cols)) {
-      throw new MathError("invalid-input", "Setiap baris matriks harus memiliki jumlah kolom yang sama.", { module: "matrix" });
+      throw new MathError(
+        "invalid-input",
+        "Setiap baris matriks harus memiliki jumlah kolom yang sama.",
+        { module: "matrix" },
+      );
     }
     if (this.rows > MAX_MATRIX_SIZE || this.cols > MAX_MATRIX_SIZE + 1) {
-      throw new MathError("limit-exceeded", `Ukuran matriks maksimal ${MAX_MATRIX_SIZE}×${MAX_MATRIX_SIZE}.`, { module: "matrix" });
+      throw new MathError(
+        "limit-exceeded",
+        `Ukuran matriks maksimal ${MAX_MATRIX_SIZE}×${MAX_MATRIX_SIZE}.`,
+        { module: "matrix" },
+      );
     }
     this.data = data.map((r) => [...r]);
   }
 
   static from(rows: Array<Array<number | bigint | Rational>>): RMatrix {
-    return new RMatrix(rows.map((r) => r.map((v) => (v instanceof Rational ? v : Rational.of(typeof v === "number" ? BigInt(v) : v)))));
+    return new RMatrix(
+      rows.map((r) =>
+        r.map((v) =>
+          v instanceof Rational ? v : Rational.of(typeof v === "number" ? BigInt(v) : v),
+        ),
+      ),
+    );
   }
 
   static identity(n: number): RMatrix {
-    return new RMatrix(Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? Rational.ONE : Rational.ZERO))));
+    return new RMatrix(
+      Array.from({ length: n }, (_, i) =>
+        Array.from({ length: n }, (_, j) => (i === j ? Rational.ONE : Rational.ZERO)),
+      ),
+    );
   }
 
   static zeros(r: number, c: number): RMatrix {
-    return new RMatrix(Array.from({ length: r }, () => Array.from({ length: c }, () => Rational.ZERO)));
+    return new RMatrix(
+      Array.from({ length: r }, () => Array.from({ length: c }, () => Rational.ZERO)),
+    );
   }
 
   get isSquare(): boolean {
@@ -66,7 +86,11 @@ export class RMatrix {
   }
 
   equals(o: RMatrix): boolean {
-    return this.rows === o.rows && this.cols === o.cols && this.data.every((r, i) => r.every((v, j) => v.equals(o.data[i][j])));
+    return (
+      this.rows === o.rows &&
+      this.cols === o.cols &&
+      this.data.every((r, i) => r.every((v, j) => v.equals(o.data[i][j])))
+    );
   }
 
   add(o: RMatrix): RMatrix {
@@ -85,10 +109,14 @@ export class RMatrix {
 
   mul(o: RMatrix): RMatrix {
     if (this.cols !== o.rows) {
-      throw new MathError("invalid-input", `Perkalian matriks tidak terdefinisi: ukuran ${this.rows}×${this.cols} dan ${o.rows}×${o.cols}.`, {
-        module: "matrix",
-        cause: "Jumlah kolom matriks pertama harus sama dengan jumlah baris matriks kedua.",
-      });
+      throw new MathError(
+        "invalid-input",
+        `Perkalian matriks tidak terdefinisi: ukuran ${this.rows}×${this.cols} dan ${o.rows}×${o.cols}.`,
+        {
+          module: "matrix",
+          cause: "Jumlah kolom matriks pertama harus sama dengan jumlah baris matriks kedua.",
+        },
+      );
     }
     const out: Rational[][] = [];
     for (let i = 0; i < this.rows; i++) {
@@ -107,7 +135,11 @@ export class RMatrix {
   }
 
   transpose(): RMatrix {
-    return new RMatrix(Array.from({ length: this.cols }, (_, j) => Array.from({ length: this.rows }, (_, i) => this.data[i][j])));
+    return new RMatrix(
+      Array.from({ length: this.cols }, (_, j) =>
+        Array.from({ length: this.rows }, (_, i) => this.data[i][j]),
+      ),
+    );
   }
 
   trace(): Rational {
@@ -131,19 +163,35 @@ export class RMatrix {
 
   private assertSameShape(o: RMatrix, op: string) {
     if (this.rows !== o.rows || this.cols !== o.cols) {
-      throw new MathError("invalid-input", `Operasi ${op} matriks membutuhkan ukuran yang sama (${this.rows}×${this.cols} vs ${o.rows}×${o.cols}).`, { module: "matrix" });
+      throw new MathError(
+        "invalid-input",
+        `Operasi ${op} matriks membutuhkan ukuran yang sama (${this.rows}×${this.cols} vs ${o.rows}×${o.cols}).`,
+        { module: "matrix" },
+      );
     }
   }
 
   assertSquare(op: string) {
-    if (!this.isSquare) throw new MathError("invalid-input", `${op} hanya terdefinisi untuk matriks persegi (ukuran saat ini ${this.rows}×${this.cols}).`, { module: "matrix" });
+    if (!this.isSquare)
+      throw new MathError(
+        "invalid-input",
+        `${op} hanya terdefinisi untuk matriks persegi (ukuran saat ini ${this.rows}×${this.cols}).`,
+        { module: "matrix" },
+      );
   }
 
   /**
    * Reduced row echelon form by Gauss–Jordan elimination.
    * `augmentAt` is only used for display; `stopAtEchelon` gives row echelon form (Gauss).
    */
-  rref(options: { augmentAt?: number; record?: boolean; stopAtEchelon?: boolean; pivotCols?: number } = {}): {
+  rref(
+    options: {
+      augmentAt?: number;
+      record?: boolean;
+      stopAtEchelon?: boolean;
+      pivotCols?: number;
+    } = {},
+  ): {
     matrix: RMatrix;
     pivots: number[];
     ops: RowOp[];
@@ -171,14 +219,22 @@ export class RMatrix {
       if (p !== row) {
         [m[p], m[row]] = [m[row], m[p]];
         swaps++;
-        record({ kind: "swap", latex: `${R(row)} \\leftrightarrow ${R(p)}`, description: `Tukar baris ${row + 1} dan baris ${p + 1} agar pivot tidak nol.` });
+        record({
+          kind: "swap",
+          latex: `${R(row)} \\leftrightarrow ${R(p)}`,
+          description: `Tukar baris ${row + 1} dan baris ${p + 1} agar pivot tidak nol.`,
+        });
       }
       const pv = m[row][col];
       if (!options.stopAtEchelon && !pv.isOne()) {
         const inv = pv.inv();
         m[row] = m[row].map((v) => v.mul(inv));
         scaleProduct = scaleProduct.mul(inv);
-        record({ kind: "scale", latex: `${R(row)} \\leftarrow ${rationalLatex(inv)}\\,${R(row)}`, description: `Kalikan baris ${row + 1} dengan ${inv.toString()} agar pivot bernilai 1.` });
+        record({
+          kind: "scale",
+          latex: `${R(row)} \\leftarrow ${rationalLatex(inv)}\\,${R(row)}`,
+          description: `Kalikan baris ${row + 1} dengan ${inv.toString()} agar pivot bernilai 1.`,
+        });
       }
       const start = options.stopAtEchelon ? row + 1 : 0;
       for (let r = start; r < this.rows; r++) {
@@ -204,7 +260,12 @@ export class RMatrix {
   }
 
   /** Determinant by elimination to upper-triangular form (with recorded ops). */
-  determinant(record = false): { value: Rational; ops: RowOp[]; triangular: RMatrix; swaps: number } {
+  determinant(record = false): {
+    value: Rational;
+    ops: RowOp[];
+    triangular: RMatrix;
+    swaps: number;
+  } {
     this.assertSquare("Determinan");
     const n = this.rows;
     const m = this.data.map((r) => [...r]);
@@ -221,7 +282,13 @@ export class RMatrix {
       if (p !== col) {
         [m[p], m[col]] = [m[col], m[p]];
         swaps++;
-        if (record) ops.push({ kind: "swap", latex: `R_{${col + 1}} \\leftrightarrow R_{${p + 1}}`, description: "Menukar dua baris mengubah tanda determinan.", matrix: snap() });
+        if (record)
+          ops.push({
+            kind: "swap",
+            latex: `R_{${col + 1}} \\leftrightarrow R_{${p + 1}}`,
+            description: "Menukar dua baris mengubah tanda determinan.",
+            matrix: snap(),
+          });
       }
       for (let r = col + 1; r < n; r++) {
         if (m[r][col].isZero()) continue;
@@ -230,7 +297,12 @@ export class RMatrix {
         if (record) {
           const sign = factor.isNegative() ? "+" : "-";
           const f = factor.abs();
-          ops.push({ kind: "add", latex: `R_{${r + 1}} \\leftarrow R_{${r + 1}} ${sign} ${f.isOne() ? "" : rationalLatex(f)}\\,R_{${col + 1}}`, description: "Menambahkan kelipatan baris lain tidak mengubah determinan.", matrix: snap() });
+          ops.push({
+            kind: "add",
+            latex: `R_{${r + 1}} \\leftarrow R_{${r + 1}} ${sign} ${f.isOne() ? "" : rationalLatex(f)}\\,R_{${col + 1}}`,
+            description: "Menambahkan kelipatan baris lain tidak mengubah determinan.",
+            matrix: snap(),
+          });
         }
       }
     }
@@ -245,7 +317,8 @@ export class RMatrix {
     const n = this.rows;
     if (n > 7) return this.determinant().value;
     if (n === 1) return this.data[0][0];
-    if (n === 2) return this.data[0][0].mul(this.data[1][1]).sub(this.data[0][1].mul(this.data[1][0]));
+    if (n === 2)
+      return this.data[0][0].mul(this.data[1][1]).sub(this.data[0][1].mul(this.data[1][0]));
     let s = Rational.ZERO;
     for (let j = 0; j < n; j++) {
       if (this.data[0][j].isZero()) continue;
@@ -256,21 +329,32 @@ export class RMatrix {
   }
 
   minor(i: number, j: number): RMatrix {
-    return new RMatrix(this.data.filter((_, r) => r !== i).map((row) => row.filter((_, c) => c !== j)));
+    return new RMatrix(
+      this.data.filter((_, r) => r !== i).map((row) => row.filter((_, c) => c !== j)),
+    );
   }
 
   /** Inverse by Gauss–Jordan on [A | I]. */
   inverse(record = false): { matrix: RMatrix; ops: RowOp[] } {
     this.assertSquare("Invers");
     const n = this.rows;
-    const aug = new RMatrix(this.data.map((r, i) => [...r, ...Array.from({ length: n }, (_, j) => (i === j ? Rational.ONE : Rational.ZERO))]));
+    const aug = new RMatrix(
+      this.data.map((r, i) => [
+        ...r,
+        ...Array.from({ length: n }, (_, j) => (i === j ? Rational.ONE : Rational.ZERO)),
+      ]),
+    );
     const res = aug.rref({ augmentAt: n, record, pivotCols: n });
     if (res.rank < n) {
-      throw new MathError("no-solution", "Matriks singular (determinan = 0) sehingga tidak memiliki invers.", {
-        module: "matrix",
-        operation: "inverse",
-        cause: `Rank matriks ${res.rank} < ${n}.`,
-      });
+      throw new MathError(
+        "no-solution",
+        "Matriks singular (determinan = 0) sehingga tidak memiliki invers.",
+        {
+          module: "matrix",
+          operation: "inverse",
+          cause: `Rank matriks ${res.rank} < ${n}.`,
+        },
+      );
     }
     return { matrix: new RMatrix(res.matrix.data.map((r) => r.slice(n))), ops: res.ops };
   }

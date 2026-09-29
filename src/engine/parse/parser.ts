@@ -15,45 +15,173 @@ import { tokenize, type Token } from "./lexer";
 import type { ParseResult, RelOp, SNode } from "./syntax";
 
 export const FUNCTION_ALIASES: Record<string, string> = {
-  arcsin: "asin", arccos: "acos", arctan: "atan", arccot: "acot", arcsec: "asec", arccsc: "acsc",
-  arsinh: "asinh", arcosh: "acosh", artanh: "atanh", arcsinh: "asinh", arccosh: "acosh", arctanh: "atanh",
-  sgn: "sign", fpb: "gcd", kpk: "lcm", comb: "binomial", choose: "binomial", nCr: "binomial",
-  tg: "tan", ctg: "cot", cosec: "csc", fact: "factorial", lg: "log10", abs: "abs",
+  arcsin: "asin",
+  arccos: "acos",
+  arctan: "atan",
+  arccot: "acot",
+  arcsec: "asec",
+  arccsc: "acsc",
+  arsinh: "asinh",
+  arcosh: "acosh",
+  artanh: "atanh",
+  arcsinh: "asinh",
+  arccosh: "acosh",
+  arctanh: "atanh",
+  sgn: "sign",
+  fpb: "gcd",
+  kpk: "lcm",
+  comb: "binomial",
+  choose: "binomial",
+  nCr: "binomial",
+  tg: "tan",
+  ctg: "cot",
+  cosec: "csc",
+  fact: "factorial",
+  lg: "log10",
+  abs: "abs",
 };
 
 /** Functions handled during conversion to Expr (not stored as Fn nodes). */
-export const SPECIAL_FUNCTIONS = new Set(["sqrt", "cbrt", "root", "nthroot", "exp", "log10", "log2", "nPr", "perm"]);
+export const SPECIAL_FUNCTIONS = new Set([
+  "sqrt",
+  "cbrt",
+  "root",
+  "nthroot",
+  "exp",
+  "log10",
+  "log2",
+  "nPr",
+  "perm",
+]);
 
 /** Command-style calls interpreted by the problem router. */
 export const COMMANDS = new Set([
-  "diff", "derivative", "turunan", "integrate", "integral", "int", "limit", "lim",
-  "det", "inv", "inverse", "invers", "transpose", "rank", "rref", "trace", "eigen", "eigenvalues", "eigenvectors",
-  "dot", "cross", "norm", "solve", "simplify", "expand", "factor", "taylor", "series", "sum",
-  "mean", "median", "mode", "variance", "stdev", "isprime", "primefactors", "divisors", "extrema", "implicit", "modinv", "modpow",
+  "diff",
+  "derivative",
+  "turunan",
+  "integrate",
+  "integral",
+  "int",
+  "limit",
+  "lim",
+  "det",
+  "inv",
+  "inverse",
+  "invers",
+  "transpose",
+  "rank",
+  "rref",
+  "trace",
+  "eigen",
+  "eigenvalues",
+  "eigenvectors",
+  "dot",
+  "cross",
+  "norm",
+  "solve",
+  "simplify",
+  "expand",
+  "factor",
+  "taylor",
+  "series",
+  "sum",
+  "mean",
+  "median",
+  "mode",
+  "variance",
+  "stdev",
+  "isprime",
+  "primefactors",
+  "divisors",
+  "extrema",
+  "implicit",
+  "modinv",
+  "modpow",
 ]);
 
 /** Connector words for natural-language bounds: "integral from 0 to 1 of x^2", "lim x menuju 0". */
-export const CONNECTOR_WORDS = new Set(["from", "to", "of", "dari", "sampai", "hingga", "menuju", "mendekati"]);
+export const CONNECTOR_WORDS = new Set([
+  "from",
+  "to",
+  "of",
+  "dari",
+  "sampai",
+  "hingga",
+  "menuju",
+  "mendekati",
+]);
 const UPPER_CONNECTORS = new Set(["to", "sampai", "hingga"]);
 const LIMIT_ARROWS = new Set(["to", "menuju", "mendekati"]);
 
 const GREEK_NAMES = [
-  "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi",
-  "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega", "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi",
-  "Sigma", "Phi", "Psi", "Omega",
+  "alpha",
+  "beta",
+  "gamma",
+  "delta",
+  "epsilon",
+  "zeta",
+  "eta",
+  "theta",
+  "iota",
+  "kappa",
+  "lambda",
+  "mu",
+  "nu",
+  "xi",
+  "rho",
+  "sigma",
+  "tau",
+  "upsilon",
+  "phi",
+  "chi",
+  "psi",
+  "omega",
+  "Gamma",
+  "Delta",
+  "Theta",
+  "Lambda",
+  "Xi",
+  "Pi",
+  "Sigma",
+  "Phi",
+  "Psi",
+  "Omega",
 ];
 
-const FUNCTION_WORDS = new Set([...Object.keys(KNOWN_FUNCTIONS), ...Object.keys(FUNCTION_ALIASES), ...SPECIAL_FUNCTIONS]);
+const FUNCTION_WORDS = new Set([
+  ...Object.keys(KNOWN_FUNCTIONS),
+  ...Object.keys(FUNCTION_ALIASES),
+  ...SPECIAL_FUNCTIONS,
+]);
 const CONSTANT_WORDS = new Set(["pi", "inf", "infinity"]);
 /** Words that may be recognised inside a longer word ("sinx" = sin x). */
-const GREEDY_WORDS = [...FUNCTION_WORDS, "pi", ...GREEK_NAMES.filter((g) => g.length >= 3)].sort((a, b) => b.length - a.length);
-const WHOLE_WORDS = new Set([...FUNCTION_WORDS, ...CONSTANT_WORDS, ...GREEK_NAMES, ...COMMANDS, ...CONNECTOR_WORDS, "for", "untuk", "d"]);
+const GREEDY_WORDS = [...FUNCTION_WORDS, "pi", ...GREEK_NAMES.filter((g) => g.length >= 3)].sort(
+  (a, b) => b.length - a.length,
+);
+const WHOLE_WORDS = new Set([
+  ...FUNCTION_WORDS,
+  ...CONSTANT_WORDS,
+  ...GREEK_NAMES,
+  ...COMMANDS,
+  ...CONNECTOR_WORDS,
+  "for",
+  "untuk",
+  "d",
+]);
 
 function editDistance(a: string, b: string): number {
-  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array<number>(b.length).fill(0)]);
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [
+    i,
+    ...Array<number>(b.length).fill(0),
+  ]);
   for (let j = 1; j <= b.length; j++) dp[0][j] = j;
   for (let i = 1; i <= a.length; i++)
-    for (let j = 1; j <= b.length; j++) dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    for (let j = 1; j <= b.length; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
   return dp[a.length][b.length];
 }
 
@@ -84,7 +212,12 @@ function splitWords(tokens: Token[], warnings: string[]): Token[] {
   for (let idx = 0; idx < tokens.length; idx++) {
     const t = tokens[idx];
     const afterUnderscore = idx > 0 && tokens[idx - 1].type === "underscore" && !t.spaceBefore;
-    if (t.type !== "ident" || WHOLE_WORDS.has(t.value) || t.end - t.start === 1 || afterUnderscore) {
+    if (
+      t.type !== "ident" ||
+      WHOLE_WORDS.has(t.value) ||
+      t.end - t.start === 1 ||
+      afterUnderscore
+    ) {
       out.push(t);
       continue;
     }
@@ -103,29 +236,55 @@ function splitWords(tokens: Token[], warnings: string[]): Token[] {
       p += m[0].length;
     }
     const next = tokens[idx + 1];
-    if (w.length >= 4 && pieces.length > 1 && !FUNCTION_WORDS.has(pieces[pieces.length - 1]) && next?.type === "lparen" && !next.spaceBefore) {
+    if (
+      w.length >= 4 &&
+      pieces.length > 1 &&
+      !FUNCTION_WORDS.has(pieces[pieces.length - 1]) &&
+      next?.type === "lparen" &&
+      !next.spaceBefore
+    ) {
       const guess = suggestName(w);
       throw invalidInput(`Fungsi atau perintah '${w}' tidak dikenal.`, {
         module: "parser",
         span: { start: t.start, end: t.end },
-        hint: guess ? `Mungkin maksud Anda '${guess}(…)'?` : "Lihat daftar fungsi yang didukung di halaman Panduan.",
+        hint: guess
+          ? `Mungkin maksud Anda '${guess}(…)'?`
+          : "Lihat daftar fungsi yang didukung di halaman Panduan.",
       });
     }
     if (pieces.length === 1 && /^[A-Za-z][0-9]+$/.test(pieces[0])) {
-      warnings.push(`'${w}' ditafsirkan sebagai variabel ${w[0]} dengan indeks ${w.slice(1)}. Gunakan ${w[0]}^${w.slice(1)} untuk pangkat.`);
+      warnings.push(
+        `'${w}' ditafsirkan sebagai variabel ${w[0]} dengan indeks ${w.slice(1)}. Gunakan ${w[0]}^${w.slice(1)} untuk pangkat.`,
+      );
     } else if (pieces.length > 1) {
       warnings.push(`'${w}' ditafsirkan sebagai ${pieces.join("·")}.`);
     }
     let offset = t.start;
     pieces.forEach((piece, idx) => {
-      out.push({ type: "ident", value: piece, start: offset, end: offset + piece.length, spaceBefore: idx === 0 ? t.spaceBefore : false });
+      out.push({
+        type: "ident",
+        value: piece,
+        start: offset,
+        end: offset + piece.length,
+        spaceBefore: idx === 0 ? t.spaceBefore : false,
+      });
       offset += piece.length;
     });
   }
   return out;
 }
 
-const TERMINATORS = new Set(["eof", "rparen", "rbracket", "rbrace", "comma", "semicolon", "newline", "rel", "bar"]);
+const TERMINATORS = new Set([
+  "eof",
+  "rparen",
+  "rbracket",
+  "rbrace",
+  "comma",
+  "semicolon",
+  "newline",
+  "rel",
+  "bar",
+]);
 
 class Parser {
   private pos = 0;
@@ -154,7 +313,12 @@ class Parser {
     return { start, end: Math.max(start, prev.end) };
   }
   private fail(message: string, t: Token, cause?: string, hint?: string): never {
-    throw invalidInput(message, { module: "parser", span: { start: t.start, end: Math.max(t.end, t.start + 1) }, cause, hint });
+    throw invalidInput(message, {
+      module: "parser",
+      span: { start: t.start, end: Math.max(t.end, t.start + 1) },
+      cause,
+      hint,
+    });
   }
   private enter(): void {
     if (++this.depth > MAX_DEPTH) {
@@ -179,18 +343,31 @@ class Parser {
       const t = this.peek();
       if (t.type === "eof") break;
       if (!["comma", "semicolon", "newline"].includes(t.type)) {
-        if (t.type === "rparen") this.fail("Kurung tutup ')' tidak memiliki pasangan '('.", t, `Posisi ${t.start + 1}.`);
+        if (t.type === "rparen")
+          this.fail("Kurung tutup ')' tidak memiliki pasangan '('.", t, `Posisi ${t.start + 1}.`);
         if (t.type === "rbracket") this.fail("Kurung siku ']' tidak memiliki pasangan '['.", t);
         if (t.type === "rbrace") this.fail("Kurung kurawal '}' tidak memiliki pasangan '{'.", t);
         if (t.type === "ident" && CONNECTOR_WORDS.has(t.value)) {
-          this.fail(`Kata '${t.value}' hanya dapat dipakai untuk batas integral atau limit.`, t, undefined, "Contoh: integral from 0 to 1 of x^2, integral x^2 dari 0 sampai 1, lim x menuju 0 sin(x)/x");
+          this.fail(
+            `Kata '${t.value}' hanya dapat dipakai untuk batas integral atau limit.`,
+            t,
+            undefined,
+            "Contoh: integral from 0 to 1 of x^2, integral x^2 dari 0 sampai 1, lim x menuju 0 sin(x)/x",
+          );
         }
-        this.fail("Token tak terduga.", t, `'${t.value}' pada posisi ${t.start + 1} tidak dapat ditafsirkan di sini.`);
+        this.fail(
+          "Token tak terduga.",
+          t,
+          `'${t.value}' pada posisi ${t.start + 1} tidak dapat ditafsirkan di sini.`,
+        );
       }
       skipSeparators();
     }
     if (statements.length === 0) {
-      throw invalidInput("Input kosong.", { module: "parser", hint: "Masukkan soal, misalnya 2x + 5 = 15." });
+      throw invalidInput("Input kosong.", {
+        module: "parser",
+        hint: "Masukkan soal, misalnya 2x + 5 = 15.",
+      });
     }
     return statements;
   }
@@ -215,7 +392,11 @@ class Parser {
     while (this.peek().type === "rel") {
       const opTok = this.next();
       if (TERMINATORS.has(this.peek().type) && this.peek().type !== "bar") {
-        this.fail(`Ruas kanan '${opTok.value}' kosong.`, opTok, "Setiap relasi membutuhkan ekspresi di kedua sisi.");
+        this.fail(
+          `Ruas kanan '${opTok.value}' kosong.`,
+          opTok,
+          "Setiap relasi membutuhkan ekspresi di kedua sisi.",
+        );
       }
       ops.push(opTok.value as RelOp);
       operands.push(this.parseExpr());
@@ -235,8 +416,15 @@ class Parser {
       const t = this.peek();
       if (t.type === "op" && (t.value === "+" || t.value === "-")) {
         this.next();
-        if (TERMINATORS.has(this.peek().type) && !(this.peek().type === "bar" && this.absDepth === 0)) {
-          this.fail(`Operator '${t.value}' di akhir ekspresi membutuhkan operand.`, t, "Ekspresi tidak lengkap.");
+        if (
+          TERMINATORS.has(this.peek().type) &&
+          !(this.peek().type === "bar" && this.absDepth === 0)
+        ) {
+          this.fail(
+            `Operator '${t.value}' di akhir ekspresi membutuhkan operand.`,
+            t,
+            "Ekspresi tidak lengkap.",
+          );
         }
         const right = this.parseMultiplicative();
         left = { k: "bin", op: t.value as "+" | "-", left, right, span: this.span(start) };
@@ -264,7 +452,12 @@ class Parser {
     if (!t || t.type !== "ident" || t.value !== "d" || !v || v.type !== "ident") return false;
     if (!/^[A-Za-z]$|^[a-z]+$/.test(v.value) || isFunctionName(v.value)) return false;
     const after = this.tokens[pos + 2];
-    return !after || TERMINATORS.has(after.type) || (after.type === "op" && (after.value === "+" || after.value === "-")) || (after.type === "ident" && CONNECTOR_WORDS.has(after.value));
+    return (
+      !after ||
+      TERMINATORS.has(after.type) ||
+      (after.type === "op" && (after.value === "+" || after.value === "-")) ||
+      (after.type === "ident" && CONNECTOR_WORDS.has(after.value))
+    );
   }
 
   private parseMultiplicative(): SNode {
@@ -275,18 +468,37 @@ class Parser {
       const t = this.peek();
       if (t.type === "op" && (t.value === "*" || t.value === "/")) {
         this.next();
-        if (TERMINATORS.has(this.peek().type) && !(this.peek().type === "bar" && this.absDepth === 0)) {
-          this.fail(`Operator '${t.value}' membutuhkan operand di sebelah kanan.`, t, "Ekspresi tidak lengkap.");
+        if (
+          TERMINATORS.has(this.peek().type) &&
+          !(this.peek().type === "bar" && this.absDepth === 0)
+        ) {
+          this.fail(
+            `Operator '${t.value}' membutuhkan operand di sebelah kanan.`,
+            t,
+            "Ekspresi tidak lengkap.",
+          );
         }
         const right = this.parseUnary();
-        if (t.value === "/" && this.startsImplicit(this.peek()) && !this.peek().spaceBefore && this.peek().type !== "lparen") {
+        if (
+          t.value === "/" &&
+          this.startsImplicit(this.peek()) &&
+          !this.peek().spaceBefore &&
+          this.peek().type !== "lparen"
+        ) {
           const shown = this.source.slice(left.span.start, this.peek().end);
-          this.warnings.push(`'${shown}' ditafsirkan sebagai (${this.source.slice(left.span.start, right.span.end)})·${this.peek().value}. Gunakan tanda kurung jika maksudnya berbeda, misalnya 1/(2x).`);
+          this.warnings.push(
+            `'${shown}' ditafsirkan sebagai (${this.source.slice(left.span.start, right.span.end)})·${this.peek().value}. Gunakan tanda kurung jika maksudnya berbeda, misalnya 1/(2x).`,
+          );
         }
         left = { k: "bin", op: t.value as "*" | "/", left, right, span: this.span(start) };
       } else if (this.startsImplicit(t)) {
         if (t.type === "number" && left.k === "num") {
-          this.fail("Dua angka berurutan tanpa operator.", t, `Tidak jelas hubungan antara '${left.text}' dan '${t.value}'.`, "Tambahkan operator, misalnya 2*3 atau 2+3.");
+          this.fail(
+            "Dua angka berurutan tanpa operator.",
+            t,
+            `Tidak jelas hubungan antara '${left.text}' dan '${t.value}'.`,
+            "Tambahkan operator, misalnya 2*3 atau 2+3.",
+          );
         }
         const right = this.parsePower();
         left = { k: "bin", op: "*", left, right, implicit: true, span: this.span(start) };
@@ -317,13 +529,21 @@ class Parser {
     const base = this.parsePostfix();
     if (this.isOp(this.peek(), "^")) {
       const caret = this.next();
-      if (TERMINATORS.has(this.peek().type)) this.fail("Pangkat tidak lengkap.", caret, "Operator '^' membutuhkan eksponen.");
+      if (TERMINATORS.has(this.peek().type))
+        this.fail("Pangkat tidak lengkap.", caret, "Operator '^' membutuhkan eksponen.");
       this.enter();
       const exp = this.parseUnary();
       this.leave();
       const nxt = this.peek();
-      if (this.startsImplicit(nxt) && !nxt.spaceBefore && nxt.type !== "lparen" && exp.k === "num") {
-        this.warnings.push(`'${this.source.slice(start, nxt.end)}' ditafsirkan sebagai (${this.source.slice(start, exp.span.end)})·${nxt.value}. Tulis ${this.source.slice(start, caret.end)}(${exp.k === "num" ? exp.text : "…"}${nxt.value}) jika ${nxt.value} termasuk eksponen.`);
+      if (
+        this.startsImplicit(nxt) &&
+        !nxt.spaceBefore &&
+        nxt.type !== "lparen" &&
+        exp.k === "num"
+      ) {
+        this.warnings.push(
+          `'${this.source.slice(start, nxt.end)}' ditafsirkan sebagai (${this.source.slice(start, exp.span.end)})·${nxt.value}. Tulis ${this.source.slice(start, caret.end)}(${exp.k === "num" ? exp.text : "…"}${nxt.value}) jika ${nxt.value} termasuk eksponen.`,
+        );
       }
       return { k: "bin", op: "^", left: base, right: exp, span: this.span(start) };
     }
@@ -361,15 +581,29 @@ class Parser {
     const t = this.peek();
     if (t.type !== closeType) {
       if (t.type === "eof") {
-        this.fail(`Kurung buka '${open.value}' tidak memiliki pasangan '${closeChar}'.`, open, `Kurung dibuka pada posisi ${open.start + 1} tetapi tidak pernah ditutup.`, `Tambahkan '${closeChar}' di tempat yang sesuai.`);
+        this.fail(
+          `Kurung buka '${open.value}' tidak memiliki pasangan '${closeChar}'.`,
+          open,
+          `Kurung dibuka pada posisi ${open.start + 1} tetapi tidak pernah ditutup.`,
+          `Tambahkan '${closeChar}' di tempat yang sesuai.`,
+        );
       }
-      this.fail(`Diharapkan '${closeChar}' tetapi ditemukan '${t.value}'.`, t, `Kurung '${open.value}' pada posisi ${open.start + 1} belum ditutup.`);
+      this.fail(
+        `Diharapkan '${closeChar}' tetapi ditemukan '${t.value}'.`,
+        t,
+        `Kurung '${open.value}' pada posisi ${open.start + 1} belum ditutup.`,
+      );
     }
     this.next();
     return inner;
   }
 
-  private parseList(open: Token, closeType: Token["type"], closeChar: string, bracket: "[" | "{" | "("): SNode {
+  private parseList(
+    open: Token,
+    closeType: Token["type"],
+    closeChar: string,
+    bracket: "[" | "{" | "(",
+  ): SNode {
     const start = open.start;
     const rows: SNode[][] = [[]];
     if (this.peek().type === closeType) {
@@ -392,12 +626,18 @@ class Parser {
         this.next();
         break;
       }
-      if (t.type === "eof") this.fail(`Kurung '${open.value}' tidak memiliki pasangan '${closeChar}'.`, open);
+      if (t.type === "eof")
+        this.fail(`Kurung '${open.value}' tidak memiliki pasangan '${closeChar}'.`, open);
       this.fail(`Diharapkan ',' atau '${closeChar}' tetapi ditemukan '${t.value}'.`, t);
     }
     const span = this.span(start);
     if (rows.length > 1) {
-      return { k: "list", items: rows.map((r) => ({ k: "list", items: r, bracket, span }) as SNode), bracket, span };
+      return {
+        k: "list",
+        items: rows.map((r) => ({ k: "list", items: r, bracket, span }) as SNode),
+        bracket,
+        span,
+      };
     }
     return { k: "list", items: rows[0], bracket, span };
   }
@@ -422,7 +662,8 @@ class Parser {
       }
       case "lparen": {
         this.next();
-        if (this.peek().type === "rparen") this.fail("Tanda kurung kosong '()'.", t, "Isi tanda kurung dengan ekspresi.");
+        if (this.peek().type === "rparen")
+          this.fail("Tanda kurung kosong '()'.", t, "Isi tanda kurung dengan ekspresi.");
         const inner = this.parseRelation();
         if (this.peek().type === "comma") {
           // tuple / point
@@ -431,13 +672,19 @@ class Parser {
             this.next();
             items.push(this.parseRelation());
           }
-          if (this.peek().type !== "rparen") this.fail("Kurung buka '(' tidak memiliki pasangan ')'.", t);
+          if (this.peek().type !== "rparen")
+            this.fail("Kurung buka '(' tidak memiliki pasangan ')'.", t);
           this.next();
           return { k: "list", items, bracket: "(", span: this.span(t.start) };
         }
         if (this.peek().type !== "rparen") {
           if (this.peek().type === "eof") {
-            this.fail("Kurung buka '(' tidak memiliki pasangan ')'.", t, `Kurung dibuka pada posisi ${t.start + 1} tetapi tidak pernah ditutup.`, "Tambahkan ')' di tempat yang sesuai.");
+            this.fail(
+              "Kurung buka '(' tidak memiliki pasangan ')'.",
+              t,
+              `Kurung dibuka pada posisi ${t.start + 1} tetapi tidak pernah ditutup.`,
+              "Tambahkan ')' di tempat yang sesuai.",
+            );
           }
           this.fail(`Diharapkan ')' tetapi ditemukan '${this.peek().value}'.`, this.peek());
         }
@@ -460,7 +707,8 @@ class Parser {
         this.absDepth++;
         const inner = this.parseExpr();
         this.absDepth--;
-        if (this.peek().type !== "bar") this.fail("Tanda nilai mutlak '|' tidak ditutup.", t, "Nilai mutlak ditulis |x|.");
+        if (this.peek().type !== "bar")
+          this.fail("Tanda nilai mutlak '|' tidak ditutup.", t, "Nilai mutlak ditulis |x|.");
         this.next();
         return { k: "abs", arg: inner, span: this.span(t.start) };
       }
@@ -470,7 +718,18 @@ class Parser {
         if (TERMINATORS.has(this.peek().type)) this.fail("Tanda akar membutuhkan operand.", t);
         const arg = this.parsePower();
         const name = index === 2 ? "sqrt" : "root";
-        const args: SNode[] = index === 2 ? [arg] : [arg, { k: "num", value: Rational.of(index), text: String(index), span: { start: t.start, end: t.end } }];
+        const args: SNode[] =
+          index === 2
+            ? [arg]
+            : [
+                arg,
+                {
+                  k: "num",
+                  value: Rational.of(index),
+                  text: String(index),
+                  span: { start: t.start, end: t.end },
+                },
+              ];
         return { k: "call", name, args, span: this.span(t.start) };
       }
       case "integral":
@@ -484,7 +743,11 @@ class Parser {
         this.fail("Kurung tutup ')' tidak memiliki pasangan '('.", t, `Posisi ${t.start + 1}.`);
       default:
         if (t.type === "op") {
-          this.fail(`Operator '${t.value}' tidak dapat berada di sini.`, t, `Operator '${t.value}' pada posisi ${t.start + 1} tidak memiliki operand di sebelah kiri.`);
+          this.fail(
+            `Operator '${t.value}' tidak dapat berada di sini.`,
+            t,
+            `Operator '${t.value}' pada posisi ${t.start + 1} tidak memiliki operand di sebelah kiri.`,
+          );
         }
         this.fail(`Token tak terduga '${t.value}'.`, t, `Posisi ${t.start + 1}.`);
     }
@@ -517,12 +780,19 @@ class Parser {
     const start = t.start;
 
     if (CONNECTOR_WORDS.has(word)) {
-      this.fail(`Kata '${word}' hanya dapat dipakai untuk batas integral atau limit.`, t, undefined, "Contoh: integral from 0 to 1 of x^2, integral x^2 dari 0 sampai 1, lim x menuju 0 sin(x)/x");
+      this.fail(
+        `Kata '${word}' hanya dapat dipakai untuk batas integral atau limit.`,
+        t,
+        undefined,
+        "Contoh: integral from 0 to 1 of x^2, integral x^2 dari 0 sampai 1, lim x menuju 0 sin(x)/x",
+      );
     }
 
     // School notation C(n, r) and P(n, r) with integer literals: combinations / permutations.
     if ((word === "C" || word === "P") && this.isIntegerPairCall()) {
-      this.warnings.push(`${word}(…) ditafsirkan sebagai ${word === "C" ? "kombinasi (nCr)" : "permutasi (nPr)"}.`);
+      this.warnings.push(
+        `${word}(…) ditafsirkan sebagai ${word === "C" ? "kombinasi (nCr)" : "permutasi (nPr)"}.`,
+      );
       return this.parseFunction({ ...t, value: word === "C" ? "nCr" : "nPr" });
     }
 
@@ -534,7 +804,12 @@ class Parser {
         this.next();
         order = Number(this.next().value);
       }
-      if (this.isOp(this.peek(), "/") && this.peek(1).type === "ident" && this.peek(1).value === "d" && this.peek(2).type === "ident") {
+      if (
+        this.isOp(this.peek(), "/") &&
+        this.peek(1).type === "ident" &&
+        this.peek(1).value === "d" &&
+        this.peek(2).type === "ident"
+      ) {
         this.next();
         this.next();
         const v = this.next().value;
@@ -543,29 +818,47 @@ class Parser {
           const o2 = Number(this.next().value);
           if (o2 !== order) this.fail("Orde turunan pada pembilang dan penyebut berbeda.", t);
         }
-        if (!Number.isInteger(order) || order < 1 || order > 10) this.fail("Orde turunan harus bilangan bulat 1–10.", t);
+        if (!Number.isInteger(order) || order < 1 || order > 10)
+          this.fail("Orde turunan harus bilangan bulat 1–10.", t);
         const expr = this.parseAdditive();
         return { k: "deriv", expr, variable: v, order, span: this.span(start) };
       }
       this.pos = save;
     }
 
-    if ((word === "lim" || word === "limit") && this.peek().type !== "lparen") return this.parseLimit(t);
-    if ((word === "lim" || word === "limit") && this.peek().type === "lparen" && this.parenHasArrow()) return this.parseLimit(t);
-    if ((word === "int" || word === "integral" || word === "integrate") && this.peek().type !== "lparen") return this.parseIntegral(t);
+    if ((word === "lim" || word === "limit") && this.peek().type !== "lparen")
+      return this.parseLimit(t);
+    if (
+      (word === "lim" || word === "limit") &&
+      this.peek().type === "lparen" &&
+      this.parenHasArrow()
+    )
+      return this.parseLimit(t);
+    if (
+      (word === "int" || word === "integral" || word === "integrate") &&
+      this.peek().type !== "lparen"
+    )
+      return this.parseIntegral(t);
 
-    if (isFunctionName(word) && !(word === "gamma" && t.end - t.start === 1)) return this.parseFunction(t);
+    if (isFunctionName(word) && !(word === "gamma" && t.end - t.start === 1))
+      return this.parseFunction(t);
 
     if (COMMANDS.has(word)) {
       if (this.peek().type !== "lparen") {
-        this.fail(`Perintah '${word}' membutuhkan argumen dalam tanda kurung.`, t, undefined, `Contoh: ${word}(...)`);
+        this.fail(
+          `Perintah '${word}' membutuhkan argumen dalam tanda kurung.`,
+          t,
+          undefined,
+          `Contoh: ${word}(...)`,
+        );
       }
       const open = this.next();
       const args = this.parseArgs(open);
       return { k: "call", name: word, args, span: this.span(start) };
     }
 
-    if (word === "inf" || word === "infinity") return { k: "sym", name: "inf", span: { start, end: t.end } };
+    if (word === "inf" || word === "infinity")
+      return { k: "sym", name: "inf", span: { start, end: t.end } };
 
     let name = word;
     if (/^[A-Za-z][0-9]+$/.test(word)) name = `${word[0]}_${word.slice(1)}`;
@@ -577,7 +870,14 @@ class Parser {
   private isIntegerPairCall(): boolean {
     const [a, b, c, d, e] = [0, 1, 2, 3, 4].map((k) => this.peek(k));
     const int = (x: Token) => x.type === "number" && /^\d+$/.test(x.value);
-    return a.type === "lparen" && !a.spaceBefore && int(b) && c.type === "comma" && int(d) && e.type === "rparen";
+    return (
+      a.type === "lparen" &&
+      !a.spaceBefore &&
+      int(b) &&
+      c.type === "comma" &&
+      int(d) &&
+      e.type === "rparen"
+    );
   }
 
   private isWord(t: Token, words: Set<string>): boolean {
@@ -591,7 +891,15 @@ class Parser {
       const t = this.tokens[p];
       if (t.type === "lparen" || t.type === "lbracket" || t.type === "lbrace") depth++;
       else if (t.type === "rparen" || t.type === "rbracket" || t.type === "rbrace") depth--;
-      else if (depth === 0 && (t.type === "comma" || t.type === "semicolon" || t.type === "newline" || t.type === "eof" || t.type === "rel")) return false;
+      else if (
+        depth === 0 &&
+        (t.type === "comma" ||
+          t.type === "semicolon" ||
+          t.type === "newline" ||
+          t.type === "eof" ||
+          t.type === "rel")
+      )
+        return false;
       else if (depth === 0 && this.isWord(t, UPPER_CONNECTORS)) return true;
       if (depth < 0) return false;
     }
@@ -612,7 +920,12 @@ class Parser {
         this.pos = save;
         return null;
       }
-      this.fail("Diharapkan 'to' atau 'sampai' setelah batas bawah.", kw, undefined, "Contoh: integral from 0 to 1 of x^2");
+      this.fail(
+        "Diharapkan 'to' atau 'sampai' setelah batas bawah.",
+        kw,
+        undefined,
+        "Contoh: integral from 0 to 1 of x^2",
+      );
     }
     this.next();
     let upper: SNode;
@@ -620,7 +933,10 @@ class Parser {
       // No "of" separator: the upper bound is a single term ("dari 0 sampai 1 x^2").
       const s0 = this.peek().start;
       upper = this.parseUnaryTerm();
-      if (!TERMINATORS.has(this.peek().type)) this.warnings.push(`Batas atas dibaca sebagai '${this.source.slice(s0, upper.span.end)}'. Gunakan 'of'/'dari' atau tanda kurung untuk batas yang lebih rumit, misalnya integral from 0 to (pi/2) of sin(x).`);
+      if (!TERMINATORS.has(this.peek().type))
+        this.warnings.push(
+          `Batas atas dibaca sebagai '${this.source.slice(s0, upper.span.end)}'. Gunakan 'of'/'dari' atau tanda kurung untuk batas yang lebih rumit, misalnya integral from 0 to (pi/2) of sin(x).`,
+        );
     } else upper = this.parseAdditive();
     return [lower, upper];
   }
@@ -641,7 +957,15 @@ class Parser {
       const t = this.tokens[p];
       if (t.type === "lparen" || t.type === "lbracket" || t.type === "lbrace") depth++;
       else if (t.type === "rparen" || t.type === "rbracket" || t.type === "rbrace") depth--;
-      else if (depth === 0 && (t.type === "comma" || t.type === "semicolon" || t.type === "newline" || t.type === "eof" || t.type === "rel")) return false;
+      else if (
+        depth === 0 &&
+        (t.type === "comma" ||
+          t.type === "semicolon" ||
+          t.type === "newline" ||
+          t.type === "eof" ||
+          t.type === "rel")
+      )
+        return false;
       else if (depth === 0 && this.isWord(t, words)) return true;
       if (depth < 0) return false;
     }
@@ -679,7 +1003,12 @@ class Parser {
         this.next();
         return args;
       }
-      if (t.type === "eof") this.fail("Kurung buka '(' tidak memiliki pasangan ')'.", open, `Kurung dibuka pada posisi ${open.start + 1}.`);
+      if (t.type === "eof")
+        this.fail(
+          "Kurung buka '(' tidak memiliki pasangan ')'.",
+          open,
+          `Kurung dibuka pada posisi ${open.start + 1}.`,
+        );
       this.fail(`Diharapkan ',' atau ')' tetapi ditemukan '${t.value}'.`, t);
     }
   }
@@ -688,12 +1017,19 @@ class Parser {
     const start = t.start;
     let name = canonicalFunctionName(t.value);
     let baseArg: SNode | null = null;
-    if (this.peek().type === "underscore" && (name === "log" || name === "log10" || name === "log2")) {
+    if (
+      this.peek().type === "underscore" &&
+      (name === "log" || name === "log10" || name === "log2")
+    ) {
       this.next();
       const b = this.peek();
       if (b.type === "lbrace" || b.type === "lparen") {
         this.next();
-        baseArg = this.parseDelimited(b, b.type === "lbrace" ? "rbrace" : "rparen", b.type === "lbrace" ? "}" : ")");
+        baseArg = this.parseDelimited(
+          b,
+          b.type === "lbrace" ? "rbrace" : "rparen",
+          b.type === "lbrace" ? "}" : ")",
+        );
       } else {
         baseArg = this.parsePrimary();
       }
@@ -704,9 +1040,21 @@ class Parser {
       this.next();
       power = this.parseUnary();
       const isInverse = power.k === "neg" && power.arg.k === "num" && power.arg.value.isOne();
-      const inv: Record<string, string> = { sin: "asin", cos: "acos", tan: "atan", cot: "acot", sec: "asec", csc: "acsc", sinh: "asinh", cosh: "acosh", tanh: "atanh" };
+      const inv: Record<string, string> = {
+        sin: "asin",
+        cos: "acos",
+        tan: "atan",
+        cot: "acot",
+        sec: "asec",
+        csc: "acsc",
+        sinh: "asinh",
+        cosh: "acosh",
+        tanh: "atanh",
+      };
       if (isInverse && inv[name]) {
-        this.warnings.push(`${name}^-1 ditafsirkan sebagai fungsi invers ${inv[name]} (bukan 1/${name}).`);
+        this.warnings.push(
+          `${name}^-1 ditafsirkan sebagai fungsi invers ${inv[name]} (bukan 1/${name}).`,
+        );
         name = inv[name];
         power = null;
       }
@@ -721,7 +1069,12 @@ class Parser {
         if (nt.type === "bar" && this.absDepth === 0) {
           args = [this.parsePower()];
         } else {
-          this.fail(`Fungsi '${t.value}' membutuhkan argumen.`, t, undefined, `Contoh: ${t.value}(x)`);
+          this.fail(
+            `Fungsi '${t.value}' membutuhkan argumen.`,
+            t,
+            undefined,
+            `Contoh: ${t.value}(x)`,
+          );
         }
       } else {
         let arg = this.parsePower();
@@ -729,10 +1082,20 @@ class Parser {
           this.startsImplicit(this.peek()) &&
           this.peek().type !== "lparen" &&
           this.peek().type !== "sqrt" &&
-          !(this.peek().type === "ident" && (isFunctionName(this.peek().value) || COMMANDS.has(this.peek().value)))
+          !(
+            this.peek().type === "ident" &&
+            (isFunctionName(this.peek().value) || COMMANDS.has(this.peek().value))
+          )
         ) {
           const right = this.parsePower();
-          arg = { k: "bin", op: "*", left: arg, right, implicit: true, span: { start: arg.span.start, end: right.span.end } };
+          arg = {
+            k: "bin",
+            op: "*",
+            left: arg,
+            right,
+            implicit: true,
+            span: { start: arg.span.start, end: right.span.end },
+          };
         }
         args = [arg];
       }
@@ -747,7 +1110,11 @@ class Parser {
     const t = this.peek();
     if (t.type === "lbrace" || t.type === "lparen") {
       this.next();
-      return this.parseDelimited(t, t.type === "lbrace" ? "rbrace" : "rparen", t.type === "lbrace" ? "}" : ")");
+      return this.parseDelimited(
+        t,
+        t.type === "lbrace" ? "rbrace" : "rparen",
+        t.type === "lbrace" ? "}" : ")",
+      );
     }
     if (this.isOp(t, "-")) {
       this.next();
@@ -769,7 +1136,13 @@ class Parser {
       this.next();
       upper = this.parseBound();
     }
-    if ((lower && !upper) || (!lower && upper)) this.fail("Integral tentu membutuhkan batas bawah dan batas atas.", t, undefined, "Contoh: ∫_0^1 x^2 dx");
+    if ((lower && !upper) || (!lower && upper))
+      this.fail(
+        "Integral tentu membutuhkan batas bawah dan batas atas.",
+        t,
+        undefined,
+        "Contoh: ∫_0^1 x^2 dx",
+      );
     if (!lower) {
       const wb = this.parseWordBounds(true);
       if (wb) [lower, upper] = wb;
@@ -793,11 +1166,17 @@ class Parser {
     }
     expr = this.parseAdditive();
     this.integralStop--;
-    if (this.peek().type === "ident" && this.peek().value === "d" && this.peek(1).type === "ident") {
+    if (
+      this.peek().type === "ident" &&
+      this.peek().value === "d" &&
+      this.peek(1).type === "ident"
+    ) {
       this.next();
       variable = this.next().value;
     } else {
-      this.warnings.push("Diferensial (misalnya dx) tidak ditulis; variabel integrasi ditentukan otomatis.");
+      this.warnings.push(
+        "Diferensial (misalnya dx) tidak ditulis; variabel integrasi ditentukan otomatis.",
+      );
     }
     if (!lower) {
       const wb = this.parseWordBounds(false);
@@ -813,11 +1192,16 @@ class Parser {
     let direction: "+" | "-" | undefined;
     const readDirection = (closeType?: Token["type"]) => {
       const p = this.peek();
-      const isDirTok = (tok: Token) => tok.type === "op" && (tok.value === "+" || tok.value === "-");
+      const isDirTok = (tok: Token) =>
+        tok.type === "op" && (tok.value === "+" || tok.value === "-");
       if (this.isOp(p, "^") && isDirTok(this.peek(1))) {
         this.next();
         direction = this.next().value as "+" | "-";
-      } else if (isDirTok(p) && !p.spaceBefore && (closeType ? this.peek(1).type === closeType : true)) {
+      } else if (
+        isDirTok(p) &&
+        !p.spaceBefore &&
+        (closeType ? this.peek(1).type === closeType : true)
+      ) {
         const after = this.peek(1);
         if (closeType || after.spaceBefore || TERMINATORS.has(after.type)) {
           this.next();
@@ -838,7 +1222,13 @@ class Parser {
             break;
           }
           const right = this.parseMultiplicativeForLimit(closeType);
-          node = { k: "bin", op: op.value as "+" | "-", left: node, right, span: this.span(tStart) };
+          node = {
+            k: "bin",
+            op: op.value as "+" | "-",
+            left: node,
+            right,
+            span: this.span(tStart),
+          };
           readDirection(closeType);
         }
         return node;
@@ -858,23 +1248,39 @@ class Parser {
       this.next();
       const close = open.type === "lbrace" ? "rbrace" : "rparen";
       const v = this.next();
-      if (v.type !== "ident") this.fail("Variabel limit tidak valid.", v, undefined, "Contoh: lim_{x->0} sin(x)/x");
+      if (v.type !== "ident")
+        this.fail("Variabel limit tidak valid.", v, undefined, "Contoh: lim_{x->0} sin(x)/x");
       variable = v.value;
-      if (this.peek().type !== "arrow") this.fail("Diharapkan '->' pada notasi limit.", this.peek(), undefined, "Contoh: lim_{x->0} sin(x)/x");
+      if (this.peek().type !== "arrow")
+        this.fail(
+          "Diharapkan '->' pada notasi limit.",
+          this.peek(),
+          undefined,
+          "Contoh: lim_{x->0} sin(x)/x",
+        );
       this.next();
       to = parseTarget(close);
-      if (this.peek().type !== close) this.fail(`Diharapkan '${close === "rbrace" ? "}" : ")"}' pada notasi limit.`, this.peek());
+      if (this.peek().type !== close)
+        this.fail(`Diharapkan '${close === "rbrace" ? "}" : ")"}' pada notasi limit.`, this.peek());
       this.next();
     } else {
       const v = this.next();
-      if (v.type !== "ident") this.fail("Variabel limit tidak valid.", v, undefined, "Contoh: lim x->0 sin(x)/x");
+      if (v.type !== "ident")
+        this.fail("Variabel limit tidak valid.", v, undefined, "Contoh: lim x->0 sin(x)/x");
       variable = v.value;
-      if (this.peek().type !== "arrow" && !this.isWord(this.peek(), LIMIT_ARROWS)) this.fail("Diharapkan '->' pada notasi limit.", this.peek(), undefined, "Contoh: lim x->0 sin(x)/x");
+      if (this.peek().type !== "arrow" && !this.isWord(this.peek(), LIMIT_ARROWS))
+        this.fail(
+          "Diharapkan '->' pada notasi limit.",
+          this.peek(),
+          undefined,
+          "Contoh: lim x->0 sin(x)/x",
+        );
       this.next();
       to = parseTarget();
       if (this.isWord(this.peek(), new Set(["of", "dari"]))) this.next();
     }
-    if (TERMINATORS.has(this.peek().type)) this.fail("Limit membutuhkan ekspresi.", this.peek(), undefined, "Contoh: lim x->0 sin(x)/x");
+    if (TERMINATORS.has(this.peek().type))
+      this.fail("Limit membutuhkan ekspresi.", this.peek(), undefined, "Contoh: lim x->0 sin(x)/x");
     const expr = this.parseAdditive();
     return { k: "limit", expr, variable, to, direction, span: this.span(start) };
   }
@@ -907,7 +1313,12 @@ class Parser {
     const base = this.parsePostfix();
     if (this.isOp(this.peek(), "^")) {
       const n1 = this.peek(1);
-      if (n1.type === "op" && (n1.value === "+" || n1.value === "-") && this.peek(2).type === closeType) return base;
+      if (
+        n1.type === "op" &&
+        (n1.value === "+" || n1.value === "-") &&
+        this.peek(2).type === closeType
+      )
+        return base;
       this.next();
       const exp = this.parseUnary();
       return { k: "bin", op: "^", left: base, right: exp, span: this.span(start) };

@@ -25,7 +25,17 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export function CopyButton({ text, label = "Salin", className = "", compact = false }: { text: string; label?: string; className?: string; compact?: boolean }) {
+export function CopyButton({
+  text,
+  label = "Salin",
+  className = "",
+  compact = false,
+}: {
+  text: string;
+  label?: string;
+  className?: string;
+  compact?: boolean;
+}) {
   const [state, setState] = useState<"idle" | "ok" | "fail">("idle");
   return (
     <button

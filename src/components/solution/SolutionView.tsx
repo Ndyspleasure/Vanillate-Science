@@ -39,10 +39,18 @@ function Explanation({ solution, level }: { solution: Solution; level: Level }) 
         <p className="text-text/90">
           <MathText text={solution.method.description} />
         </p>
-        {solution.method.formula && atLeast(level, "pelajar") && <Tex tex={solution.method.formula} display className="rounded-lg bg-surface-2/60 px-3 py-1" />}
+        {solution.method.formula && atLeast(level, "pelajar") && (
+          <Tex
+            tex={solution.method.formula}
+            display
+            className="rounded-lg bg-surface-2/60 px-3 py-1"
+          />
+        )}
         {level === "dasar" && (
           <p className="text-muted">
-            Buka tab <strong>Langkah</strong> untuk melihat cara menghitungnya satu per satu. Setiap langkah dihitung oleh mesin matematika, lalu hasilnya diperiksa ulang pada tab <strong>Verifikasi</strong>.
+            Buka tab <strong>Langkah</strong> untuk melihat cara menghitungnya satu per satu. Setiap
+            langkah dihitung oleh mesin matematika, lalu hasilnya diperiksa ulang pada tab{" "}
+            <strong>Verifikasi</strong>.
           </p>
         )}
       </section>
@@ -54,7 +62,9 @@ function Explanation({ solution, level }: { solution: Solution; level: Level }) 
               <li key={i} className="rounded-lg border border-border p-3">
                 <p className="font-medium text-text">{r.name}</p>
                 {r.formula && <Tex tex={r.formula} display />}
-                {r.conditions && atLeast(level, "advanced") && <p className="text-xs text-muted">Syarat: {r.conditions}</p>}
+                {r.conditions && atLeast(level, "advanced") && (
+                  <p className="text-xs text-muted">Syarat: {r.conditions}</p>
+                )}
               </li>
             ))}
           </ul>
@@ -91,7 +101,9 @@ function Explanation({ solution, level }: { solution: Solution; level: Level }) 
                 <span className="font-medium">{r.name}</span> — {r.source}
                 {r.edition ? ` (${r.edition})` : ""}
                 {r.section ? `, ${r.section}` : ""}
-                {r.notes && atLeast(level, "advanced") ? <span className="text-muted"> · {r.notes}</span> : null}
+                {r.notes && atLeast(level, "advanced") ? (
+                  <span className="text-muted"> · {r.notes}</span>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -107,7 +119,15 @@ function Explanation({ solution, level }: { solution: Solution; level: Level }) 
   );
 }
 
-export function SolutionView({ solution, shareUrl, entry }: { solution: Solution; shareUrl?: string; entry?: Omit<HistoryEntry, "id" | "time"> }) {
+export function SolutionView({
+  solution,
+  shareUrl,
+  entry,
+}: {
+  solution: Solution;
+  shareUrl?: string;
+  entry?: Omit<HistoryEntry, "id" | "time">;
+}) {
   const [tab, setTab] = useState("jawaban");
   const [level, setLevel] = usePreference<Level>("vs-level", "pelajar", LEVEL_IDS);
 
@@ -138,10 +158,19 @@ export function SolutionView({ solution, shareUrl, entry }: { solution: Solution
       label: `Langkah (${solution.steps.length})`,
       content: <StepList steps={solution.steps} level={level} />,
     },
-    { id: "penjelasan", label: "Penjelasan", content: <Explanation solution={solution} level={level} /> },
-    { id: "verifikasi", label: "Verifikasi", content: <VerificationPanel verification={solution.verification} /> },
+    {
+      id: "penjelasan",
+      label: "Penjelasan",
+      content: <Explanation solution={solution} level={level} />,
+    },
+    {
+      id: "verifikasi",
+      label: "Verifikasi",
+      content: <VerificationPanel verification={solution.verification} />,
+    },
   ];
-  if (solution.plot) tabs.push({ id: "grafik", label: "Grafik", content: <PlotView spec={solution.plot} /> });
+  if (solution.plot)
+    tabs.push({ id: "grafik", label: "Grafik", content: <PlotView spec={solution.plot} /> });
   if (solution.alternatives.length > 0) {
     tabs.push({
       id: "metode-lain",
@@ -159,7 +188,9 @@ export function SolutionView({ solution, shareUrl, entry }: { solution: Solution
               <StepList steps={alt.steps} level={level} />
               {alt.answers && alt.answers.length > 0 && (
                 <div className="rounded-lg border border-border p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Hasil metode ini</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                    Hasil metode ini
+                  </p>
                   <AnswerList answers={alt.answers} large={false} />
                 </div>
               )}
@@ -171,10 +202,15 @@ export function SolutionView({ solution, shareUrl, entry }: { solution: Solution
   }
 
   return (
-    <article className="rounded-2xl border border-border bg-surface shadow-sm" aria-label={`Hasil: ${solution.title}`}>
+    <article
+      className="rounded-2xl border border-border bg-surface shadow-sm"
+      aria-label={`Hasil: ${solution.title}`}
+    >
       <header className="space-y-3 border-b border-border p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-accent">{solution.title}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+            {solution.title}
+          </p>
           <VerificationBadge status={solution.verification.status} />
         </div>
         <div className="text-lg text-text">

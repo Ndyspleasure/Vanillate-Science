@@ -170,12 +170,17 @@ export class Rational {
    */
   static fromNumber(x: number): Rational {
     if (!Number.isFinite(x)) {
-      throw new MathError("numerical-instability", "Nilai numerik tidak berhingga atau tidak terdefinisi.", {
-        module: "rational",
-        operation: "from-number",
-      });
+      throw new MathError(
+        "numerical-instability",
+        "Nilai numerik tidak berhingga atau tidak terdefinisi.",
+        {
+          module: "rational",
+          operation: "from-number",
+        },
+      );
     }
-    if (Number.isInteger(x) && Math.abs(x) <= Number.MAX_SAFE_INTEGER) return Rational.of(BigInt(x));
+    if (Number.isInteger(x) && Math.abs(x) <= Number.MAX_SAFE_INTEGER)
+      return Rational.of(BigInt(x));
     const r = Rational.parseDecimal(x.toString());
     if (!r) throw new Error(`Cannot convert ${x} to rational`);
     return r;
@@ -241,10 +246,15 @@ export class Rational {
     const k = typeof e === "bigint" ? e : BigInt(e);
     if (k === 0n) return Rational.ONE;
     if (k > BigInt(MAX_BIGINT_BITS) || k < -BigInt(MAX_BIGINT_BITS)) {
-      if (this.isZero() || this.num === this.den || (this.num === -this.den)) {
+      if (this.isZero() || this.num === this.den || this.num === -this.den) {
         // 0^k, 1^k, (-1)^k are cheap
         if (this.isZero()) {
-          if (k < 0n) throw new MathError("division-by-zero", "0 dipangkatkan bilangan negatif tidak terdefinisi.", { module: "rational", operation: "pow" });
+          if (k < 0n)
+            throw new MathError(
+              "division-by-zero",
+              "0 dipangkatkan bilangan negatif tidak terdefinisi.",
+              { module: "rational", operation: "pow" },
+            );
           return Rational.ZERO;
         }
         if (this.isOne()) return Rational.ONE;
@@ -284,7 +294,10 @@ export class Rational {
   }
   /** Round half away from zero. */
   round(): bigint {
-    const twice = new Rational(this.num * 2n + (this.num < 0n ? -this.den : this.den), this.den * 2n);
+    const twice = new Rational(
+      this.num * 2n + (this.num < 0n ? -this.den : this.den),
+      this.den * 2n,
+    );
     return this.num < 0n ? twice.ceil() : twice.floor();
   }
   /** Truncated integer part and remainder (for mixed numbers). */
@@ -337,7 +350,9 @@ export class Rational {
    * Decimal expansion with repeating part detection, e.g. 1/3 -> "0.(3)", 1/6 -> "0.1(6)".
    * Returns null if the repetend is longer than `maxDigits`.
    */
-  toRepeatingDecimal(maxDigits = 60): { integer: string; nonRepeating: string; repeating: string } | null {
+  toRepeatingDecimal(
+    maxDigits = 60,
+  ): { integer: string; nonRepeating: string; repeating: string } | null {
     const neg = this.num < 0n;
     const n = bigAbs(this.num);
     const intPart = n / this.den;
@@ -354,7 +369,11 @@ export class Rational {
     const integer = (neg ? "-" : "") + intPart.toString();
     if (rem === 0n) return { integer, nonRepeating: digits.join(""), repeating: "" };
     const start = seen.get(rem.toString())!;
-    return { integer, nonRepeating: digits.slice(0, start).join(""), repeating: digits.slice(start).join("") };
+    return {
+      integer,
+      nonRepeating: digits.slice(0, start).join(""),
+      repeating: digits.slice(start).join(""),
+    };
   }
 }
 

@@ -5,13 +5,35 @@ import { symbolToLatex } from "../expr/print";
 import type { SNode } from "./syntax";
 
 const LATEX_FN: Record<string, string> = {
-  sin: "\\sin", cos: "\\cos", tan: "\\tan", cot: "\\cot", sec: "\\sec", csc: "\\csc",
-  asin: "\\arcsin", acos: "\\arccos", atan: "\\arctan", sinh: "\\sinh", cosh: "\\cosh", tanh: "\\tanh",
-  ln: "\\ln", exp: "\\exp", det: "\\det", gcd: "\\operatorname{FPB}", lcm: "\\operatorname{KPK}",
-  min: "\\min", max: "\\max",
+  sin: "\\sin",
+  cos: "\\cos",
+  tan: "\\tan",
+  cot: "\\cot",
+  sec: "\\sec",
+  csc: "\\csc",
+  asin: "\\arcsin",
+  acos: "\\arccos",
+  atan: "\\arctan",
+  sinh: "\\sinh",
+  cosh: "\\cosh",
+  tanh: "\\tanh",
+  ln: "\\ln",
+  exp: "\\exp",
+  det: "\\det",
+  gcd: "\\operatorname{FPB}",
+  lcm: "\\operatorname{KPK}",
+  min: "\\min",
+  max: "\\max",
 };
 
-const REL_LATEX: Record<string, string> = { "=": "=", "<": "<", ">": ">", "<=": "\\le", ">=": "\\ge", "!=": "\\ne" };
+const REL_LATEX: Record<string, string> = {
+  "=": "=",
+  "<": "<",
+  ">": ">",
+  "<=": "\\le",
+  ">=": "\\ge",
+  "!=": "\\ne",
+};
 
 function prec(n: SNode): number {
   switch (n.k) {
@@ -46,11 +68,22 @@ export function syntaxToLatex(n: SNode, divStyle: "frac" | "div" = "frac"): stri
       if (n.op === "/" && divStyle === "frac") return `\\frac{${rec(n.left)}}{${rec(n.right)}}`;
       if (n.op === "^") {
         const base = rec(n.left);
-        const needParen = !(n.left.k === "num" || n.left.k === "sym" || n.left.k === "group" || n.left.k === "call" || n.left.k === "abs");
+        const needParen = !(
+          n.left.k === "num" ||
+          n.left.k === "sym" ||
+          n.left.k === "group" ||
+          n.left.k === "call" ||
+          n.left.k === "abs"
+        );
         return `${wrapIf(base, needParen)}^{${rec(n.right)}}`;
       }
       const l = wrapIf(rec(n.left), prec(n.left) < p);
-      const r = wrapIf(rec(n.right), prec(n.right) < p || (prec(n.right) === p && (n.op === "-" || n.op === "/")) || n.right.k === "neg");
+      const r = wrapIf(
+        rec(n.right),
+        prec(n.right) < p ||
+          (prec(n.right) === p && (n.op === "-" || n.op === "/")) ||
+          n.right.k === "neg",
+      );
       switch (n.op) {
         case "+":
           return `${l} + ${r}`;
@@ -73,14 +106,20 @@ export function syntaxToLatex(n: SNode, divStyle: "frac" | "div" = "frac"): stri
       if (n.name === "root" || n.name === "nthroot") return `\\sqrt[${args[1]}]{${args[0]}}`;
       if (n.name === "cbrt") return `\\sqrt[3]{${args[0]}}`;
       if (n.name === "abs") return `\\left|${args[0]}\\right|`;
-      if (n.name === "log") return args.length > 1 ? `\\log_{${args[1]}}\\left(${args[0]}\\right)` : `\\log\\left(${args[0]}\\right)`;
+      if (n.name === "log")
+        return args.length > 1
+          ? `\\log_{${args[1]}}\\left(${args[0]}\\right)`
+          : `\\log\\left(${args[0]}\\right)`;
       if (n.name === "log10") return `\\log\\left(${args[0]}\\right)`;
       if (n.name === "log2") return `\\log_{2}\\left(${args[0]}\\right)`;
       if (n.name === "binomial") return `\\binom{${args[0]}}{${args[1]}}`;
       if (n.name === "factorial") return `${args[0]}!`;
       if (n.name === "nPr" || n.name === "perm") return `{}^{${args[0]}}P_{${args[1]}}`;
       if (n.name === "sum" && args.length === 4) {
-        const body = n.args[0].k === "bin" && (n.args[0].op === "+" || n.args[0].op === "-") ? `\\left(${args[0]}\\right)` : args[0];
+        const body =
+          n.args[0].k === "bin" && (n.args[0].op === "+" || n.args[0].op === "-")
+            ? `\\left(${args[0]}\\right)`
+            : args[0];
         return `\\sum_{${args[1]}=${args[2]}}^{${args[3] === "inf" ? "\\infty" : args[3]}} ${body}`;
       }
       const cmd = LATEX_FN[n.name] ?? `\\operatorname{${n.name}}`;
@@ -108,23 +147,33 @@ export function syntaxToLatex(n: SNode, divStyle: "frac" | "div" = "frac"): stri
         return `\\begin{pmatrix}${rows.join(" \\\\ ")}\\end{pmatrix}`;
       }
       const inner = n.items.map(rec).join(", ");
-      return n.bracket === "(" ? `\\left(${inner}\\right)` : n.bracket === "{" ? `\\left\\{${inner}\\right\\}` : `\\left[${inner}\\right]`;
+      return n.bracket === "("
+        ? `\\left(${inner}\\right)`
+        : n.bracket === "{"
+          ? `\\left\\{${inner}\\right\\}`
+          : `\\left[${inner}\\right]`;
     }
     case "deriv": {
       const v = n.variable || "x";
-      if (n.variable === "" ) return `\\left(${rec(n.expr)}\\right)${"'".repeat(n.order)}`;
+      if (n.variable === "") return `\\left(${rec(n.expr)}\\right)${"'".repeat(n.order)}`;
       const d = n.order === 1 ? `\\frac{d}{d${v}}` : `\\frac{d^{${n.order}}}{d${v}^{${n.order}}}`;
       return `${d}\\left(${rec(n.expr)}\\right)`;
     }
     case "integral": {
       const v = n.variable || "x";
       const bounds = n.lower && n.upper ? `_{${rec(n.lower)}}^{${rec(n.upper)}}` : "";
-      const body = n.expr.k === "bin" && (n.expr.op === "+" || n.expr.op === "-") ? `\\left(${rec(n.expr)}\\right)` : rec(n.expr);
+      const body =
+        n.expr.k === "bin" && (n.expr.op === "+" || n.expr.op === "-")
+          ? `\\left(${rec(n.expr)}\\right)`
+          : rec(n.expr);
       return `\\int${bounds} ${body} \\, d${v}`;
     }
     case "limit": {
       const dir = n.direction ? `^{${n.direction}}` : "";
-      const body = n.expr.k === "bin" && (n.expr.op === "+" || n.expr.op === "-") ? `\\left(${rec(n.expr)}\\right)` : rec(n.expr);
+      const body =
+        n.expr.k === "bin" && (n.expr.op === "+" || n.expr.op === "-")
+          ? `\\left(${rec(n.expr)}\\right)`
+          : rec(n.expr);
       return `\\lim_{${symbolToLatex(n.variable)} \\to ${rec(n.to)}${dir}} ${body}`;
     }
   }

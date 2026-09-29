@@ -8,7 +8,9 @@ describe("syntax guide examples", () => {
       for (const row of section.rows) {
         const r = solve(row.example);
         if (!r.ok) throw new Error(`${row.example}: ${r.error.message}`);
-        expect(["verified", "verified-numeric"], row.example).toContain(r.solution.verification.status);
+        expect(["verified", "verified-numeric"], row.example).toContain(
+          r.solution.verification.status,
+        );
       }
     });
   }

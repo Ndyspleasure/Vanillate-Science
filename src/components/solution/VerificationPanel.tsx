@@ -15,9 +15,16 @@ export function VerificationPanel({ verification }: { verification: Verification
       {verification.checks.length > 0 && (
         <ul className="space-y-3">
           {verification.checks.map((c, i) => (
-            <li key={i} className={`rounded-lg border p-3 ${c.passed ? "border-ok/30 bg-ok-soft/40" : "border-bad/30 bg-bad-soft/40"}`}>
+            <li
+              key={i}
+              className={`rounded-lg border p-3 ${c.passed ? "border-ok/30 bg-ok-soft/40" : "border-bad/30 bg-bad-soft/40"}`}
+            >
               <div className="flex items-start gap-2">
-                {c.passed ? <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-ok" aria-label="Lolos" /> : <XCircle size={17} className="mt-0.5 shrink-0 text-bad" aria-label="Gagal" />}
+                {c.passed ? (
+                  <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-ok" aria-label="Lolos" />
+                ) : (
+                  <XCircle size={17} className="mt-0.5 shrink-0 text-bad" aria-label="Gagal" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-text">
                     <MathText text={c.description} />

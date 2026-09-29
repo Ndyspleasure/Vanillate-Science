@@ -30,9 +30,22 @@ export function renderTex(tex: string, display = false): string {
   return html;
 }
 
-export function Tex({ tex, display = false, className }: { tex: string; display?: boolean; className?: string }) {
+export function Tex({
+  tex,
+  display = false,
+  className,
+}: {
+  tex: string;
+  display?: boolean;
+  className?: string;
+}) {
   if (display) {
-    return <div className={`math-scroll ${className ?? ""}`} dangerouslySetInnerHTML={{ __html: renderTex(tex, true) }} />;
+    return (
+      <div
+        className={`math-scroll ${className ?? ""}`}
+        dangerouslySetInnerHTML={{ __html: renderTex(tex, true) }}
+      />
+    );
   }
   return <span className={className} dangerouslySetInnerHTML={{ __html: renderTex(tex, false) }} />;
 }

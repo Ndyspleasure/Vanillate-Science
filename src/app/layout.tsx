@@ -14,7 +14,18 @@ export const metadata: Metadata = {
   },
   description: SITE.description,
   applicationName: SITE.name,
-  keywords: ["kalkulator", "kalkulator matematika", "kalkulator sains", "langkah penyelesaian", "turunan", "integral", "persamaan kuadrat", "fisika", "kimia", "statistika"],
+  keywords: [
+    "kalkulator",
+    "kalkulator matematika",
+    "kalkulator sains",
+    "langkah penyelesaian",
+    "turunan",
+    "integral",
+    "persamaan kuadrat",
+    "fisika",
+    "kimia",
+    "statistika",
+  ],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -44,7 +55,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="flex min-h-screen flex-col">
-        <a href="#konten" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-contrast">
+        <a
+          href="#konten"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-contrast"
+        >
           Lewati ke konten utama
         </a>
         <SiteHeader />

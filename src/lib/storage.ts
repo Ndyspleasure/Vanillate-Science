@@ -39,7 +39,8 @@ function read(key: string): HistoryEntry[] {
   let value: HistoryEntry[] = EMPTY;
   try {
     const parsed = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed)) value = parsed.filter((e) => e && typeof e.href === "string" && typeof e.title === "string");
+    if (Array.isArray(parsed))
+      value = parsed.filter((e) => e && typeof e.href === "string" && typeof e.title === "string");
   } catch {
     value = EMPTY;
   }
@@ -75,7 +76,11 @@ export function useStoredList(key: string): HistoryEntry[] {
 
 export function addHistory(entry: Omit<HistoryEntry, "id" | "time">) {
   const list = read(HISTORY_KEY).filter((e) => e.href !== entry.href);
-  list.unshift({ ...entry, id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, time: Date.now() });
+  list.unshift({
+    ...entry,
+    id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    time: Date.now(),
+  });
   write(HISTORY_KEY, list.slice(0, MAX_HISTORY));
 }
 
@@ -96,8 +101,23 @@ export function isFavorite(list: HistoryEntry[], href: string): boolean {
 
 export function toggleFavorite(entry: Omit<HistoryEntry, "id" | "time">) {
   const list = read(FAVORITES_KEY);
-  if (list.some((e) => e.href === entry.href)) write(FAVORITES_KEY, list.filter((e) => e.href !== entry.href));
-  else write(FAVORITES_KEY, [{ ...entry, id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, time: Date.now() }, ...list].slice(0, MAX_FAVORITES));
+  if (list.some((e) => e.href === entry.href))
+    write(
+      FAVORITES_KEY,
+      list.filter((e) => e.href !== entry.href),
+    );
+  else
+    write(
+      FAVORITES_KEY,
+      [
+        {
+          ...entry,
+          id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+          time: Date.now(),
+        },
+        ...list,
+      ].slice(0, MAX_FAVORITES),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -112,13 +132,18 @@ function readPref(key: string): string | null {
   }
 }
 
-export function usePreference<T extends string>(key: string, fallback: T, allowed: readonly T[]): [T, (v: T) => void] {
+export function usePreference<T extends string>(
+  key: string,
+  fallback: T,
+  allowed: readonly T[],
+): [T, (v: T) => void] {
   const raw = useSyncExternalStore(
     subscribe,
     () => readPref(key),
     () => null,
   );
-  const value = raw !== null && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback;
+  const value =
+    raw !== null && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback;
   const set = (v: T) => {
     try {
       localStorage.setItem(key, v);

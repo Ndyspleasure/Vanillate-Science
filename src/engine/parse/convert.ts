@@ -3,7 +3,22 @@
  */
 import { invalidInput, MathError } from "../core/errors";
 import { Rational } from "../core/rational";
-import { add, div, fn, frac, HALF, I, mul, neg, num, pow, sub, PI, E, KNOWN_FUNCTIONS } from "../expr/simplify";
+import {
+  add,
+  div,
+  fn,
+  frac,
+  HALF,
+  I,
+  mul,
+  neg,
+  num,
+  pow,
+  sub,
+  PI,
+  E,
+  KNOWN_FUNCTIONS,
+} from "../expr/simplify";
 import { rawSym, type Expr } from "../expr/types";
 import type { SNode } from "./syntax";
 
@@ -25,10 +40,13 @@ export function toExpr(node: SNode, options: ConvertOptions = {}): Expr {
       if (node.name === "i") return I;
       if (node.name === "inf") {
         if (!options.allowInfinity) {
-          throw invalidInput("Simbol tak hingga (∞) hanya dapat digunakan pada limit atau batas integral.", {
-            module: "convert",
-            span: node.span,
-          });
+          throw invalidInput(
+            "Simbol tak hingga (∞) hanya dapat digunakan pada limit atau batas integral.",
+            {
+              module: "convert",
+              span: node.span,
+            },
+          );
         }
         return rawSym(INFINITY_SYMBOL);
       }
@@ -72,9 +90,15 @@ export function toExpr(node: SNode, options: ConvertOptions = {}): Expr {
     case "call":
       return convertCall(node.name, node.args.map(rec), node);
     case "rel":
-      throw invalidInput("Relasi (=, <, >) tidak dapat digunakan sebagai ekspresi di sini.", { module: "convert", span: node.span });
+      throw invalidInput("Relasi (=, <, >) tidak dapat digunakan sebagai ekspresi di sini.", {
+        module: "convert",
+        span: node.span,
+      });
     case "list":
-      throw invalidInput("Daftar/matriks tidak dapat digunakan sebagai ekspresi skalar di sini.", { module: "convert", span: node.span });
+      throw invalidInput("Daftar/matriks tidak dapat digunakan sebagai ekspresi skalar di sini.", {
+        module: "convert",
+        span: node.span,
+      });
     case "deriv":
     case "integral":
     case "limit":
@@ -90,10 +114,13 @@ export function toExpr(node: SNode, options: ConvertOptions = {}): Expr {
 export function convertCall(name: string, args: Expr[], node: SNode): Expr {
   const arity = (min: number, max = min) => {
     if (args.length < min || args.length > max) {
-      throw invalidInput(`Fungsi ${name} menerima ${min === max ? min : `${min}–${max}`} argumen, tetapi diberikan ${args.length}.`, {
-        module: "convert",
-        span: node.span,
-      });
+      throw invalidInput(
+        `Fungsi ${name} menerima ${min === max ? min : `${min}–${max}`} argumen, tetapi diberikan ${args.length}.`,
+        {
+          module: "convert",
+          span: node.span,
+        },
+      );
     }
   };
   switch (name) {
@@ -107,7 +134,8 @@ export function convertCall(name: string, args: Expr[], node: SNode): Expr {
     case "nthroot": {
       arity(2);
       const n = args[1];
-      if (n.type === "num" && n.value.isZero()) throw invalidInput("Indeks akar tidak boleh 0.", { module: "convert", span: node.span });
+      if (n.type === "num" && n.value.isZero())
+        throw invalidInput("Indeks akar tidak boleh 0.", { module: "convert", span: node.span });
       return pow(args[0], div(num(1), n));
     }
     case "exp":
@@ -140,7 +168,15 @@ export function convertCall(name: string, args: Expr[], node: SNode): Expr {
 
 export function isInfinity(e: Expr): -1 | 1 | 0 {
   if (e.type === "sym" && e.name === INFINITY_SYMBOL) return 1;
-  if (e.type === "mul" && e.factors.length === 2 && e.factors[0].type === "num" && e.factors[0].value.isNegative() && e.factors[1].type === "sym" && e.factors[1].name === INFINITY_SYMBOL) return -1;
+  if (
+    e.type === "mul" &&
+    e.factors.length === 2 &&
+    e.factors[0].type === "num" &&
+    e.factors[0].value.isNegative() &&
+    e.factors[1].type === "sym" &&
+    e.factors[1].name === INFINITY_SYMBOL
+  )
+    return -1;
   return 0;
 }
 

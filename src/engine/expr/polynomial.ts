@@ -24,7 +24,11 @@ export class Poly {
   }
 
   static fromNumbers(coeffsAscending: Array<number | bigint | Rational>): Poly {
-    return new Poly(coeffsAscending.map((v) => (v instanceof Rational ? v : Rational.of(typeof v === "number" ? BigInt(v) : v))));
+    return new Poly(
+      coeffsAscending.map((v) =>
+        v instanceof Rational ? v : Rational.of(typeof v === "number" ? BigInt(v) : v),
+      ),
+    );
   }
 
   static monomial(c: Rational, k: number): Poly {
@@ -80,7 +84,10 @@ export class Poly {
 
   /** Long division: this = q * d + r with deg r < deg d. */
   divmod(d: Poly): { q: Poly; r: Poly } {
-    if (d.isZero()) throw new MathError("division-by-zero", "Pembagian polinomial dengan polinomial nol.", { module: "polynomial" });
+    if (d.isZero())
+      throw new MathError("division-by-zero", "Pembagian polinomial dengan polinomial nol.", {
+        module: "polynomial",
+      });
     let r = new Poly(this.coeffs);
     const q = new Array<Rational>(Math.max(0, this.degree - d.degree + 1)).fill(Rational.ZERO);
     while (!r.isZero() && r.degree >= d.degree) {
@@ -128,7 +135,9 @@ export class Poly {
   }
 
   equals(o: Poly): boolean {
-    return this.coeffs.length === o.coeffs.length && this.coeffs.every((c, k) => c.equals(o.coeffs[k]));
+    return (
+      this.coeffs.length === o.coeffs.length && this.coeffs.every((c, k) => c.equals(o.coeffs[k]))
+    );
   }
 
   /** Integer primitive part: scaled so coefficients are coprime integers with positive lead. */
@@ -183,11 +192,12 @@ export class Poly {
     }
     if (ps.length * qs.length > 20000) return { roots, rest: p };
     const candidates = new Map<string, Rational>();
-    for (const a of ps) for (const b of qs) {
-      const r = Rational.of(a, b);
-      candidates.set(r.toString(), r);
-      candidates.set(r.neg().toString(), r.neg());
-    }
+    for (const a of ps)
+      for (const b of qs) {
+        const r = Rational.of(a, b);
+        candidates.set(r.toString(), r);
+        candidates.set(r.neg().toString(), r.neg());
+      }
     const sorted = [...candidates.values()].sort((a, b) => a.cmp(b));
     for (const r of sorted) {
       tick("rational-roots");
@@ -227,7 +237,11 @@ export class Poly {
  * Numeric roots (all complex roots) of a polynomial with the Durand–Kerner method.
  * Returns roots with an error estimate; throws numerical-instability on non-convergence.
  */
-export function numericRoots(p: Poly, tolerance = 1e-13, maxIter = 2000): { roots: Array<{ re: number; im: number }>; iterations: number; converged: boolean } {
+export function numericRoots(
+  p: Poly,
+  tolerance = 1e-13,
+  maxIter = 2000,
+): { roots: Array<{ re: number; im: number }>; iterations: number; converged: boolean } {
   const n = p.degree;
   if (n < 1) return { roots: [], iterations: 0, converged: true };
   const lead = p.lead().toNumber();
@@ -336,7 +350,14 @@ export function polyCoefficients(e: Expr, x: string, alreadyExpanded = false): E
     const coef: Expr[] = [];
     for (const f of factors) {
       if (f.type === "sym" && f.name === x) deg += 1;
-      else if (f.type === "pow" && f.base.type === "sym" && f.base.name === x && f.exp.type === "num" && f.exp.value.isInteger() && !f.exp.value.isNegative()) {
+      else if (
+        f.type === "pow" &&
+        f.base.type === "sym" &&
+        f.base.name === x &&
+        f.exp.type === "num" &&
+        f.exp.value.isInteger() &&
+        !f.exp.value.isNegative()
+      ) {
         deg += Number(f.exp.value.num);
       } else if (containsSymbol(f, x)) return null;
       else coef.push(f);
@@ -347,7 +368,12 @@ export function polyCoefficients(e: Expr, x: string, alreadyExpanded = false): E
   const maxDeg = Math.max(0, ...byDeg.keys());
   const out: Expr[] = [];
   for (let k = 0; k <= maxDeg; k++) out.push(add(...(byDeg.get(k) ?? [])));
-  while (out.length > 1 && out[out.length - 1].type === "num" && (out[out.length - 1] as { value: Rational }).value.isZero()) out.pop();
+  while (
+    out.length > 1 &&
+    out[out.length - 1].type === "num" &&
+    (out[out.length - 1] as { value: Rational }).value.isZero()
+  )
+    out.pop();
   return out;
 }
 

@@ -28,7 +28,11 @@ export function GraphingApp() {
   const [mode, setMode] = useState<GraphMode>("function");
   const [exprs, setExprs] = useState<string[]>(DEFAULTS.function);
   const [range, setRange] = useState<[string, string]>(["-10", "10"]);
-  const [plotted, setPlotted] = useState<{ mode: GraphMode; exprs: string[]; range: [number, number] }>({ mode: "function", exprs: DEFAULTS.function, range: [-10, 10] });
+  const [plotted, setPlotted] = useState<{
+    mode: GraphMode;
+    exprs: string[];
+    range: [number, number];
+  }>({ mode: "function", exprs: DEFAULTS.function, range: [-10, 10] });
   const didInit = useRef(false);
 
   useEffect(() => {
@@ -45,14 +49,23 @@ export function GraphingApp() {
       setMode(gm);
       setExprs(fs);
       setRange([String(a), String(b)]);
-      setPlotted({ mode: gm, exprs: fs, range: Number.isFinite(a) && Number.isFinite(b) && b > a ? [a, b] : [-10, 10] });
+      setPlotted({
+        mode: gm,
+        exprs: fs,
+        range: Number.isFinite(a) && Number.isFinite(b) && b > a ? [a, b] : [-10, 10],
+      });
     }
   }, []);
 
   const draw = () => {
     const a = Number(range[0].replace(",", "."));
     const b = Number(range[1].replace(",", "."));
-    const r: [number, number] = Number.isFinite(a) && Number.isFinite(b) && b > a ? [a, b] : mode === "function" ? [-10, 10] : [0, 2 * Math.PI];
+    const r: [number, number] =
+      Number.isFinite(a) && Number.isFinite(b) && b > a
+        ? [a, b]
+        : mode === "function"
+          ? [-10, 10]
+          : [0, 2 * Math.PI];
     const list = exprs.map((e) => e.trim()).filter(Boolean);
     setPlotted({ mode, exprs: list, range: r });
     const url = new URL(window.location.href);
@@ -67,10 +80,28 @@ export function GraphingApp() {
   const spec: PlotSpec | null = useMemo(() => {
     const list = plotted.exprs;
     if (list.length === 0) return null;
-    if (plotted.mode === "function") return { kind: "function", variable: "x", functions: list.map((e) => ({ expr: e, label: `y = ${e}` })), xRange: plotted.range };
-    if (plotted.mode === "polar") return { kind: "polar", variable: "theta", functions: list.map((e) => ({ expr: e, label: `r = ${e}` })), tRange: plotted.range };
+    if (plotted.mode === "function")
+      return {
+        kind: "function",
+        variable: "x",
+        functions: list.map((e) => ({ expr: e, label: `y = ${e}` })),
+        xRange: plotted.range,
+      };
+    if (plotted.mode === "polar")
+      return {
+        kind: "polar",
+        variable: "theta",
+        functions: list.map((e) => ({ expr: e, label: `r = ${e}` })),
+        tRange: plotted.range,
+      };
     if (list.length < 2) return null;
-    return { kind: "parametric", variable: "t", functions: [{ expr: list[0], label: `(${list[0]}, ${list[1]})` }], yExpr: list[1], tRange: plotted.range };
+    return {
+      kind: "parametric",
+      variable: "t",
+      functions: [{ expr: list[0], label: `(${list[0]}, ${list[1]})` }],
+      yExpr: list[1],
+      tRange: plotted.range,
+    };
   }, [plotted]);
 
   const switchMode = (m: GraphMode) => {
@@ -79,8 +110,16 @@ export function GraphingApp() {
     setRange(m === "function" ? ["-10", "10"] : ["0", "6.283185307"]);
   };
 
-  const label = (i: number) => (mode === "function" ? `f${i + 1}(x) =` : mode === "polar" ? `r${exprs.length > 1 ? i + 1 : ""}(θ) =` : i === 0 ? "x(t) =" : "y(t) =");
-  const field = "w-full rounded-lg border border-border bg-bg px-3 py-2 font-mono text-sm text-text focus:border-accent focus:outline-none";
+  const label = (i: number) =>
+    mode === "function"
+      ? `f${i + 1}(x) =`
+      : mode === "polar"
+        ? `r${exprs.length > 1 ? i + 1 : ""}(θ) =`
+        : i === 0
+          ? "x(t) ="
+          : "y(t) =";
+  const field =
+    "w-full rounded-lg border border-border bg-bg px-3 py-2 font-mono text-sm text-text focus:border-accent focus:outline-none";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
@@ -92,9 +131,19 @@ export function GraphingApp() {
         }}
         aria-label="Fungsi yang digambar"
       >
-        <div className="flex gap-1 rounded-lg bg-surface-2 p-1" role="group" aria-label="Jenis grafik">
+        <div
+          className="flex gap-1 rounded-lg bg-surface-2 p-1"
+          role="group"
+          aria-label="Jenis grafik"
+        >
           {(["function", "polar", "parametric"] as GraphMode[]).map((m) => (
-            <button key={m} type="button" aria-pressed={mode === m} onClick={() => switchMode(m)} className="flex-1 rounded-md px-2 py-1.5 text-xs font-medium text-muted aria-pressed:bg-surface aria-pressed:text-accent-strong aria-pressed:shadow-sm">
+            <button
+              key={m}
+              type="button"
+              aria-pressed={mode === m}
+              onClick={() => switchMode(m)}
+              className="flex-1 rounded-md px-2 py-1.5 text-xs font-medium text-muted aria-pressed:bg-surface aria-pressed:text-accent-strong aria-pressed:shadow-sm"
+            >
               {m === "function" ? "y = f(x)" : m === "polar" ? "Polar r(θ)" : "Parametrik"}
             </button>
           ))}
@@ -102,13 +151,33 @@ export function GraphingApp() {
         <ul className="space-y-2">
           {exprs.map((e, i) => (
             <li key={i} className="flex items-center gap-2">
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: PLOT_COLORS[(mode === "parametric" ? 0 : i) % PLOT_COLORS.length] }} aria-hidden />
+              <span
+                className="h-3 w-3 shrink-0 rounded-full"
+                style={{
+                  background: PLOT_COLORS[(mode === "parametric" ? 0 : i) % PLOT_COLORS.length],
+                }}
+                aria-hidden
+              />
               <label className="flex flex-1 items-center gap-2">
                 <span className="w-16 shrink-0 font-mono text-xs text-muted">{label(i)}</span>
-                <input value={e} onChange={(ev) => setExprs((cur) => cur.map((x, j) => (j === i ? ev.target.value : x)))} className={field} spellCheck={false} autoComplete="off" aria-label={label(i)} />
+                <input
+                  value={e}
+                  onChange={(ev) =>
+                    setExprs((cur) => cur.map((x, j) => (j === i ? ev.target.value : x)))
+                  }
+                  className={field}
+                  spellCheck={false}
+                  autoComplete="off"
+                  aria-label={label(i)}
+                />
               </label>
               {mode !== "parametric" && exprs.length > 1 && (
-                <button type="button" onClick={() => setExprs((cur) => cur.filter((_, j) => j !== i))} className="text-muted hover:text-bad" aria-label={`Hapus fungsi ${i + 1}`}>
+                <button
+                  type="button"
+                  onClick={() => setExprs((cur) => cur.filter((_, j) => j !== i))}
+                  className="text-muted hover:text-bad"
+                  aria-label={`Hapus fungsi ${i + 1}`}
+                >
                   <Trash2 size={15} aria-hidden />
                 </button>
               )}
@@ -116,21 +185,38 @@ export function GraphingApp() {
           ))}
         </ul>
         {mode !== "parametric" && exprs.length < 8 && (
-          <button type="button" onClick={() => setExprs((cur) => [...cur, ""])} className="inline-flex items-center gap-1.5 text-sm font-medium text-accent">
+          <button
+            type="button"
+            onClick={() => setExprs((cur) => [...cur, ""])}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+          >
             <Plus size={15} aria-hidden /> Tambah fungsi
           </button>
         )}
         <div className="grid grid-cols-2 gap-2">
           <label className="text-xs text-muted">
             {mode === "function" ? "x minimum" : mode === "polar" ? "θ awal" : "t awal"}
-            <input value={range[0]} onChange={(e) => setRange([e.target.value, range[1]])} inputMode="decimal" className={`${field} mt-1`} />
+            <input
+              value={range[0]}
+              onChange={(e) => setRange([e.target.value, range[1]])}
+              inputMode="decimal"
+              className={`${field} mt-1`}
+            />
           </label>
           <label className="text-xs text-muted">
             {mode === "function" ? "x maksimum" : mode === "polar" ? "θ akhir" : "t akhir"}
-            <input value={range[1]} onChange={(e) => setRange([range[0], e.target.value])} inputMode="decimal" className={`${field} mt-1`} />
+            <input
+              value={range[1]}
+              onChange={(e) => setRange([range[0], e.target.value])}
+              inputMode="decimal"
+              className={`${field} mt-1`}
+            />
           </label>
         </div>
-        <button type="submit" className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast hover:bg-accent-strong">
+        <button
+          type="submit"
+          className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast hover:bg-accent-strong"
+        >
           Gambar grafik
         </button>
         <div>
@@ -156,14 +242,21 @@ export function GraphingApp() {
         </div>
       </form>
       <div className="min-w-0 space-y-3">
-        {spec ? <PlotView spec={spec} interactive height={480} /> : <p className="text-sm text-muted">Masukkan fungsi lalu tekan “Gambar grafik”.</p>}
+        {spec ? (
+          <PlotView spec={spec} interactive height={480} />
+        ) : (
+          <p className="text-sm text-muted">Masukkan fungsi lalu tekan “Gambar grafik”.</p>
+        )}
         {plotted.mode === "function" && plotted.exprs.length > 0 && (
           <p className="text-sm text-muted">
             Analisis fungsi:{" "}
             {plotted.exprs.slice(0, 3).map((e, i) => (
               <span key={i}>
                 {i > 0 && " · "}
-                <Link href={`/?q=${encodeURIComponent(`extrema(${e})`)}`} className="font-mono text-accent hover:underline">
+                <Link
+                  href={`/?q=${encodeURIComponent(`extrema(${e})`)}`}
+                  className="font-mono text-accent hover:underline"
+                >
                   titik ekstrem {e}
                 </Link>
               </span>

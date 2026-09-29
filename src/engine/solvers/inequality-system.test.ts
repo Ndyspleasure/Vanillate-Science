@@ -41,7 +41,10 @@ describe("systems", () => {
   it("solves a 2x2 linear system with alternatives", () => {
     const s = sys("2x + 3y = 7, x - y = 1");
     expect(s.answers.map((a) => a.text)).toEqual(["2", "1"]);
-    expect(s.alternatives.map((a) => a.name)).toEqual(["Eliminasi dan substitusi", "Aturan Cramer"]);
+    expect(s.alternatives.map((a) => a.name)).toEqual([
+      "Eliminasi dan substitusi",
+      "Aturan Cramer",
+    ]);
     expect(s.verification.status).toBe("verified");
   });
   it("solves a 3x3 system", () => {

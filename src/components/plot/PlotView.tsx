@@ -7,7 +7,16 @@ import type { PlotSpec } from "@/engine/steps/types";
 import { runEngine } from "@/lib/engine-client";
 import { formatTick, niceTicks, robustRange, splitSegments } from "./plot-math";
 
-export const PLOT_COLORS = ["var(--accent)", "var(--warm)", "#0d9488", "#db2777", "#65a30d", "#7c3aed", "#0891b2", "#dc2626"];
+export const PLOT_COLORS = [
+  "var(--accent)",
+  "var(--warm)",
+  "#0d9488",
+  "#db2777",
+  "#65a30d",
+  "#7c3aed",
+  "#0891b2",
+  "#dc2626",
+];
 
 interface View {
   x0: number;
@@ -24,7 +33,11 @@ function histogram(data: number[]) {
   const max = Math.max(...data);
   const k = Math.max(1, Math.min(40, Math.ceil(Math.log2(n) + 1)));
   const width = max === min ? 1 : (max - min) / k;
-  const bins = Array.from({ length: k }, (_, i) => ({ x0: min + i * width, x1: min + (i + 1) * width, count: 0 }));
+  const bins = Array.from({ length: k }, (_, i) => ({
+    x0: min + i * width,
+    x1: min + (i + 1) * width,
+    count: 0,
+  }));
   for (const v of data) {
     const idx = max === min ? 0 : Math.min(k - 1, Math.floor((v - min) / width));
     bins[idx].count++;
@@ -133,12 +146,31 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
       const id = ++reqId.current;
       if (isParam) {
         const range = spec.tRange ?? [0, 2 * Math.PI];
-        const res = await runEngine({ type: "sample", request: { kind: spec.kind as "polar" | "parametric", exprs, yExprs: spec.yExpr ? [spec.yExpr] : undefined, variable: spec.variable, range, samples: 1500 } });
+        const res = await runEngine({
+          type: "sample",
+          request: {
+            kind: spec.kind as "polar" | "parametric",
+            exprs,
+            yExprs: spec.yExpr ? [spec.yExpr] : undefined,
+            variable: spec.variable,
+            range,
+            samples: 1500,
+          },
+        });
         if (id !== reqId.current || !res.ok) return null;
         return res.curves;
       }
       const w = x1 - x0;
-      const res = await runEngine({ type: "sample", request: { kind: "function", exprs, variable: spec.variable, range: [x0 - w * 0.25, x1 + w * 0.25], samples: Math.min(2400, Math.max(600, Math.round(width * 1.5))) } });
+      const res = await runEngine({
+        type: "sample",
+        request: {
+          kind: "function",
+          exprs,
+          variable: spec.variable,
+          range: [x0 - w * 0.25, x1 + w * 0.25],
+          samples: Math.min(2400, Math.max(600, Math.round(width * 1.5))),
+        },
+      });
       if (id !== reqId.current || !res.ok) return null;
       return res.curves;
     },
@@ -157,19 +189,22 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
       if (isParam) {
         const xs: number[] = [];
         const ys: number[] = [];
-        for (const c of cs) for (let i = 0; i < c.points.length; i += 2) if (Number.isFinite(c.points[i]) && Number.isFinite(c.points[i + 1])) {
-          xs.push(c.points[i]);
-          ys.push(c.points[i + 1]);
-        }
+        for (const c of cs)
+          for (let i = 0; i < c.points.length; i += 2)
+            if (Number.isFinite(c.points[i]) && Number.isFinite(c.points[i + 1])) {
+              xs.push(c.points[i]);
+              ys.push(c.points[i + 1]);
+            }
         const [ax, bx] = robustRange(xs, [-5, 5]);
         const [ay, by] = robustRange(ys, [-5, 5]);
         v = { x0: ax, x1: bx, y0: ay, y1: by };
       } else {
         const ys: number[] = [];
-        for (const c of cs) for (let i = 0; i < c.points.length; i += 2) {
-          const x = c.points[i];
-          if (x >= x0 && x <= x1 && Number.isFinite(c.points[i + 1])) ys.push(c.points[i + 1]);
-        }
+        for (const c of cs)
+          for (let i = 0; i < c.points.length; i += 2) {
+            const x = c.points[i];
+            if (x >= x0 && x <= x1 && Number.isFinite(c.points[i + 1])) ys.push(c.points[i + 1]);
+          }
         for (const p of spec.points ?? []) if (Number.isFinite(p.y)) ys.push(p.y);
         const [y0, y1] = spec.yRange ?? robustRange(ys, [-5, 5]);
         v = { x0, x1, y0, y1 };
@@ -202,20 +237,23 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
   const sx = useCallback((x: number) => (v ? M.l + ((x - v.x0) / (v.x1 - v.x0)) * pw : 0), [v, pw]);
   const sy = useCallback((y: number) => (v ? M.t + ((v.y1 - y) / (v.y1 - v.y0)) * ph : 0), [v, ph]);
 
-  const zoom = useCallback((factor: number, cx?: number, cy?: number) => {
-    setView((prev) => {
-      const cur = prev ?? staticHome;
-      if (!cur) return prev;
-      const mx = cx ?? (cur.x0 + cur.x1) / 2;
-      const my = cy ?? (cur.y0 + cur.y1) / 2;
-      const nx0 = mx - (mx - cur.x0) * factor;
-      const nx1 = mx + (cur.x1 - mx) * factor;
-      const ny0 = my - (my - cur.y0) * factor;
-      const ny1 = my + (cur.y1 - my) * factor;
-      if (nx1 - nx0 < 1e-9 || nx1 - nx0 > 1e9) return cur;
-      return { x0: nx0, x1: nx1, y0: ny0, y1: ny1 };
-    });
-  }, [staticHome]);
+  const zoom = useCallback(
+    (factor: number, cx?: number, cy?: number) => {
+      setView((prev) => {
+        const cur = prev ?? staticHome;
+        if (!cur) return prev;
+        const mx = cx ?? (cur.x0 + cur.x1) / 2;
+        const my = cy ?? (cur.y0 + cur.y1) / 2;
+        const nx0 = mx - (mx - cur.x0) * factor;
+        const nx1 = mx + (cur.x1 - mx) * factor;
+        const ny0 = my - (my - cur.y0) * factor;
+        const ny1 = my + (cur.y1 - my) * factor;
+        if (nx1 - nx0 < 1e-9 || nx1 - nx0 > 1e9) return cur;
+        return { x0: nx0, x1: nx1, y0: ny0, y1: ny1 };
+      });
+    },
+    [staticHome],
+  );
 
   const toData = useCallback(
     (clientX: number, clientY: number) => {
@@ -224,7 +262,12 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
       const r = svg.getBoundingClientRect();
       const px = ((clientX - r.left) / r.width) * W;
       const py = ((clientY - r.top) / r.height) * H;
-      return { x: v.x0 + ((px - M.l) / pw) * (v.x1 - v.x0), y: v.y1 - ((py - M.t) / ph) * (v.y1 - v.y0), px, py };
+      return {
+        x: v.x0 + ((px - M.l) / pw) * (v.x1 - v.x0),
+        y: v.y1 - ((py - M.t) / ph) * (v.y1 - v.y0),
+        px,
+        py,
+      };
     },
     [v, W, H, pw, ph],
   );
@@ -265,7 +308,12 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
     if (!v) return;
     const stepX = (v.x1 - v.x0) * 0.1;
     const stepY = (v.y1 - v.y0) * 0.1;
-    const moves: Record<string, [number, number]> = { ArrowLeft: [-stepX, 0], ArrowRight: [stepX, 0], ArrowUp: [0, stepY], ArrowDown: [0, -stepY] };
+    const moves: Record<string, [number, number]> = {
+      ArrowLeft: [-stepX, 0],
+      ArrowRight: [stepX, 0],
+      ArrowUp: [0, stepY],
+      ArrowDown: [0, -stepY],
+    };
     if (moves[e.key]) {
       e.preventDefault();
       const [dx, dy] = moves[e.key];
@@ -277,7 +325,11 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
 
   const paths = useMemo(() => {
     if (!v) return [];
-    return curves.map((c) => splitSegments(c.points, v, !isParam).map((seg) => seg.map(([x, y], i) => `${i ? "L" : "M"}${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join("")));
+    return curves.map((c) =>
+      splitSegments(c.points, v, !isParam).map((seg) =>
+        seg.map(([x, y], i) => `${i ? "L" : "M"}${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join(""),
+      ),
+    );
   }, [curves, v, isParam, sx, sy]);
 
   const shadePath = useMemo(() => {
@@ -314,8 +366,18 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
     });
   }, [hover, curves, isCurve, isParam]);
 
-  const errors = curves.map((c, i) => (c.error ? `${spec.functions[i]?.label ?? `f${i + 1}`}: ${c.error}` : null)).filter(Boolean);
-  const description = title ?? (spec.functions.length ? `Grafik ${spec.functions.map((f) => f.label).join("; ")}` : spec.kind === "histogram" ? "Histogram data" : spec.kind === "bar" ? "Diagram batang distribusi peluang" : "Diagram pencar data");
+  const errors = curves
+    .map((c, i) => (c.error ? `${spec.functions[i]?.label ?? `f${i + 1}`}: ${c.error}` : null))
+    .filter(Boolean);
+  const description =
+    title ??
+    (spec.functions.length
+      ? `Grafik ${spec.functions.map((f) => f.label).join("; ")}`
+      : spec.kind === "histogram"
+        ? "Histogram data"
+        : spec.kind === "bar"
+          ? "Diagram batang distribusi peluang"
+          : "Diagram pencar data");
 
   const xt = v ? niceTicks(v.x0, v.x1, Math.max(3, Math.round(pw / 80))) : [];
   const yt = v ? niceTicks(v.y0, v.y1, Math.max(3, Math.round(ph / 50))) : [];
@@ -323,7 +385,10 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
 
   return (
     <figure className="space-y-2">
-      <div ref={wrapRef} className="relative w-full overflow-hidden rounded-xl border border-border bg-surface">
+      <div
+        ref={wrapRef}
+        className="relative w-full overflow-hidden rounded-xl border border-border bg-surface"
+      >
         <svg
           ref={svgRef}
           width="100%"
@@ -381,7 +446,15 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
                 {spec.kind === "histogram" &&
                   spec.data &&
                   histogram(spec.data).map((b, i) => (
-                    <rect key={i} x={sx(b.x0) + 0.5} y={sy(b.count)} width={Math.max(1, sx(b.x1) - sx(b.x0) - 1)} height={Math.max(0, sy(0) - sy(b.count))} fill="var(--accent)" opacity={0.75}>
+                    <rect
+                      key={i}
+                      x={sx(b.x0) + 0.5}
+                      y={sy(b.count)}
+                      width={Math.max(1, sx(b.x1) - sx(b.x0) - 1)}
+                      height={Math.max(0, sy(0) - sy(b.count))}
+                      fill="var(--accent)"
+                      opacity={0.75}
+                    >
                       <title>{`[${formatTick(b.x0)}, ${formatTick(b.x1)}): ${b.count}`}</title>
                     </rect>
                   ))}
@@ -389,21 +462,55 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
                   spec.points?.map((p, i) => {
                     const bw = Math.max(2, (sx(1) - sx(0)) * 0.7);
                     return (
-                      <rect key={i} x={sx(p.x) - bw / 2} y={sy(p.y)} width={bw} height={Math.max(0, sy(0) - sy(p.y))} fill={p.label ? "var(--accent)" : "var(--surface-3)"} stroke="var(--accent)" strokeWidth={p.label ? 0 : 1}>
+                      <rect
+                        key={i}
+                        x={sx(p.x) - bw / 2}
+                        y={sy(p.y)}
+                        width={bw}
+                        height={Math.max(0, sy(0) - sy(p.y))}
+                        fill={p.label ? "var(--accent)" : "var(--surface-3)"}
+                        stroke="var(--accent)"
+                        strokeWidth={p.label ? 0 : 1}
+                      >
                         <title>{`k = ${p.x}: ${formatTick(p.y)}`}</title>
                       </rect>
                     );
                   })}
                 {paths.map((segs, i) =>
-                  segs.map((d, j) => <path key={`${i}-${j}`} d={d} fill="none" stroke={PLOT_COLORS[i % PLOT_COLORS.length]} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />),
+                  segs.map((d, j) => (
+                    <path
+                      key={`${i}-${j}`}
+                      d={d}
+                      fill="none"
+                      stroke={PLOT_COLORS[i % PLOT_COLORS.length]}
+                      strokeWidth={2.2}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  )),
                 )}
                 {spec.kind !== "bar" &&
                   spec.points?.map((p, i) =>
                     Number.isFinite(p.x) && Number.isFinite(p.y) ? (
                       <g key={`p${i}`}>
-                        <circle cx={sx(p.x)} cy={sy(p.y)} r={spec.kind === "scatter" ? 4 : 5} fill={spec.kind === "scatter" ? "var(--warm)" : "var(--surface)"} stroke={spec.kind === "scatter" ? "none" : "var(--text)"} strokeWidth={2} />
+                        <circle
+                          cx={sx(p.x)}
+                          cy={sy(p.y)}
+                          r={spec.kind === "scatter" ? 4 : 5}
+                          fill={spec.kind === "scatter" ? "var(--warm)" : "var(--surface)"}
+                          stroke={spec.kind === "scatter" ? "none" : "var(--text)"}
+                          strokeWidth={2}
+                        />
                         {p.label && spec.kind !== "scatter" && (
-                          <text x={sx(p.x) + 8} y={sy(p.y) - 8} fontSize={11} fill="var(--text)" paintOrder="stroke" stroke="var(--surface)" strokeWidth={3}>
+                          <text
+                            x={sx(p.x) + 8}
+                            y={sy(p.y) - 8}
+                            fontSize={11}
+                            fill="var(--text)"
+                            paintOrder="stroke"
+                            stroke="var(--surface)"
+                            strokeWidth={3}
+                          >
                             {p.label}
                           </text>
                         )}
@@ -411,7 +518,14 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
                     ) : null,
                   )}
                 {hover && isCurve && !isParam && hover.x >= v.x0 && hover.x <= v.x1 && (
-                  <line x1={sx(hover.x)} x2={sx(hover.x)} y1={M.t} y2={M.t + ph} stroke="var(--plot-axis)" strokeDasharray="3 4" />
+                  <line
+                    x1={sx(hover.x)}
+                    x2={sx(hover.x)}
+                    y1={M.t}
+                    y2={M.t + ph}
+                    stroke="var(--plot-axis)"
+                    strokeDasharray="3 4"
+                  />
                 )}
               </g>
             </>
@@ -423,13 +537,28 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
           )}
         </svg>
         <div className="absolute right-2 top-2 flex gap-1">
-          <button type="button" onClick={() => zoom(1 / 1.5)} className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface/90 text-muted hover:text-text" aria-label="Perbesar">
+          <button
+            type="button"
+            onClick={() => zoom(1 / 1.5)}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface/90 text-muted hover:text-text"
+            aria-label="Perbesar"
+          >
             <Plus size={15} aria-hidden />
           </button>
-          <button type="button" onClick={() => zoom(1.5)} className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface/90 text-muted hover:text-text" aria-label="Perkecil">
+          <button
+            type="button"
+            onClick={() => zoom(1.5)}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface/90 text-muted hover:text-text"
+            aria-label="Perkecil"
+          >
             <Minus size={15} aria-hidden />
           </button>
-          <button type="button" onClick={() => setView(home ?? staticHome)} className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface/90 text-muted hover:text-text" aria-label="Kembalikan tampilan awal">
+          <button
+            type="button"
+            onClick={() => setView(home ?? staticHome)}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface/90 text-muted hover:text-text"
+            aria-label="Kembalikan tampilan awal"
+          >
             <Maximize2 size={14} aria-hidden />
           </button>
         </div>
@@ -450,12 +579,25 @@ export function PlotView({ spec, interactive = false, height = 380, title }: Plo
       <figcaption className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
         {spec.functions.map((f, i) => (
           <span key={i} className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-4 rounded" style={{ background: PLOT_COLORS[i % PLOT_COLORS.length] }} aria-hidden />
+            <span
+              className="inline-block h-0.5 w-4 rounded"
+              style={{ background: PLOT_COLORS[i % PLOT_COLORS.length] }}
+              aria-hidden
+            />
             <span className="font-mono">{f.label}</span>
           </span>
         ))}
-        {spec.shade && <span>Daerah arsir: luas di bawah kurva pada [{formatTick(spec.shade.from)}, {formatTick(spec.shade.to)}]</span>}
-        <span className="ml-auto hidden sm:inline">{interactive ? "Seret untuk menggeser · roda mouse untuk zoom · tombol panah & +/−" : "Seret untuk menggeser · tombol +/− untuk zoom"}</span>
+        {spec.shade && (
+          <span>
+            Daerah arsir: luas di bawah kurva pada [{formatTick(spec.shade.from)},{" "}
+            {formatTick(spec.shade.to)}]
+          </span>
+        )}
+        <span className="ml-auto hidden sm:inline">
+          {interactive
+            ? "Seret untuk menggeser · roda mouse untuk zoom · tombol panah & +/−"
+            : "Seret untuk menggeser · tombol +/− untuk zoom"}
+        </span>
       </figcaption>
       {errors.length > 0 && (
         <p className="text-xs text-bad" role="status">

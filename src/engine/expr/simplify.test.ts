@@ -115,7 +115,9 @@ describe("automatic simplification", () => {
       e: fc.oneof(
         { depthSize: "small" },
         fc.constantFrom(...leaves),
-        fc.tuple(tie("e"), fc.constantFrom("+", "-", "*"), tie("e")).map(([a, op, b]) => `(${a})${op}(${b})`),
+        fc
+          .tuple(tie("e"), fc.constantFrom("+", "-", "*"), tie("e"))
+          .map(([a, op, b]) => `(${a})${op}(${b})`),
         fc.tuple(tie("e"), fc.integer({ min: 0, max: 3 })).map(([a, n]) => `(${a})^${n}`),
         fc.tuple(fc.constantFrom("sin", "cos", "exp"), tie("e")).map(([f, a]) => `${f}(${a})`),
       ),

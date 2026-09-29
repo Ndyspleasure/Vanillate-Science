@@ -7,7 +7,21 @@ import { MathError } from "../core/errors";
 import { evalComplex, complexApproxEqual } from "../expr/evaluate";
 import { expand, numerDenom } from "../expr/expand";
 import { toLatex, toText } from "../expr/print";
-import { add, div, fn, mul, neg, num, pow, sub, substitute, E, I, PI, ZERO } from "../expr/simplify";
+import {
+  add,
+  div,
+  fn,
+  mul,
+  neg,
+  num,
+  pow,
+  sub,
+  substitute,
+  E,
+  I,
+  PI,
+  ZERO,
+} from "../expr/simplify";
 import { containsSymbol, freeSymbols, type Expr } from "../expr/types";
 import { syntaxToLatex } from "../parse/print-syntax";
 import type { SNode } from "../parse/syntax";
@@ -108,8 +122,13 @@ export function rectangular(e: Expr): Rect | null {
       // z^w = e^(w · Log z), Log z = ln|z| + i·Arg z (principal branch)
       let log: Rect;
       if (e.base.type === "sym" && e.base.name === "e") log = { re: num(1), im: ZERO };
-      else if (isZero(base.im) && evalComplex(base.re).re > 0) log = { re: fn("ln", base.re), im: ZERO };
-      else log = { re: fn("ln", pow(add(pow(base.re, num(2)), pow(base.im, num(2))), num(0.5))), im: argExpr(base.re, base.im) };
+      else if (isZero(base.im) && evalComplex(base.re).re > 0)
+        log = { re: fn("ln", base.re), im: ZERO };
+      else
+        log = {
+          re: fn("ln", pow(add(pow(base.re, num(2)), pow(base.im, num(2))), num(0.5))),
+          im: argExpr(base.re, base.im),
+        };
       return rExp(rMul(w, log));
     }
     case "fn": {
@@ -121,13 +140,19 @@ export function rectangular(e: Expr): Rect | null {
         case "sin":
           return { re: mul(fn("sin", a), fn("cosh", b)), im: mul(fn("cos", a), fn("sinh", b)) };
         case "cos":
-          return { re: mul(fn("cos", a), fn("cosh", b)), im: neg(mul(fn("sin", a), fn("sinh", b))) };
+          return {
+            re: mul(fn("cos", a), fn("cosh", b)),
+            im: neg(mul(fn("sin", a), fn("sinh", b))),
+          };
         case "sinh":
           return { re: mul(fn("sinh", a), fn("cos", b)), im: mul(fn("cosh", a), fn("sin", b)) };
         case "cosh":
           return { re: mul(fn("cosh", a), fn("cos", b)), im: mul(fn("sinh", a), fn("sin", b)) };
         case "ln":
-          return { re: fn("ln", pow(add(pow(a, num(2)), pow(b, num(2))), num(0.5))), im: argExpr(a, b) };
+          return {
+            re: fn("ln", pow(add(pow(a, num(2)), pow(b, num(2))), num(0.5))),
+            im: argExpr(a, b),
+          };
         case "abs":
           return { re: pow(add(pow(a, num(2)), pow(b, num(2))), num(0.5)), im: ZERO };
         default:
@@ -154,7 +179,10 @@ export function isComplexExpression(n: SNode): boolean {
 
 /** True when i appears inside an exponent or a function argument (needs Euler's formula). */
 function hasComplexTranscendental(e: Expr): boolean {
-  if (e.type === "pow") return (containsSymbol(e.exp, "i") && !(e.exp.type === "num")) || hasComplexTranscendental(e.base);
+  if (e.type === "pow")
+    return (
+      (containsSymbol(e.exp, "i") && !(e.exp.type === "num")) || hasComplexTranscendental(e.base)
+    );
   if (e.type === "fn") return e.args.some((a) => containsSymbol(a, "i"));
   if (e.type === "add") return e.terms.some(hasComplexTranscendental);
   if (e.type === "mul") return e.factors.some(hasComplexTranscendental);
@@ -163,7 +191,12 @@ function hasComplexTranscendental(e: Expr): boolean {
 
 export function solveComplex(input: string, node: SNode, warnings: string[] = []): Solution {
   const e = toExpr(node);
-  if (freeSymbols(e).size > 0) throw new MathError("unsupported", "Kalkulator bilangan kompleks hanya untuk ekspresi numerik.", { module: "complex" });
+  if (freeSymbols(e).size > 0)
+    throw new MathError(
+      "unsupported",
+      "Kalkulator bilangan kompleks hanya untuk ekspresi numerik.",
+      { module: "complex" },
+    );
   const steps: Step[] = [];
   let work = e;
   const { numer, denom } = numerDenom(e);
@@ -171,7 +204,18 @@ export function solveComplex(input: string, node: SNode, warnings: string[] = []
     const conj = conjugate(denom);
     const newNum = expand(mul(numer, conj));
     const newDen = expand(mul(denom, conj));
-    steps.push({ title: "Kalikan pembilang dan penyebut dengan sekawan penyebut", before: `\\frac{${toLatex(numer)}}{${toLatex(denom)}}`, after: `\\frac{${toLatex(numer)}}{${toLatex(denom)}} \\cdot \\frac{${toLatex(conj)}}{${toLatex(conj)}} = \\frac{${toLatex(newNum)}}{${toLatex(newDen)}}`, operation: "conjugate", rule: { id: "complex-division", name: "Pembagian bilangan kompleks", formula: "\\frac{a + bi}{c + di} = \\frac{(a + bi)(c - di)}{c^2 + d^2}" }, reason: "(c + di)(c − di) = c² + d² adalah bilangan real, sehingga i hilang dari penyebut." });
+    steps.push({
+      title: "Kalikan pembilang dan penyebut dengan sekawan penyebut",
+      before: `\\frac{${toLatex(numer)}}{${toLatex(denom)}}`,
+      after: `\\frac{${toLatex(numer)}}{${toLatex(denom)}} \\cdot \\frac{${toLatex(conj)}}{${toLatex(conj)}} = \\frac{${toLatex(newNum)}}{${toLatex(newDen)}}`,
+      operation: "conjugate",
+      rule: {
+        id: "complex-division",
+        name: "Pembagian bilangan kompleks",
+        formula: "\\frac{a + bi}{c + di} = \\frac{(a + bi)(c - di)}{c^2 + d^2}",
+      },
+      reason: "(c + di)(c − di) = c² + d² adalah bilangan real, sehingga i hilang dari penyebut.",
+    });
     work = div(newNum, newDen);
   }
   const orig = evalComplex(e);
@@ -184,16 +228,43 @@ export function solveComplex(input: string, node: SNode, warnings: string[] = []
   }
   const numericOnly = rect === null;
   if (numericOnly) {
-    if (!Number.isFinite(orig.re) || !Number.isFinite(orig.im)) throw new MathError("unsupported", "Bentuk ini belum dapat dihitung sebagai bilangan kompleks.", { module: "complex" });
+    if (!Number.isFinite(orig.re) || !Number.isFinite(orig.im))
+      throw new MathError(
+        "unsupported",
+        "Bentuk ini belum dapat dihitung sebagai bilangan kompleks.",
+        { module: "complex" },
+      );
     rect = { re: num(Number(orig.re.toPrecision(15))), im: num(Number(orig.im.toPrecision(15))) };
-    warnings = [...warnings, "Bentuk eksak a + bi tidak dapat diturunkan secara simbolik untuk soal ini; hasil dihitung numerik (15 angka penting)."];
+    warnings = [
+      ...warnings,
+      "Bentuk eksak a + bi tidak dapat diturunkan secara simbolik untuk soal ini; hasil dihitung numerik (15 angka penting).",
+    ];
   }
   const { re, im } = rect!;
   const z = add(re, mul(im, I));
   if (usesEuler) {
-    steps.push({ title: "Gunakan rumus Euler dan nilai utama logaritma kompleks", after: toLatex(z), operation: "euler", rule: { id: "euler", name: "Rumus Euler", formula: "e^{a + bi} = e^{a}(\\cos b + i\\sin b),\\quad z^{w} = e^{w\\,\\mathrm{Log}\\,z}", conditions: "Pangkat kompleks memakai cabang utama Log z = ln|z| + i·Arg z, dengan Arg z ∈ (−π, π]." }, reason: "Eksponen imajiner diubah menjadi cos dan sin sehingga bagian real dan imajiner terpisah." });
+    steps.push({
+      title: "Gunakan rumus Euler dan nilai utama logaritma kompleks",
+      after: toLatex(z),
+      operation: "euler",
+      rule: {
+        id: "euler",
+        name: "Rumus Euler",
+        formula: "e^{a + bi} = e^{a}(\\cos b + i\\sin b),\\quad z^{w} = e^{w\\,\\mathrm{Log}\\,z}",
+        conditions:
+          "Pangkat kompleks memakai cabang utama Log z = ln|z| + i·Arg z, dengan Arg z ∈ (−π, π].",
+      },
+      reason:
+        "Eksponen imajiner diubah menjadi cos dan sin sehingga bagian real dan imajiner terpisah.",
+    });
   } else {
-    steps.push({ title: "Jabarkan dan gunakan i² = −1, lalu kelompokkan bagian real dan imajiner", after: toLatex(z), operation: "collect", rule: { id: "i-squared", name: "Satuan imajiner", formula: "i^2 = -1" }, reason: "Suku tanpa i membentuk bagian real; koefisien i membentuk bagian imajiner." });
+    steps.push({
+      title: "Jabarkan dan gunakan i² = −1, lalu kelompokkan bagian real dan imajiner",
+      after: toLatex(z),
+      operation: "collect",
+      rule: { id: "i-squared", name: "Satuan imajiner", formula: "i^2 = -1" },
+      reason: "Suku tanpa i membentuk bagian real; koefisien i membentuk bagian imajiner.",
+    });
   }
   const mod = pow(add(pow(re, num(2)), pow(im, num(2))), num(0.5));
   const rv = evalComplex(re).re;
@@ -201,11 +272,31 @@ export function solveComplex(input: string, node: SNode, warnings: string[] = []
   let arg: Expr;
   if (rv === 0 && iv === 0) arg = ZERO;
   else if (rv > 0) arg = fn("atan", div(im, re));
-  else if (rv < 0) arg = iv >= 0 ? add(fn("atan", div(im, re)), PI) : sub(fn("atan", div(im, re)), PI);
+  else if (rv < 0)
+    arg = iv >= 0 ? add(fn("atan", div(im, re)), PI) : sub(fn("atan", div(im, re)), PI);
   else arg = iv > 0 ? div(PI, num(2)) : neg(div(PI, num(2)));
-  const sq = (q: Expr) => (q.type === "num" && !q.value.isNegative() ? `${toLatex(q)}^{2}` : `\\left(${toLatex(q)}\\right)^{2}`);
-  steps.push({ title: "Hitung modulus", after: `|z| = \\sqrt{${sq(re)} + ${sq(im)}} = ${toLatex(mod)}`, operation: "modulus", rule: { id: "modulus", name: "Modulus", formula: "|a + bi| = \\sqrt{a^2 + b^2}" }, reason: "Jarak z ke titik asal pada bidang kompleks." });
-  steps.push({ title: "Hitung argumen (sudut)", after: `\\arg z = ${toLatex(arg)} \\approx ${formatNumber(Math.atan2(iv, rv), 8)}\\ \\text{rad}`, operation: "argument", rule: { id: "argument", name: "Argumen utama", formula: "\\arg z = \\operatorname{atan2}(b, a) \\in (-\\pi, \\pi]" }, reason: "Sudut diukur dari sumbu real positif; kuadran ditentukan dari tanda a dan b." });
+  const sq = (q: Expr) =>
+    q.type === "num" && !q.value.isNegative()
+      ? `${toLatex(q)}^{2}`
+      : `\\left(${toLatex(q)}\\right)^{2}`;
+  steps.push({
+    title: "Hitung modulus",
+    after: `|z| = \\sqrt{${sq(re)} + ${sq(im)}} = ${toLatex(mod)}`,
+    operation: "modulus",
+    rule: { id: "modulus", name: "Modulus", formula: "|a + bi| = \\sqrt{a^2 + b^2}" },
+    reason: "Jarak z ke titik asal pada bidang kompleks.",
+  });
+  steps.push({
+    title: "Hitung argumen (sudut)",
+    after: `\\arg z = ${toLatex(arg)} \\approx ${formatNumber(Math.atan2(iv, rv), 8)}\\ \\text{rad}`,
+    operation: "argument",
+    rule: {
+      id: "argument",
+      name: "Argumen utama",
+      formula: "\\arg z = \\operatorname{atan2}(b, a) \\in (-\\pi, \\pi]",
+    },
+    reason: "Sudut diukur dari sumbu real positif; kuadran ditentukan dari tanda a dan b.",
+  });
   const answers: Answer[] = [
     { ...exactAnswer(z), label: "Bentuk a + bi" },
     { ...exactAnswer(re), label: "Re(z)" },
@@ -213,13 +304,37 @@ export function solveComplex(input: string, node: SNode, warnings: string[] = []
     { ...exactAnswer(mod), label: "|z|" },
     { ...exactAnswer(arg), label: "arg(z)" },
     { ...exactAnswer(conjugate(z)), label: "Sekawan z̄" },
-    { label: "Bentuk polar", latex: `${toLatex(mod)}\\left(\\cos\\left(${toLatex(arg)}\\right) + i\\sin\\left(${toLatex(arg)}\\right)\\right) = ${toLatex(mod)}\\,e^{i\\,${toLatex(arg)}}`, text: `${toText(mod)}·(cos(${toText(arg)}) + i·sin(${toText(arg)}))`, exact: true },
+    {
+      label: "Bentuk polar",
+      latex: `${toLatex(mod)}\\left(\\cos\\left(${toLatex(arg)}\\right) + i\\sin\\left(${toLatex(arg)}\\right)\\right) = ${toLatex(mod)}\\,e^{i\\,${toLatex(arg)}}`,
+      text: `${toText(mod)}·(cos(${toText(arg)}) + i·sin(${toText(arg)}))`,
+      exact: true,
+    },
   ];
   if (numericOnly) for (const a of answers) a.exact = false;
   const res = evalComplex(z);
   const checks = [
-    { description: numericOnly ? "Evaluasi numerik kompleks (satu-satunya metode yang tersedia)" : "Evaluasi numerik kompleks independen dari soal asli", latex: `${formatComplex(orig.re, orig.im, 12)} \\approx ${formatComplex(res.re, res.im, 12)}`, passed: complexApproxEqual(orig, res, 1e-9, 1e-12), method: "Aritmetika kompleks floating-point" },
-    { description: "Bentuk polar kembali ke a + bi", passed: complexApproxEqual({ re: evalComplex(mod).re * Math.cos(evalComplex(arg).re), im: evalComplex(mod).re * Math.sin(evalComplex(arg).re) }, res, 1e-9, 1e-12), method: "Evaluasi numerik" },
+    {
+      description: numericOnly
+        ? "Evaluasi numerik kompleks (satu-satunya metode yang tersedia)"
+        : "Evaluasi numerik kompleks independen dari soal asli",
+      latex: `${formatComplex(orig.re, orig.im, 12)} \\approx ${formatComplex(res.re, res.im, 12)}`,
+      passed: complexApproxEqual(orig, res, 1e-9, 1e-12),
+      method: "Aritmetika kompleks floating-point",
+    },
+    {
+      description: "Bentuk polar kembali ke a + bi",
+      passed: complexApproxEqual(
+        {
+          re: evalComplex(mod).re * Math.cos(evalComplex(arg).re),
+          im: evalComplex(mod).re * Math.sin(evalComplex(arg).re),
+        },
+        res,
+        1e-9,
+        1e-12,
+      ),
+      method: "Evaluasi numerik",
+    },
   ];
   return makeSolution({
     kind: "complex",
@@ -227,12 +342,23 @@ export function solveComplex(input: string, node: SNode, warnings: string[] = []
     input,
     inputLatex: syntaxToLatex(node),
     answers,
-    method: { name: "Aljabar bilangan kompleks", description: "Operasikan seperti aljabar biasa dengan i² = −1; bagi dengan mengalikan sekawan penyebut." },
+    method: {
+      name: "Aljabar bilangan kompleks",
+      description:
+        "Operasikan seperti aljabar biasa dengan i² = −1; bagi dengan mengalikan sekawan penyebut.",
+    },
     steps,
     verification: aggregateVerification(checks),
     module: "complex",
     notes: warnings,
-    plot: { kind: "scatter", variable: "x", functions: [], points: [{ x: rv, y: iv, label: "z" }], xRange: [Math.min(-1, rv) - 1, Math.max(1, rv) + 1], yRange: [Math.min(-1, iv) - 1, Math.max(1, iv) + 1] },
+    plot: {
+      kind: "scatter",
+      variable: "x",
+      functions: [],
+      points: [{ x: rv, y: iv, label: "z" }],
+      xRange: [Math.min(-1, rv) - 1, Math.max(1, rv) + 1],
+      yRange: [Math.min(-1, iv) - 1, Math.max(1, iv) + 1],
+    },
     references: [REFERENCES.openstaxAlgebra],
   });
 }

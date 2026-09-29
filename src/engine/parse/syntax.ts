@@ -13,7 +13,14 @@ export type SNode =
   | { k: "num"; value: Rational; text: string; span: SourceSpan }
   | { k: "sym"; name: string; span: SourceSpan }
   | { k: "neg"; arg: SNode; span: SourceSpan }
-  | { k: "bin"; op: "+" | "-" | "*" | "/" | "^"; left: SNode; right: SNode; implicit?: boolean; span: SourceSpan }
+  | {
+      k: "bin";
+      op: "+" | "-" | "*" | "/" | "^";
+      left: SNode;
+      right: SNode;
+      implicit?: boolean;
+      span: SourceSpan;
+    }
   | { k: "call"; name: string; args: SNode[]; span: SourceSpan }
   | { k: "postfix"; op: "!" | "%" | "°"; arg: SNode; span: SourceSpan }
   | { k: "abs"; arg: SNode; span: SourceSpan }
@@ -22,7 +29,14 @@ export type SNode =
   | { k: "list"; items: SNode[]; bracket: "[" | "{" | "("; span: SourceSpan }
   | { k: "deriv"; expr: SNode; variable: string; order: number; span: SourceSpan }
   | { k: "integral"; expr: SNode; variable: string; lower?: SNode; upper?: SNode; span: SourceSpan }
-  | { k: "limit"; expr: SNode; variable: string; to: SNode; direction?: "+" | "-"; span: SourceSpan };
+  | {
+      k: "limit";
+      expr: SNode;
+      variable: string;
+      to: SNode;
+      direction?: "+" | "-";
+      span: SourceSpan;
+    };
 
 export interface ParseResult {
   /** One node per top-level statement (several for a system of equations). */

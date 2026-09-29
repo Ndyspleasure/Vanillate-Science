@@ -62,7 +62,8 @@ export function SiteFooter() {
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {SITE.name}. Semua perhitungan dilakukan oleh mesin matematika deterministik di perangkat Anda — tanpa AI generatif.
+            © {new Date().getFullYear()} {SITE.name}. Semua perhitungan dilakukan oleh mesin
+            matematika deterministik di perangkat Anda — tanpa AI generatif.
           </p>
           <p>
             Mesin v{SITE.version} · {SITE.commit}

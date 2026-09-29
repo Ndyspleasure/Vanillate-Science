@@ -14,9 +14,38 @@ export interface PrintOptions {
 }
 
 const GREEK = new Set([
-  "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi",
-  "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega", "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi",
-  "Sigma", "Phi", "Psi", "Omega",
+  "alpha",
+  "beta",
+  "gamma",
+  "delta",
+  "epsilon",
+  "zeta",
+  "eta",
+  "theta",
+  "iota",
+  "kappa",
+  "lambda",
+  "mu",
+  "nu",
+  "xi",
+  "rho",
+  "sigma",
+  "tau",
+  "upsilon",
+  "phi",
+  "chi",
+  "psi",
+  "omega",
+  "Gamma",
+  "Delta",
+  "Theta",
+  "Lambda",
+  "Xi",
+  "Pi",
+  "Sigma",
+  "Phi",
+  "Psi",
+  "Omega",
 ]);
 
 export function symbolToLatex(name: string, options: PrintOptions = {}): string {
@@ -43,7 +72,13 @@ export function symbolToLatex(name: string, options: PrintOptions = {}): string 
 function termDegree(t: Expr, main?: string): number {
   const deg = (f: Expr): number => {
     if (f.type === "sym") return freeSymbols(f).size > 0 && (!main || f.name === main) ? 1 : 0;
-    if (f.type === "pow" && f.base.type === "sym" && f.exp.type === "num" && (!main || f.base.name === main) && freeSymbols(f.base).size) {
+    if (
+      f.type === "pow" &&
+      f.base.type === "sym" &&
+      f.exp.type === "num" &&
+      (!main || f.base.name === main) &&
+      freeSymbols(f.base).size
+    ) {
       return f.exp.value.toNumber();
     }
     return 0;
@@ -74,7 +109,11 @@ export function displayOrderTerms(terms: readonly Expr[], main?: string): Expr[]
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
   // Purely real constant sums read better with a positive term first: π − atan 5, not −atan 5 + π.
-  if (sorted.length > 1 && sorted.every((t) => freeSymbols(t).size === 0 && !containsSymbol(t, "i")) && isNegativeTerm(sorted[0])) {
+  if (
+    sorted.length > 1 &&
+    sorted.every((t) => freeSymbols(t).size === 0 && !containsSymbol(t, "i")) &&
+    isNegativeTerm(sorted[0])
+  ) {
     const k = sorted.findIndex((t) => !isNegativeTerm(t));
     if (k > 0) sorted.unshift(...sorted.splice(k, 1));
   }
@@ -83,7 +122,11 @@ export function displayOrderTerms(terms: readonly Expr[], main?: string): Expr[]
 
 function displayKey(e: Expr): string {
   // sort by first symbol name, ignoring coefficients
-  if (e.type === "mul") return e.factors.filter((f) => f.type !== "num").map(displayKey).join("");
+  if (e.type === "mul")
+    return e.factors
+      .filter((f) => f.type !== "num")
+      .map(displayKey)
+      .join("");
   if (e.type === "sym") return e.name;
   if (e.type === "pow") return displayKey(e.base);
   return exprKey(e);
@@ -136,7 +179,13 @@ export function negateTerm(t: Expr): Expr {
 }
 
 /** Split a product into numerator and denominator factor lists (for fraction display). */
-export function splitFraction(e: Expr): { sign: 1 | -1; coefNum: bigint; coefDen: bigint; numer: Expr[]; denom: Expr[] } {
+export function splitFraction(e: Expr): {
+  sign: 1 | -1;
+  coefNum: bigint;
+  coefDen: bigint;
+  numer: Expr[];
+  denom: Expr[];
+} {
   const factors = e.type === "mul" ? e.factors : [e];
   let coef = Rational.ONE;
   const numer: Expr[] = [];
@@ -164,17 +213,55 @@ export function splitFraction(e: Expr): { sign: 1 | -1; coefNum: bigint; coefDen
 const PREC = { add: 1, mul: 2, neg: 2, pow: 4, atom: 5 } as const;
 
 const LATEX_FUNCTIONS: Record<string, string> = {
-  sin: "\\sin", cos: "\\cos", tan: "\\tan", cot: "\\cot", sec: "\\sec", csc: "\\csc",
-  asin: "\\arcsin", acos: "\\arccos", atan: "\\arctan", acot: "\\operatorname{arccot}",
-  asec: "\\operatorname{arcsec}", acsc: "\\operatorname{arccsc}",
-  sinh: "\\sinh", cosh: "\\cosh", tanh: "\\tanh", coth: "\\coth",
-  sech: "\\operatorname{sech}", csch: "\\operatorname{csch}",
-  asinh: "\\operatorname{arsinh}", acosh: "\\operatorname{arcosh}", atanh: "\\operatorname{artanh}",
-  ln: "\\ln", sign: "\\operatorname{sgn}", gcd: "\\gcd", lcm: "\\operatorname{kpk}",
-  min: "\\min", max: "\\max", gamma: "\\Gamma", mod: "\\operatorname{mod}", atan2: "\\operatorname{atan2}",
-  re: "\\operatorname{Re}", im: "\\operatorname{Im}", arg: "\\arg", round: "\\operatorname{round}",
+  sin: "\\sin",
+  cos: "\\cos",
+  tan: "\\tan",
+  cot: "\\cot",
+  sec: "\\sec",
+  csc: "\\csc",
+  asin: "\\arcsin",
+  acos: "\\arccos",
+  atan: "\\arctan",
+  acot: "\\operatorname{arccot}",
+  asec: "\\operatorname{arcsec}",
+  acsc: "\\operatorname{arccsc}",
+  sinh: "\\sinh",
+  cosh: "\\cosh",
+  tanh: "\\tanh",
+  coth: "\\coth",
+  sech: "\\operatorname{sech}",
+  csch: "\\operatorname{csch}",
+  asinh: "\\operatorname{arsinh}",
+  acosh: "\\operatorname{arcosh}",
+  atanh: "\\operatorname{artanh}",
+  ln: "\\ln",
+  sign: "\\operatorname{sgn}",
+  gcd: "\\gcd",
+  lcm: "\\operatorname{kpk}",
+  min: "\\min",
+  max: "\\max",
+  gamma: "\\Gamma",
+  mod: "\\operatorname{mod}",
+  atan2: "\\operatorname{atan2}",
+  re: "\\operatorname{Re}",
+  im: "\\operatorname{Im}",
+  arg: "\\arg",
+  round: "\\operatorname{round}",
 };
-const POWERABLE = new Set(["sin", "cos", "tan", "cot", "sec", "csc", "sinh", "cosh", "tanh", "coth", "ln", "log"]);
+const POWERABLE = new Set([
+  "sin",
+  "cos",
+  "tan",
+  "cot",
+  "sec",
+  "csc",
+  "sinh",
+  "cosh",
+  "tanh",
+  "coth",
+  "ln",
+  "log",
+]);
 
 function rationalLatex(r: Rational): string {
   if (r.isInteger()) return r.num.toString();
@@ -202,7 +289,8 @@ function exprPrec(e: Expr): number {
       return isNegativeTerm(e) ? PREC.neg : PREC.mul;
     case "pow":
       if (e.exp.type === "num" && e.exp.value.isNegative()) return PREC.mul;
-      if (e.exp.type === "num" && e.exp.value.num === 1n && !e.exp.value.isInteger()) return PREC.atom; // radicals
+      if (e.exp.type === "num" && e.exp.value.num === 1n && !e.exp.value.isInteger())
+        return PREC.atom; // radicals
       return PREC.pow;
     case "fn":
       return PREC.atom;
@@ -247,13 +335,22 @@ function latexProduct(e: Expr, o: PrintOptions): string {
   return `${prefix}\\frac{${numStr}}{${denStr}}`;
 }
 
-function latexFactorList(coef: bigint, factors: Expr[], o: PrintOptions, inFraction: boolean): string {
+function latexFactorList(
+  coef: bigint,
+  factors: Expr[],
+  o: PrintOptions,
+  inFraction: boolean,
+): string {
   const parts: string[] = [];
   if (coef !== 1n || factors.length === 0) parts.push(coef.toString());
   const ordered = displayOrderFactors(factors);
   for (const f of ordered) {
     let s: string;
-    if (f.type === "add") s = ordered.length === 1 && parts.length === 0 && inFraction ? latexRaw(f, o) : wrap(latexRaw(f, o));
+    if (f.type === "add")
+      s =
+        ordered.length === 1 && parts.length === 0 && inFraction
+          ? latexRaw(f, o)
+          : wrap(latexRaw(f, o));
     else s = latexPrec(f, PREC.mul + 0.5, o);
     parts.push(s);
   }
@@ -268,13 +365,20 @@ function latexFactorList(coef: bigint, factors: Expr[], o: PrintOptions, inFract
 }
 
 function latexPow(base: Expr, exp: Expr, o: PrintOptions): string {
-  if (exp.type === "num" && exp.value.isNegative()) return latexProduct(rawMul([rawPow(base, exp)]), o);
+  if (exp.type === "num" && exp.value.isNegative())
+    return latexProduct(rawMul([rawPow(base, exp)]), o);
   if (exp.type === "num" && !exp.value.isInteger() && exp.value.num === 1n) {
     const inner = latexRaw(base, o);
     return exp.value.den === 2n ? `\\sqrt{${inner}}` : `\\sqrt[${exp.value.den}]{${inner}}`;
   }
   const expStr = latexRaw(exp, o);
-  if (base.type === "fn" && POWERABLE.has(base.name) && exp.type === "num" && exp.value.isInteger() && exp.value.isPositive()) {
+  if (
+    base.type === "fn" &&
+    POWERABLE.has(base.name) &&
+    exp.type === "num" &&
+    exp.value.isInteger() &&
+    exp.value.isPositive()
+  ) {
     const fnStr = latexFn(base.name, base.args, o);
     // insert the exponent after the function name: \sin^{2}\left(x\right)
     const m = /^(\\[a-z]+|\\operatorname\{[a-z]+\}|\\log_\{[^}]*\})(.*)$/.exec(fnStr);
@@ -282,8 +386,13 @@ function latexPow(base: Expr, exp: Expr, o: PrintOptions): string {
   }
   let baseStr: string;
   if (base.type === "sym") baseStr = latexRaw(base, o);
-  else if (base.type === "num" && base.value.isInteger() && !base.value.isNegative()) baseStr = latexRaw(base, o);
-  else if (base.type === "fn" && (base.name === "abs" || base.name === "floor" || base.name === "ceil")) baseStr = latexRaw(base, o);
+  else if (base.type === "num" && base.value.isInteger() && !base.value.isNegative())
+    baseStr = latexRaw(base, o);
+  else if (
+    base.type === "fn" &&
+    (base.name === "abs" || base.name === "floor" || base.name === "ceil")
+  )
+    baseStr = latexRaw(base, o);
   else baseStr = wrap(latexRaw(base, o));
   return `${baseStr}^{${expStr}}`;
 }
@@ -305,7 +414,8 @@ function latexFn(name: string, args: readonly Expr[], o: PrintOptions): string {
       return `\\overline{${a[0]}}`;
     case "log": {
       const base = args[1];
-      if (!base || (base.type === "num" && base.value.equals(Rational.of(10)))) return `\\log${wrap(a[0])}`;
+      if (!base || (base.type === "num" && base.value.equals(Rational.of(10))))
+        return `\\log${wrap(a[0])}`;
       return `\\log_{${latexRaw(base, o)}}${wrap(a[0])}`;
     }
   }
@@ -325,7 +435,12 @@ function textPrec(e: Expr, parentPrec: number, o: PrintOptions): string {
   const s = textRaw(e, o);
   let p = exprPrec(e);
   if (e.type === "num" && !e.value.isInteger()) p = PREC.mul;
-  if (e.type === "pow" && e.exp.type === "num" && e.exp.value.num === 1n && !e.exp.value.isInteger()) {
+  if (
+    e.type === "pow" &&
+    e.exp.type === "num" &&
+    e.exp.value.num === 1n &&
+    !e.exp.value.isInteger()
+  ) {
     p = e.exp.value.den === 2n ? PREC.atom : PREC.pow;
   }
   return p < parentPrec ? `(${s})` : s;
@@ -359,14 +474,25 @@ function textRaw(e: Expr, o: PrintOptions): string {
       if (denom.length === 0 && coefDen === 1n) return prefix + n;
       const d = list(coefDen, denom);
       const nWrapped = n;
-      const dWrapped = denom.length + (coefDen !== 1n ? 1 : 0) > 1 || (denom.length === 1 && denom[0].type === "pow" && coefDen === 1n && !(denom[0].exp.type === "num" && denom[0].exp.value.den === 2n)) ? `(${d})` : d;
+      const dWrapped =
+        denom.length + (coefDen !== 1n ? 1 : 0) > 1 ||
+        (denom.length === 1 &&
+          denom[0].type === "pow" &&
+          coefDen === 1n &&
+          !(denom[0].exp.type === "num" && denom[0].exp.value.den === 2n))
+          ? `(${d})`
+          : d;
       return `${prefix}${nWrapped}/${dWrapped}`;
     }
     case "pow": {
       if (e.exp.type === "num" && e.exp.value.isNegative()) return textRaw(rawMul([e]), o);
-      if (e.exp.type === "num" && e.exp.value.equals(Rational.HALF)) return `sqrt(${textRaw(e.base, o)})`;
+      if (e.exp.type === "num" && e.exp.value.equals(Rational.HALF))
+        return `sqrt(${textRaw(e.base, o)})`;
       const b = textPrec(e.base, PREC.pow + 1, o);
-      const x = e.exp.type === "num" && e.exp.value.isInteger() && !e.exp.value.isNegative() ? textRaw(e.exp, o) : `(${textRaw(e.exp, o)})`;
+      const x =
+        e.exp.type === "num" && e.exp.value.isInteger() && !e.exp.value.isNegative()
+          ? textRaw(e.exp, o)
+          : `(${textRaw(e.exp, o)})`;
       return `${b}^${x}`;
     }
     case "fn": {
@@ -374,7 +500,8 @@ function textRaw(e: Expr, o: PrintOptions): string {
       if (e.name === "factorial") return `${textPrec(e.args[0], PREC.atom, o)}!`;
       if (e.name === "log") {
         const base = e.args[1];
-        if (!base || (base.type === "num" && base.value.equals(Rational.of(10)))) return `log(${a[0]})`;
+        if (!base || (base.type === "num" && base.value.equals(Rational.of(10))))
+          return `log(${a[0]})`;
         return `log_(${textRaw(base, o)})(${a[0]})`;
       }
       return `${e.name}(${a.join(", ")})`;

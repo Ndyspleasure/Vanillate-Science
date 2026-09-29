@@ -5,7 +5,12 @@
  * to the appropriate solver. Deterministic: the same input always takes the same path.
  */
 import { withBudget } from "./core/budget";
-import { invalidInput, MathError, toSerializedError, type SerializedMathError } from "./core/errors";
+import {
+  invalidInput,
+  MathError,
+  toSerializedError,
+  type SerializedMathError,
+} from "./core/errors";
 import { Rational } from "./core/rational";
 import { freeSymbols, containsSymbol, type Expr } from "./expr/types";
 import { parse } from "./parse/parser";
@@ -19,8 +24,22 @@ import { solveEquation } from "./solvers/equation";
 import { solveInequality } from "./solvers/inequality";
 import { solveSystem } from "./solvers/system";
 import { solveComplex } from "./solvers/complex";
-import { solveDivisors, solveGcdLcm, solveIsPrime, solveModInverse, solveModPow, solvePrimeFactorization } from "./solvers/numbertheory";
-import { solveDerivative, solveExtrema, solveImplicit, solveIntegral, solveLimit, solveTaylor } from "./calculus/solvers";
+import {
+  solveDivisors,
+  solveGcdLcm,
+  solveIsPrime,
+  solveModInverse,
+  solveModPow,
+  solvePrimeFactorization,
+} from "./solvers/numbertheory";
+import {
+  solveDerivative,
+  solveExtrema,
+  solveImplicit,
+  solveIntegral,
+  solveLimit,
+  solveTaylor,
+} from "./calculus/solvers";
 import { containsList, solveMatrixProblem } from "./linalg/solver";
 import { solveDescriptive, solveRegression } from "./stats/descriptive";
 import { solveSum } from "./solvers/sum";
@@ -37,15 +56,22 @@ export interface SolveOptions {
   timeMs?: number;
 }
 
-export type SolveOutcome = { ok: true; solution: Solution } | { ok: false; error: SerializedMathError; input: string };
+export type SolveOutcome =
+  { ok: true; solution: Solution } | { ok: false; error: SerializedMathError; input: string };
 
 const PREFIXES: Array<[RegExp, Mode]> = [
   [/^(sederhanakan|simplify|simplifikasi|sederhana)\b[:\s]*/i, "simplify"],
   [/^(jabarkan|expand|uraikan|ekspansi|kalikan)\b[:\s]*/i, "expand"],
   [/^(faktorkan|factor|faktorisasi|factorize|faktor)\b[:\s]*/i, "factor"],
-  [/^(turunan|turunkan|derivative|derive|diferensialkan|differentiate)\b(\s+(dari|of))?[:\s]*/i, "derivative"],
+  [
+    /^(turunan|turunkan|derivative|derive|diferensialkan|differentiate)\b(\s+(dari|of))?[:\s]*/i,
+    "derivative",
+  ],
   [/^(integralkan|integrate|antiturunan)\b[:\s]*/i, "integral"],
-  [/^(titik\s+kritis|titik\s+stasioner|nilai\s+ekstrem|ekstrem|extrema|maksimum\s+dan\s+minimum)\b(\s+(dari|of))?[:\s]*/i, "extrema"],
+  [
+    /^(titik\s+kritis|titik\s+stasioner|nilai\s+ekstrem|ekstrem|extrema|maksimum\s+dan\s+minimum)\b(\s+(dari|of))?[:\s]*/i,
+    "extrema",
+  ],
   [/^(deret\s+taylor|deret\s+maclaurin|taylor|maclaurin)\b(\s+(dari|of))?[:\s]*/i, "taylor"],
   [/^(apakah\s+prima|uji\s+prima|is\s+prime|prima\??)\b[:\s]*/i, "isprime"],
   [/^(pembagi|faktor\s+dari|divisors)\b[:\s]*/i, "divisors"],
@@ -53,7 +79,10 @@ const PREFIXES: Array<[RegExp, Mode]> = [
   [/^(selesaikan|solve|hitung|tentukan|cari|berapa|evaluate|compute|calculate)\b[:\s]*/i, "auto"],
 ];
 
-function preprocess(input: string, options: SolveOptions): { text: string; mode: Mode; variable?: string } {
+function preprocess(
+  input: string,
+  options: SolveOptions,
+): { text: string; mode: Mode; variable?: string } {
   let text = input.trim();
   let mode: Mode = options.mode ?? "auto";
   let variable = options.variable;
@@ -73,7 +102,9 @@ function preprocess(input: string, options: SolveOptions): { text: string; mode:
     text = `integral ${text}`;
     mode = "auto";
   }
-  const suffix = /\s+(for|untuk|terhadap|wrt|dalam)\s+([A-Za-z](?:_?[A-Za-z0-9]+)?)\s*\.?$/i.exec(text);
+  const suffix = /\s+(for|untuk|terhadap|wrt|dalam)\s+([A-Za-z](?:_?[A-Za-z0-9]+)?)\s*\.?$/i.exec(
+    text,
+  );
   if (suffix) {
     variable = variable ?? suffix[2];
     text = text.slice(0, suffix.index).trim();
@@ -88,7 +119,8 @@ function isIntegerLiteral(n: SNode): n is SNode & { k: "num" } {
 function integerArg(n: SNode | undefined, what: string): bigint {
   if (!n) throw invalidInput(`Argumen ${what} tidak ada.`, { module: "router" });
   const e = toExpr(n);
-  if (e.type !== "num" || !e.value.isInteger()) throw invalidInput(`${what} harus bilangan bulat.`, { module: "router" });
+  if (e.type !== "num" || !e.value.isInteger())
+    throw invalidInput(`${what} harus bilangan bulat.`, { module: "router" });
   return e.value.num;
 }
 
@@ -106,7 +138,12 @@ function variableOf(n: SNode | undefined): string | undefined {
   return n.k === "sym" ? n.name : undefined;
 }
 
-function dispatchCall(input: string, node: SNode & { k: "call" }, warnings: string[], variable?: string): Solution | null {
+function dispatchCall(
+  input: string,
+  node: SNode & { k: "call" },
+  warnings: string[],
+  variable?: string,
+): Solution | null {
   const a = node.args;
   switch (node.name) {
     case "det":
@@ -145,29 +182,60 @@ function dispatchCall(input: string, node: SNode & { k: "call" }, warnings: stri
     case "lim": {
       const f = toExpr(a[0]);
       const v = variableOf(a[1]) ?? "x";
-      const to = toExpr(a[2] ?? { k: "num", value: Rational.ZERO, text: "0", span: node.span }, { allowInfinity: true });
+      const to = toExpr(a[2] ?? { k: "num", value: Rational.ZERO, text: "0", span: node.span }, {
+        allowInfinity: true,
+      });
       return solveLimit(input, f, v, to, undefined, syntaxToLatex(node), warnings);
     }
     case "taylor":
     case "series": {
       const f = toExpr(a[0]);
       const v = variableOf(a[1]) ?? variable;
-      const center = a[2] ? toExpr(a[2]) : toExpr({ k: "num", value: Rational.ZERO, text: "0", span: node.span });
+      const center = a[2]
+        ? toExpr(a[2])
+        : toExpr({ k: "num", value: Rational.ZERO, text: "0", span: node.span });
       const order = a[3] ? Number(integerArg(a[3], "Orde")) : 5;
       return solveTaylor(input, f, v, center, order, warnings);
     }
     case "sum": {
-      if (a.length !== 4) throw invalidInput("Format notasi sigma: sum(suku, indeks, batas_bawah, batas_atas).", { module: "router", hint: "Contoh: sum(k^2, k, 1, n) atau sum(1/k, k, 1, 10)" });
+      if (a.length !== 4)
+        throw invalidInput("Format notasi sigma: sum(suku, indeks, batas_bawah, batas_atas).", {
+          module: "router",
+          hint: "Contoh: sum(k^2, k, 1, n) atau sum(1/k, k, 1, 10)",
+        });
       const k = variableOf(a[1]);
-      if (!k) throw invalidInput("Argumen kedua sum() harus variabel indeks, misalnya k.", { module: "router" });
-      return solveSum(input, toExpr(a[0]), k, toExpr(a[2]), toExpr(a[3], { allowInfinity: true }), syntaxToLatex(node), warnings);
+      if (!k)
+        throw invalidInput("Argumen kedua sum() harus variabel indeks, misalnya k.", {
+          module: "router",
+        });
+      return solveSum(
+        input,
+        toExpr(a[0]),
+        k,
+        toExpr(a[2]),
+        toExpr(a[3], { allowInfinity: true }),
+        syntaxToLatex(node),
+        warnings,
+      );
     }
     case "solve": {
       const target = a[0];
       const v = variableOf(a[1]) ?? variable;
-      if (target.k === "rel") return target.ops.length === 1 && target.ops[0] === "=" ? solveEquation(input, target, { variable: v, warnings }) : solveInequality(input, target, { variable: v, warnings });
+      if (target.k === "rel")
+        return target.ops.length === 1 && target.ops[0] === "="
+          ? solveEquation(input, target, { variable: v, warnings })
+          : solveInequality(input, target, { variable: v, warnings });
       if (target.k === "list") return solveSystem(input, target.items, warnings);
-      return solveEquation(input, { k: "rel", ops: ["="], operands: [target, { k: "num", value: Rational.ZERO, text: "0", span: node.span }], span: node.span }, { variable: v, warnings });
+      return solveEquation(
+        input,
+        {
+          k: "rel",
+          ops: ["="],
+          operands: [target, { k: "num", value: Rational.ZERO, text: "0", span: node.span }],
+          span: node.span,
+        },
+        { variable: v, warnings },
+      );
     }
     case "simplify":
       return solveSimplify(input, a[0], warnings);
@@ -180,7 +248,12 @@ function dispatchCall(input: string, node: SNode & { k: "call" }, warnings: stri
     case "lcm":
     case "fpb":
     case "kpk":
-      if (a.length >= 2 && a.every(isIntegerLiteralOrNeg)) return solveGcdLcm(input, node.name === "gcd" || node.name === "fpb" ? "gcd" : "lcm", a.map((x) => integerArg(x, "Argumen")));
+      if (a.length >= 2 && a.every(isIntegerLiteralOrNeg))
+        return solveGcdLcm(
+          input,
+          node.name === "gcd" || node.name === "fpb" ? "gcd" : "lcm",
+          a.map((x) => integerArg(x, "Argumen")),
+        );
       return null;
     case "isprime":
       return solveIsPrime(input, integerArg(a[0], "Bilangan"));
@@ -191,22 +264,38 @@ function dispatchCall(input: string, node: SNode & { k: "call" }, warnings: stri
     case "modinv":
       return solveModInverse(input, integerArg(a[0], "a"), integerArg(a[1], "m"));
     case "modpow":
-      return solveModPow(input, integerArg(a[0], "a"), integerArg(a[1], "eksponen"), integerArg(a[2], "m"));
+      return solveModPow(
+        input,
+        integerArg(a[0], "a"),
+        integerArg(a[1], "eksponen"),
+        integerArg(a[2], "m"),
+      );
     case "mean":
     case "median":
     case "mode":
     case "variance":
     case "stdev": {
       const vals = a.flatMap((x) => (x.k === "list" ? x.items : [x])).map(numericValue);
-      if (vals.some((v) => v === null)) throw invalidInput("Data statistik harus berupa angka.", { module: "router" });
+      if (vals.some((v) => v === null))
+        throw invalidInput("Data statistik harus berupa angka.", { module: "router" });
       return solveDescriptive(input, vals as Rational[], warnings);
     }
     case "extrema":
       return solveExtrema(input, toExpr(a[0]), variableOf(a[1]) ?? variable, warnings);
     case "implicit": {
       const r = a[0];
-      if (r.k !== "rel" || r.ops[0] !== "=") throw invalidInput("implicit() membutuhkan persamaan, misalnya implicit(x^2 + y^2 = 25).", { module: "router" });
-      return solveImplicit(input, toExpr(r.operands[0]), toExpr(r.operands[1]), variableOf(a[1]) ?? "x", variableOf(a[2]) ?? "y", warnings);
+      if (r.k !== "rel" || r.ops[0] !== "=")
+        throw invalidInput("implicit() membutuhkan persamaan, misalnya implicit(x^2 + y^2 = 25).", {
+          module: "router",
+        });
+      return solveImplicit(
+        input,
+        toExpr(r.operands[0]),
+        toExpr(r.operands[1]),
+        variableOf(a[1]) ?? "x",
+        variableOf(a[2]) ?? "y",
+        warnings,
+      );
     }
   }
   return null;
@@ -246,8 +335,17 @@ function route(input: string, options: SolveOptions): Solution {
   }
 }
 
-function routeText(input: string, text: string, mode: Mode, variable: string | undefined): Solution {
-  if (!text) throw invalidInput("Input kosong.", { module: "router", hint: "Masukkan soal, misalnya 2x + 5 = 15." });
+function routeText(
+  input: string,
+  text: string,
+  mode: Mode,
+  variable: string | undefined,
+): Solution {
+  if (!text)
+    throw invalidInput("Input kosong.", {
+      module: "router",
+      hint: "Masukkan soal, misalnya 2x + 5 = 15.",
+    });
   const parsed = parse(text);
   const warnings = parsed.warnings;
   const st = parsed.statements;
@@ -256,17 +354,29 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
     // regression: list of (x, y) pairs
     const pairs = st.map(tupleNumbers);
     if (pairs.every((p) => p !== null)) {
-      return solveRegression(input, pairs.map((p) => p![0]), pairs.map((p) => p![1]), warnings);
+      return solveRegression(
+        input,
+        pairs.map((p) => p![0]),
+        pairs.map((p) => p![1]),
+        warnings,
+      );
     }
     // statistics: list of numbers
     const nums = st.map(numericValue);
     if (nums.every((v) => v !== null)) return solveDescriptive(input, nums as Rational[], warnings);
     // expression evaluated at given values: "x^2 + 1, x = 3"
     const [first, ...rest] = st;
-    if (first.k !== "rel" && rest.every((r) => r.k === "rel" && r.ops.length === 1 && r.ops[0] === "=" && r.operands[0].k === "sym")) {
+    if (
+      first.k !== "rel" &&
+      rest.every(
+        (r) => r.k === "rel" && r.ops.length === 1 && r.ops[0] === "=" && r.operands[0].k === "sym",
+      )
+    ) {
       const values: Record<string, Expr> = {};
-      for (const r of rest as Array<SNode & { k: "rel" }>) values[(r.operands[0] as { name: string }).name] = toExpr(r.operands[1]);
-      if (Object.values(values).every((v) => freeSymbols(v).size === 0)) return solveEvaluateAt(input, first, values, warnings);
+      for (const r of rest as Array<SNode & { k: "rel" }>)
+        values[(r.operands[0] as { name: string }).name] = toExpr(r.operands[1]);
+      if (Object.values(values).every((v) => freeSymbols(v).size === 0))
+        return solveEvaluateAt(input, first, values, warnings);
     }
     if (st.every((s) => s.k === "rel")) return solveSystem(input, st, warnings);
     throw invalidInput("Input berisi beberapa bagian yang tidak dapat ditafsirkan bersama.", {
@@ -283,13 +393,22 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
   switch (node.k) {
     case "deriv": {
       const f = toExpr(node.expr);
-      return solveDerivative(input, f, syntaxToLatex(node), { variable: node.variable || variable, order: node.order, warnings });
+      return solveDerivative(input, f, syntaxToLatex(node), {
+        variable: node.variable || variable,
+        order: node.order,
+        warnings,
+      });
     }
     case "integral": {
       const f = toExpr(node.expr);
       const lower = node.lower ? toExpr(node.lower, { allowInfinity: true }) : undefined;
       const upper = node.upper ? toExpr(node.upper, { allowInfinity: true }) : undefined;
-      return solveIntegral(input, f, syntaxToLatex(node), { variable: node.variable || variable, lower, upper, warnings });
+      return solveIntegral(input, f, syntaxToLatex(node), {
+        variable: node.variable || variable,
+        lower,
+        upper,
+        warnings,
+      });
     }
     case "limit": {
       const f = toExpr(node.expr);
@@ -297,7 +416,8 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
       return solveLimit(input, f, node.variable, to, node.direction, syntaxToLatex(node), warnings);
     }
     case "rel":
-      if (node.ops.length === 1 && node.ops[0] === "=") return solveEquation(input, node, { variable, warnings });
+      if (node.ops.length === 1 && node.ops[0] === "=")
+        return solveEquation(input, node, { variable, warnings });
       return solveInequality(input, node, { variable, warnings });
     case "call": {
       const r = dispatchCall(input, node, warnings, variable);
@@ -306,7 +426,13 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
     }
     case "list": {
       const nums = node.items.map(numericValue);
-      if (nums.length > 1 && nums.every((v) => v !== null) && node.bracket !== "(" && mode === "statistics") return solveDescriptive(input, nums as Rational[], warnings);
+      if (
+        nums.length > 1 &&
+        nums.every((v) => v !== null) &&
+        node.bracket !== "(" &&
+        mode === "statistics"
+      )
+        return solveDescriptive(input, nums as Rational[], warnings);
       return solveMatrixProblem(input, node, warnings);
     }
   }
@@ -328,7 +454,14 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
     case "extrema":
       return solveExtrema(input, e, variable, warnings);
     case "taylor":
-      return solveTaylor(input, e, variable, toExpr({ k: "num", value: Rational.ZERO, text: "0", span: node.span }), 5, warnings);
+      return solveTaylor(
+        input,
+        e,
+        variable,
+        toExpr({ k: "num", value: Rational.ZERO, text: "0", span: node.span }),
+        5,
+        warnings,
+      );
     case "isprime":
       if (e.type === "num" && e.value.isInteger()) return solveIsPrime(input, e.value.num);
       break;
@@ -336,7 +469,10 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
       if (e.type === "num" && e.value.isInteger()) return solveDivisors(input, e.value.num);
       break;
     case "factor":
-      if (isIntegerLiteral(node) || (e.type === "num" && e.value.isInteger() && vars.size === 0 && isArithmetic(node))) {
+      if (
+        isIntegerLiteral(node) ||
+        (e.type === "num" && e.value.isInteger() && vars.size === 0 && isArithmetic(node))
+      ) {
         if (e.type === "num") return solvePrimeFactorization(input, e.value.num);
       }
       return solveFactor(input, node, warnings);
@@ -353,8 +489,9 @@ function routeText(input: string, text: string, mode: Mode, variable: string | u
   return solveSimplify(input, node, warnings);
 }
 
-
-export type PreviewOutcome = { ok: true; latex: string; mode: Mode; variable?: string; warnings: string[] } | { ok: false; error: SerializedMathError };
+export type PreviewOutcome =
+  | { ok: true; latex: string; mode: Mode; variable?: string; warnings: string[] }
+  | { ok: false; error: SerializedMathError };
 
 /** Parse only (no solving): LaTeX preview of how the input is understood. Never throws. */
 export function previewInput(input: string, options: SolveOptions = {}): PreviewOutcome {
@@ -364,7 +501,13 @@ export function previewInput(input: string, options: SolveOptions = {}): Preview
       if (!text) throw invalidInput("Input kosong.", { module: "router" });
       try {
         const parsed = parse(text);
-        return { ok: true as const, latex: parsed.statements.map((s) => syntaxToLatex(s)).join(",\\quad "), mode, variable, warnings: parsed.warnings };
+        return {
+          ok: true as const,
+          latex: parsed.statements.map((s) => syntaxToLatex(s)).join(",\\quad "),
+          mode,
+          variable,
+          warnings: parsed.warnings,
+        };
       } catch (e) {
         throw shiftSpan(e, input, text);
       }
@@ -379,7 +522,9 @@ export function solve(input: string, options: SolveOptions = {}): SolveOutcome {
   const start = typeof performance !== "undefined" ? performance.now() : Date.now();
   try {
     const solution = withBudget({ timeMs: options.timeMs ?? 6000 }, () => route(input, options));
-    solution.meta.durationMs = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - start);
+    solution.meta.durationMs = Math.round(
+      (typeof performance !== "undefined" ? performance.now() : Date.now()) - start,
+    );
     return { ok: true, solution };
   } catch (e) {
     return { ok: false, error: toSerializedError(e, "router"), input };

@@ -7,16 +7,30 @@ import { checkEquivalent } from "../expr/equivalence";
 import type { Expr } from "../expr/types";
 import { differentiate } from "./derivative";
 import { integrate } from "./integral";
-import { solveDerivative, solveExtrema, solveImplicit, solveIntegral, solveLimit, solveTaylor } from "./solvers";
+import {
+  solveDerivative,
+  solveExtrema,
+  solveImplicit,
+  solveIntegral,
+  solveLimit,
+  solveTaylor,
+} from "./solvers";
 
 const ex = (s: string): Expr => toExpr(parse(s).statements[0], { allowInfinity: true });
-const d = (s: string, x = "x") => toText(solveDerivative(s, ex(s), "", { variable: x }).answers[0] as never as { text: string } & never);
+const d = (s: string, x = "x") =>
+  toText(
+    solveDerivative(s, ex(s), "", { variable: x }).answers[0] as never as { text: string } & never,
+  );
 
 function deriv(s: string, x = "x") {
   return solveDerivative(s, ex(s), "", { variable: x });
 }
 function integral(s: string, lower?: string, upper?: string) {
-  return solveIntegral(s, ex(s), "", { variable: "x", lower: lower ? ex(lower) : undefined, upper: upper ? ex(upper) : undefined });
+  return solveIntegral(s, ex(s), "", {
+    variable: "x",
+    lower: lower ? ex(lower) : undefined,
+    upper: upper ? ex(upper) : undefined,
+  });
 }
 function limit(s: string, to: string, dir?: "+" | "-") {
   return solveLimit(s, ex(s), "x", ex(to), dir, "");
@@ -33,7 +47,9 @@ describe("derivatives", () => {
   it("uses the product and quotient rules", () => {
     const s = deriv("x^2 sin(x)");
     expect(s.steps[0].rule?.id).toBe("product");
-    expect(checkEquivalent(ex(s.answers[0].text), ex("2x sin(x) + x^2 cos(x)")).equivalent).toBe(true);
+    expect(checkEquivalent(ex(s.answers[0].text), ex("2x sin(x) + x^2 cos(x)")).equivalent).toBe(
+      true,
+    );
     const q = deriv("sin(x)/x");
     expect(q.steps[0].rule?.id).toBe("quotient");
     expect(q.verification.status).toBe("verified-numeric");
@@ -50,13 +66,30 @@ describe("derivatives", () => {
     expect(s.title).toBe("Turunan parsial");
   });
   it("derivatives match numeric differentiation (property)", () => {
-    const pieces = ["x", "x^2", "sin(x)", "cos(x)", "e^x", "ln(x^2+1)", "sqrt(x^2+1)", "atan(x)", "1/(x^2+2)"];
+    const pieces = [
+      "x",
+      "x^2",
+      "sin(x)",
+      "cos(x)",
+      "e^x",
+      "ln(x^2+1)",
+      "sqrt(x^2+1)",
+      "atan(x)",
+      "1/(x^2+2)",
+    ];
     fc.assert(
-      fc.property(fc.constantFrom(...pieces), fc.constantFrom(...pieces), fc.constantFrom("+", "*", "/", "∘"), (a, b, op) => {
-        const src = op === "∘" ? b.replace(/x/g, `(${a})`) : `(${a})${op}(${b})`;
-        const s = deriv(src);
-        expect(s.verification.status === "verified" || s.verification.status === "verified-numeric").toBe(true);
-      }),
+      fc.property(
+        fc.constantFrom(...pieces),
+        fc.constantFrom(...pieces),
+        fc.constantFrom("+", "*", "/", "∘"),
+        (a, b, op) => {
+          const src = op === "∘" ? b.replace(/x/g, `(${a})`) : `(${a})${op}(${b})`;
+          const s = deriv(src);
+          expect(
+            s.verification.status === "verified" || s.verification.status === "verified-numeric",
+          ).toBe(true);
+        },
+      ),
       { numRuns: 80 },
     );
   });
@@ -173,11 +206,16 @@ describe("series, extrema, implicit", () => {
     const s = solveTaylor("", ex("e^x"), "x", ex("0"), 4);
     expect(s.answers[0].text).toBe("x^4/24 + x^3/6 + x^2/2 + x + 1");
     expect(s.verification.status).toBe("verified-numeric");
-    expect(solveTaylor("", ex("sin(x)"), "x", ex("0"), 5).answers[0].text).toBe("x^5/120 - x^3/6 + x");
+    expect(solveTaylor("", ex("sin(x)"), "x", ex("0"), 5).answers[0].text).toBe(
+      "x^5/120 - x^3/6 + x",
+    );
   });
   it("classifies critical points", () => {
     const s = solveExtrema("", ex("x^3 - 3x"));
-    expect(s.answers.map((a) => `${a.label}:${a.text}`)).toEqual(["maksimum lokal:(-1, 2)", "minimum lokal:(1, -2)"]);
+    expect(s.answers.map((a) => `${a.label}:${a.text}`)).toEqual([
+      "maksimum lokal:(-1, 2)",
+      "minimum lokal:(1, -2)",
+    ]);
   });
   it("differentiates implicitly", () => {
     const s = solveImplicit("", ex("x^2 + y^2"), ex("25"));

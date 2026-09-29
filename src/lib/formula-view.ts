@@ -2,7 +2,13 @@ import type { FormulaView } from "@/components/calculators/FormulaCalculator";
 import { CONSTANTS } from "@/engine/science/constants";
 import { formulaLatex, formulaVariablesLatex } from "@/engine/science/formula-solver";
 import type { FormulaDef } from "@/engine/science/formulas";
-import { categoryOfDim, COMMON_UNITS, dimEquals, isDimensionless, parseUnit } from "@/engine/units/units";
+import {
+  categoryOfDim,
+  COMMON_UNITS,
+  dimEquals,
+  isDimensionless,
+  parseUnit,
+} from "@/engine/units/units";
 
 /** Units offered for a variable: its own unit first, then common units of the same dimension. */
 export function compatibleUnits(unit: string): string[] {

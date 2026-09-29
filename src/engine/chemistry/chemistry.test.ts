@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { ELEMENTS } from "./elements";
 import { parseFormula, molarMass } from "./formula";
-import { balanceReaction, solveAcidPH, solveBalance, solveEmpiricalFormula, solveMolarMass, solveStoichiometry } from "./solvers";
+import {
+  balanceReaction,
+  solveAcidPH,
+  solveBalance,
+  solveEmpiricalFormula,
+  solveMolarMass,
+  solveStoichiometry,
+} from "./solvers";
 
 describe("periodic table", () => {
   it("has 118 elements with positions", () => {
@@ -77,9 +84,17 @@ describe("chemistry solvers", () => {
     expect(s.verification.status).toBe("verified");
   });
   it("computes pH exactly", () => {
-    expect(Number(solveAcidPH({ kind: "strong-acid", concentration: 0.01 }).answers[0].text)).toBeCloseTo(2, 6);
-    expect(Number(solveAcidPH({ kind: "weak-acid", concentration: 0.1, k: 1.8e-5 }).answers[0].text)).toBeCloseTo(2.8753, 3);
-    expect(Number(solveAcidPH({ kind: "strong-acid", concentration: 1e-8 }).answers[0].text)).toBeCloseTo(6.978, 3);
-    expect(Number(solveAcidPH({ kind: "strong-base", concentration: 0.001 }).answers[0].text)).toBeCloseTo(11, 6);
+    expect(
+      Number(solveAcidPH({ kind: "strong-acid", concentration: 0.01 }).answers[0].text),
+    ).toBeCloseTo(2, 6);
+    expect(
+      Number(solveAcidPH({ kind: "weak-acid", concentration: 0.1, k: 1.8e-5 }).answers[0].text),
+    ).toBeCloseTo(2.8753, 3);
+    expect(
+      Number(solveAcidPH({ kind: "strong-acid", concentration: 1e-8 }).answers[0].text),
+    ).toBeCloseTo(6.978, 3);
+    expect(
+      Number(solveAcidPH({ kind: "strong-base", concentration: 0.001 }).answers[0].text),
+    ).toBeCloseTo(11, 6);
   });
 });

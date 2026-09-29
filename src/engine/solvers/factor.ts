@@ -26,7 +26,10 @@ export interface FactorResult {
 }
 
 /** Build a displayable product that the automatic simplifier would not distribute. */
-export function buildFactoredForm(constant: Rational, factors: Array<{ factor: Expr; multiplicity: number }>): Expr {
+export function buildFactoredForm(
+  constant: Rational,
+  factors: Array<{ factor: Expr; multiplicity: number }>,
+): Expr {
   const parts: Expr[] = [];
   for (const { factor, multiplicity } of factors) {
     parts.push(multiplicity === 1 ? factor : rawPow(factor, rawNum(Rational.of(multiplicity))));
@@ -47,7 +50,11 @@ function describeSynthetic(p: Poly, r: Rational, x: string): Step {
     title: `Bagi dengan (${x} ${r.isNegative() ? "+" : "-"} ${r.abs().toString()}) menggunakan pembagian sintetik`,
     after: `${toLatex(p.toExpr(x))} = \\left(${toLatex(sub(rawSym(x), num(r)))}\\right)\\left(${toLatex(q.toExpr(x))}\\right)`,
     operation: "synthetic-division",
-    rule: { id: "factor-theorem", name: "Teorema faktor", formula: "P(r) = 0 \\iff (x - r) \\text{ adalah faktor dari } P(x)" },
+    rule: {
+      id: "factor-theorem",
+      name: "Teorema faktor",
+      formula: "P(r) = 0 \\iff (x - r) \\text{ adalah faktor dari } P(x)",
+    },
     reason: `P(${r.toString()}) = 0, sehingga (${x} ${r.isNegative() ? "+" : "-"} ${r.abs().toString()}) adalah faktor. Koefisien sisa pembagian: ${q.coeffs
       .slice()
       .reverse()
@@ -59,7 +66,14 @@ function describeSynthetic(p: Poly, r: Rational, x: string): Step {
 /** Factor a univariate polynomial with rational coefficients. */
 export function factorUnivariate(p: Poly, x: string): FactorResult {
   const steps: Step[] = [];
-  if (p.degree < 1) return { factored: p.toExpr(x), factors: [], constant: p.coeff(0), steps, irreducibleRemainder: false };
+  if (p.degree < 1)
+    return {
+      factored: p.toExpr(x),
+      factors: [],
+      constant: p.coeff(0),
+      steps,
+      irreducibleRemainder: false,
+    };
   const { content, poly } = p.primitive();
   const X = rawSym(x);
   const factors: Array<{ factor: Expr; multiplicity: number }> = [];
@@ -99,7 +113,11 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
           before: toLatex(work.toExpr(x)),
           after: `\\left(${toLatex(sub(A, B))}\\right)\\left(${toLatex(add(A, B))}\\right)`,
           operation: "difference-of-squares",
-          rule: { id: "diff-squares", name: "Selisih dua kuadrat", formula: "a^2 - b^2 = (a - b)(a + b)" },
+          rule: {
+            id: "diff-squares",
+            name: "Selisih dua kuadrat",
+            formula: "a^2 - b^2 = (a - b)(a + b)",
+          },
           reason: `$${toLatex(work.toExpr(x))} = (${toLatex(A)})^2 - ${rb}^2$.`,
         });
       }
@@ -112,11 +130,17 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
         const A = mul(num(ra), pow(X, num(third)));
         const B = num(rb);
         steps.push({
-          title: b.isNegative() ? "Gunakan selisih dua pangkat tiga" : "Gunakan jumlah dua pangkat tiga",
+          title: b.isNegative()
+            ? "Gunakan selisih dua pangkat tiga"
+            : "Gunakan jumlah dua pangkat tiga",
           before: toLatex(work.toExpr(x)),
           after: `\\left(${toLatex(add(A, B))}\\right)\\left(${toLatex(add(pow(A, num(2)), neg(mul(A, B)), pow(B, num(2))))}\\right)`,
           operation: "sum-difference-cubes",
-          rule: { id: "cubes", name: "Jumlah/selisih pangkat tiga", formula: "a^3 \\pm b^3 = (a \\pm b)(a^2 \\mp ab + b^2)" },
+          rule: {
+            id: "cubes",
+            name: "Jumlah/selisih pangkat tiga",
+            formula: "a^3 \\pm b^3 = (a \\pm b)(a^2 \\mp ab + b^2)",
+          },
           reason: `Bentuk $${toLatex(work.toExpr(x))} = (${toLatex(A)})^3 ${b.isNegative() ? "-" : "+"} ${rb < 0n ? -rb : rb}^3$.`,
         });
       }
@@ -139,8 +163,13 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
       title: "Cari akar rasional dengan teorema akar rasional",
       after: `\\text{akar rasional: } ${[...rootCounts.values()].map(({ r }) => (r.isInteger() ? r.toString() : `\\frac{${r.num}}{${r.den}}`)).join(",\\ ")}`,
       operation: "rational-root-theorem",
-      rule: { id: "rational-root", name: "Teorema akar rasional", formula: "P\\left(\\tfrac{p}{q}\\right) = 0 \\Rightarrow p \\mid a_0,\\ q \\mid a_n" },
-      reason: "Kandidat akar rasional adalah ±(pembagi suku konstan)/(pembagi koefisien utama); setiap kandidat diuji dengan substitusi.",
+      rule: {
+        id: "rational-root",
+        name: "Teorema akar rasional",
+        formula: "P\\left(\\tfrac{p}{q}\\right) = 0 \\Rightarrow p \\mid a_0,\\ q \\mid a_n",
+      },
+      reason:
+        "Kandidat akar rasional adalah ±(pembagi suku konstan)/(pembagi koefisien utama); setiap kandidat diuji dengan substitusi.",
     });
     for (const r of roots) {
       if (deflate.degree <= 2) break;
@@ -162,7 +191,11 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
         title: "Cari dua bilangan yang hasil kalinya c dan jumlahnya b",
         after: `${m.toString()} \\times ${nn.toString()} = ${c.toString()},\\quad ${m.toString()} + ${nn.toString()} = ${b.toString()}`,
         operation: "find-pair",
-        rule: { id: "trinomial", name: "Faktorisasi trinomial x² + bx + c", formula: "x^2 + bx + c = (x + m)(x + n),\\ mn = c,\\ m + n = b" },
+        rule: {
+          id: "trinomial",
+          name: "Faktorisasi trinomial x² + bx + c",
+          formula: "x^2 + bx + c = (x + m)(x + n),\\ mn = c,\\ m + n = b",
+        },
         reason: "Jika x² + bx + c = (x + m)(x + n), maka m + n = b dan m·n = c.",
       });
     } else {
@@ -170,16 +203,23 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
         title: "Metode AC: cari dua bilangan dengan hasil kali a·c dan jumlah b",
         after: `a c = ${ac.toString()},\\quad ${m.toString()} \\times ${nn.toString()} = ${ac.toString()},\\quad ${m.toString()} + ${nn.toString()} = ${b.toString()}`,
         operation: "ac-method",
-        rule: { id: "ac-method", name: "Metode AC (pemisahan suku tengah)", formula: "ax^2 + bx + c = ax^2 + mx + nx + c,\\ mn = ac,\\ m + n = b" },
-        reason: "Suku tengah dipecah menjadi dua suku sehingga dapat difaktorkan dengan pengelompokan.",
+        rule: {
+          id: "ac-method",
+          name: "Metode AC (pemisahan suku tengah)",
+          formula: "ax^2 + bx + c = ax^2 + mx + nx + c,\\ mn = ac,\\ m + n = b",
+        },
+        reason:
+          "Suku tengah dipecah menjadi dua suku sehingga dapat difaktorkan dengan pengelompokan.",
       });
     }
   }
-  for (const { r, m } of rootCounts.values()) factors.push({ factor: linearFactor(x, r), multiplicity: m });
+  for (const { r, m } of rootCounts.values())
+    factors.push({ factor: linearFactor(x, r), multiplicity: m });
 
   // Leading coefficient bookkeeping: product of (q x - p) has leading coeff prod q^m
   let leadFromFactors = Rational.ONE;
-  for (const { r, m } of rootCounts.values()) leadFromFactors = leadFromFactors.mul(Rational.of(r.den).pow(m));
+  for (const { r, m } of rootCounts.values())
+    leadFromFactors = leadFromFactors.mul(Rational.of(r.den).pow(m));
   let restPoly = rest;
   let irreducible = false;
   if (restPoly.degree >= 1) {
@@ -209,7 +249,8 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
         title: "Faktor sisa tidak memiliki akar rasional",
         after: toLatex(restExpr),
         operation: "irreducible",
-        reason: "Tidak ada kandidat akar rasional yang memenuhi; faktor ini tidak dapat difaktorkan lebih lanjut menjadi faktor linear rasional oleh engine.",
+        reason:
+          "Tidak ada kandidat akar rasional yang memenuhi; faktor ini tidak dapat difaktorkan lebih lanjut menjadi faktor linear rasional oleh engine.",
       });
     }
   }
@@ -225,7 +266,11 @@ export function factorUnivariate(p: Poly, x: string): FactorResult {
   return { factored, factors, constant, steps, irreducibleRemainder: irreducible };
 }
 
-function computeConstant(p: Poly, factors: Array<{ factor: Expr; multiplicity: number }>, x: string): Rational {
+function computeConstant(
+  p: Poly,
+  factors: Array<{ factor: Expr; multiplicity: number }>,
+  x: string,
+): Rational {
   let prod: Poly = Poly.ONE;
   for (const { factor, multiplicity } of factors) {
     const fp = toPoly(factor, x)!;
@@ -248,7 +293,13 @@ export function commonMonomialFactor(e: Expr): { gcf: Expr; rest: Expr } | null 
     for (const f of factors) {
       if (f.type === "num") coef = f.value;
       else if (f.type === "sym") vp.set(f.name, (vp.get(f.name) ?? 0) + 1);
-      else if (f.type === "pow" && f.base.type === "sym" && f.exp.type === "num" && f.exp.value.isInteger() && f.exp.value.isPositive()) {
+      else if (
+        f.type === "pow" &&
+        f.base.type === "sym" &&
+        f.exp.type === "num" &&
+        f.exp.value.isInteger() &&
+        f.exp.value.isPositive()
+      ) {
         vp.set(f.base.name, (vp.get(f.base.name) ?? 0) + Number(f.exp.value.num));
       } else vp.set(`#${f.type}`, -1e9);
     }
@@ -265,8 +316,22 @@ export function commonMonomialFactor(e: Expr): { gcf: Expr; rest: Expr } | null 
   }
   let coefG = Rational.of(g, den);
   const leading = ex.terms[0];
-  const leadCoef = leading.type === "mul" && leading.factors[0].type === "num" ? leading.factors[0].value : leading.type === "num" ? leading.value : Rational.ONE;
-  if (leadCoef.isNegative() && ex.terms.every((t) => (t.type === "mul" && t.factors[0].type === "num" ? t.factors[0].value.isNegative() : t.type === "num" ? t.value.isNegative() : false))) {
+  const leadCoef =
+    leading.type === "mul" && leading.factors[0].type === "num"
+      ? leading.factors[0].value
+      : leading.type === "num"
+        ? leading.value
+        : Rational.ONE;
+  if (
+    leadCoef.isNegative() &&
+    ex.terms.every((t) =>
+      t.type === "mul" && t.factors[0].type === "num"
+        ? t.factors[0].value.isNegative()
+        : t.type === "num"
+          ? t.value.isNegative()
+          : false,
+    )
+  ) {
     coefG = coefG.neg();
   }
   if (coefG.isOne() && common.size === 0) return null;
@@ -300,7 +365,8 @@ export function factorExpression(e: Expr): FactorResult | null {
     const gf = g.type === "mul" ? g.factors : [g];
     for (const f of gf) {
       if (f.type === "num") constant = constant.mul(f.value);
-      else if (f.type === "pow" && f.exp.type === "num") factors.push({ factor: f.base, multiplicity: Number(f.exp.value.num) });
+      else if (f.type === "pow" && f.exp.type === "num")
+        factors.push({ factor: f.base, multiplicity: Number(f.exp.value.num) });
       else factors.push({ factor: f, multiplicity: 1 });
     }
     current = cm.rest;
@@ -313,7 +379,11 @@ export function factorExpression(e: Expr): FactorResult | null {
       before: toLatex(current),
       after: `\\left(${toLatex(ds[0])}\\right)\\left(${toLatex(ds[1])}\\right)`,
       operation: "difference-of-squares",
-      rule: { id: "diff-squares", name: "Selisih dua kuadrat", formula: "a^2 - b^2 = (a - b)(a + b)" },
+      rule: {
+        id: "diff-squares",
+        name: "Selisih dua kuadrat",
+        formula: "a^2 - b^2 = (a - b)(a + b)",
+      },
       reason: "Ekspresi berbentuk selisih dua bentuk kuadrat.",
     });
     factors.push({ factor: ds[0], multiplicity: 1 }, { factor: ds[1], multiplicity: 1 });
@@ -324,7 +394,12 @@ export function factorExpression(e: Expr): FactorResult | null {
     return null;
   }
   const factored = buildFactoredForm(constant, factors);
-  steps.push({ title: "Bentuk faktor akhir", after: toLatex(factored), operation: "factored-form", reason: "Semua faktor disusun menjadi hasil kali." });
+  steps.push({
+    title: "Bentuk faktor akhir",
+    after: toLatex(factored),
+    operation: "factored-form",
+    reason: "Semua faktor disusun menjadi hasil kali.",
+  });
   return { factored, factors, constant, steps, irreducibleRemainder: false };
 }
 
@@ -332,9 +407,16 @@ function differenceOfSquares(e: Expr): [Expr, Expr] | null {
   const ex = expand(e);
   if (ex.type !== "add" || ex.terms.length !== 2) return null;
   const [t1, t2] = ex.terms;
-  const neg1 = t1.type === "mul" && t1.factors[0].type === "num" && t1.factors[0].value.isNegative();
-  const neg2 = t2.type === "mul" && t2.factors[0].type === "num" && t2.factors[0].value.isNegative();
-  if (neg1 === neg2 && !(t1.type === "num" && t1.value.isNegative()) && !(t2.type === "num" && t2.value.isNegative())) return null;
+  const neg1 =
+    t1.type === "mul" && t1.factors[0].type === "num" && t1.factors[0].value.isNegative();
+  const neg2 =
+    t2.type === "mul" && t2.factors[0].type === "num" && t2.factors[0].value.isNegative();
+  if (
+    neg1 === neg2 &&
+    !(t1.type === "num" && t1.value.isNegative()) &&
+    !(t2.type === "num" && t2.value.isNegative())
+  )
+    return null;
   const pos = neg1 || (t1.type === "num" && t1.value.isNegative()) ? t2 : t1;
   const negT = pos === t1 ? t2 : t1;
   const A = squareRootOfMonomial(pos);
@@ -353,7 +435,12 @@ function squareRootOfMonomial(t: Expr): Expr | null {
       const rd = exactIntRoot(f.value.den, 2);
       if (rn === null || rd === null) return null;
       out.push(num(Rational.of(rn, rd)));
-    } else if (f.type === "pow" && f.exp.type === "num" && f.exp.value.isInteger() && f.exp.value.num % 2n === 0n) {
+    } else if (
+      f.type === "pow" &&
+      f.exp.type === "num" &&
+      f.exp.value.isInteger() &&
+      f.exp.value.num % 2n === 0n
+    ) {
       out.push(pow(f.base, num(f.exp.value.div(Rational.TWO))));
     } else return null;
   }

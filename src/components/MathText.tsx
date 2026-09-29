@@ -10,7 +10,13 @@ export function MathText({ text, className }: { text: string; className?: string
   const parts = text.split(/\$([^$]+)\$/g);
   return (
     <span className={className}>
-      {parts.map((p, i) => (i % 2 === 1 ? <span key={i} dangerouslySetInnerHTML={{ __html: renderTex(p, false) }} /> : <Fragment key={i}>{p}</Fragment>))}
+      {parts.map((p, i) =>
+        i % 2 === 1 ? (
+          <span key={i} dangerouslySetInnerHTML={{ __html: renderTex(p, false) }} />
+        ) : (
+          <Fragment key={i}>{p}</Fragment>
+        ),
+      )}
     </span>
   );
 }

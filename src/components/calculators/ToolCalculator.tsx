@@ -36,7 +36,14 @@ export function ToolCalculator({ toolId, title, fields, defaults }: ToolCalculat
     for (const [k, val] of Object.entries(shown)) if (val !== "") url.searchParams.set(k, val);
     window.history.replaceState(window.history.state, "", url.toString());
     setShareUrl(url.toString());
-    if (res?.ok) addHistory({ kind: "tool", title, input: Object.values(shown).filter(Boolean).join(" · ").slice(0, 120), href: `${url.pathname}${url.search}`, answer: res.solution.answers[0]?.text });
+    if (res?.ok)
+      addHistory({
+        kind: "tool",
+        title,
+        input: Object.values(shown).filter(Boolean).join(" · ").slice(0, 120),
+        href: `${url.pathname}${url.search}`,
+        answer: res.solution.answers[0]?.text,
+      });
   };
 
   // Prefill from a shared link (?field=value) and compute once.
@@ -69,22 +76,58 @@ export function ToolCalculator({ toolId, title, fields, defaults }: ToolCalculat
         aria-label={title}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          {fields.filter((f) => visible(f, values)).map((f) => (
-            <FieldInput key={f.name} id={`${uid}-${f.name}`} field={f} value={values[f.name] ?? ""} onChange={(v) => setValues((cur) => ({ ...cur, [f.name]: v }))} />
-          ))}
+          {fields
+            .filter((f) => visible(f, values))
+            .map((f) => (
+              <FieldInput
+                key={f.name}
+                id={`${uid}-${f.name}`}
+                field={f}
+                value={values[f.name] ?? ""}
+                onChange={(v) => setValues((cur) => ({ ...cur, [f.name]: v }))}
+              />
+            ))}
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <button type="submit" disabled={busy} className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-accent-contrast shadow-sm hover:bg-accent-strong disabled:opacity-50">
-            {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Play size={16} aria-hidden />}
+          <button
+            type="submit"
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-accent-contrast shadow-sm hover:bg-accent-strong disabled:opacity-50"
+          >
+            {busy ? (
+              <Loader2 size={16} className="animate-spin" aria-hidden />
+            ) : (
+              <Play size={16} aria-hidden />
+            )}
             {busy ? "Menghitung…" : "Hitung"}
           </button>
-          <button type="button" onClick={() => setValues(defaults)} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted hover:text-text">
+          <button
+            type="button"
+            onClick={() => setValues(defaults)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted hover:text-text"
+          >
             <RotateCcw size={14} aria-hidden /> Contoh
           </button>
         </div>
       </form>
       <div aria-live="polite">
-        {outcome?.ok && <SolutionView solution={outcome.solution} shareUrl={shareUrl} entry={shareUrl ? { kind: "tool", title, input: title, href: new URL(shareUrl).pathname + new URL(shareUrl).search, answer: outcome.solution.answers[0]?.text } : undefined} />}
+        {outcome?.ok && (
+          <SolutionView
+            solution={outcome.solution}
+            shareUrl={shareUrl}
+            entry={
+              shareUrl
+                ? {
+                    kind: "tool",
+                    title,
+                    input: title,
+                    href: new URL(shareUrl).pathname + new URL(shareUrl).search,
+                    answer: outcome.solution.answers[0]?.text,
+                  }
+                : undefined
+            }
+          />
+        )}
         {outcome && !outcome.ok && <ErrorView error={outcome.error} />}
       </div>
     </div>

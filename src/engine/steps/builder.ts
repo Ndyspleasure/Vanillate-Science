@@ -3,7 +3,19 @@
  */
 import { checkEquivalent } from "../expr/equivalence";
 import type { Expr } from "../expr/types";
-import { ENGINE_VERSION, type Alternative, type Answer, type ProblemKind, type Reference, type Solution, type Step, type StepCheck, type Verification, type PlotSpec, type TableData } from "./types";
+import {
+  ENGINE_VERSION,
+  type Alternative,
+  type Answer,
+  type ProblemKind,
+  type Reference,
+  type Solution,
+  type Step,
+  type StepCheck,
+  type Verification,
+  type PlotSpec,
+  type TableData,
+} from "./types";
 
 export interface SolutionInit {
   kind: ProblemKind;
@@ -44,7 +56,11 @@ export function makeSolution(init: SolutionInit): Solution {
 }
 
 /** Verify that a rewriting step preserved the value of an expression. */
-export function checkRewrite(before: Expr, after: Expr, options: { positiveOnly?: boolean } = {}): StepCheck {
+export function checkRewrite(
+  before: Expr,
+  after: Expr,
+  options: { positiveOnly?: boolean } = {},
+): StepCheck {
   try {
     const r = checkEquivalent(before, after, { positiveOnly: options.positiveOnly });
     if (r.equivalent) {
@@ -54,10 +70,15 @@ export function checkRewrite(before: Expr, after: Expr, options: { positiveOnly?
         detail: r.detail,
       };
     }
-    if (r.method === "inconclusive") return { status: "unverified", method: "Kesetaraan numerik", detail: r.detail };
+    if (r.method === "inconclusive")
+      return { status: "unverified", method: "Kesetaraan numerik", detail: r.detail };
     return { status: "failed", method: "Kesetaraan numerik", detail: r.detail };
   } catch (e) {
-    return { status: "unverified", method: "Kesetaraan", detail: e instanceof Error ? e.message : String(e) };
+    return {
+      status: "unverified",
+      method: "Kesetaraan",
+      detail: e instanceof Error ? e.message : String(e),
+    };
   }
 }
 
@@ -66,7 +87,8 @@ export const REFERENCES = {
     name: "Computer Algebra and Symbolic Computation: Elementary Algorithms",
     source: "Joel S. Cohen, A K Peters",
     edition: "2002",
-    notes: "Algoritma penyederhanaan otomatis (automatic simplification) dan manipulasi polinomial.",
+    notes:
+      "Algoritma penyederhanaan otomatis (automatic simplification) dan manipulasi polinomial.",
   },
   openstaxAlgebra: {
     name: "College Algebra 2e",
@@ -147,7 +169,8 @@ export const REFERENCES = {
   },
   numericalRecipes: {
     name: "Numerical Recipes: The Art of Scientific Computing",
-    source: "W. H. Press, S. A. Teukolsky, W. T. Vetterling, B. P. Flannery, Cambridge University Press",
+    source:
+      "W. H. Press, S. A. Teukolsky, W. T. Vetterling, B. P. Flannery, Cambridge University Press",
     edition: "3rd edition, 2007",
   },
   burdenFaires: {

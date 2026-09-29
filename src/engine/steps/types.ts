@@ -13,10 +13,15 @@ export const LEVELS: { id: Level; label: string; description: string }[] = [
   { id: "pelajar", label: "Pelajar", description: "Penjelasan konseptual dan rumus." },
   { id: "universitas", label: "Universitas", description: "Notasi dan terminologi akademik." },
   { id: "advanced", label: "Advanced", description: "Langkah formal beserta asumsi." },
-  { id: "expert", label: "Expert", description: "Teorema, kondisi keberlakuan, domain, dan verifikasi tiap langkah." },
+  {
+    id: "expert",
+    label: "Expert",
+    description: "Teorema, kondisi keberlakuan, domain, dan verifikasi tiap langkah.",
+  },
 ];
 
-export type VerificationStatus = "verified" | "verified-numeric" | "partial" | "unverified" | "failed";
+export type VerificationStatus =
+  "verified" | "verified-numeric" | "partial" | "unverified" | "failed";
 
 export interface Reference {
   name: string;

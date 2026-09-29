@@ -6,9 +6,19 @@ import { atLeast } from "./levels";
 
 function CheckMark({ check, level }: { check: StepCheck; level: Level }) {
   const ok = check.status === "verified" || check.status === "verified-numeric";
-  const Icon = ok ? CheckCircle2 : check.status === "failed" ? XCircle : check.status === "partial" ? CircleAlert : CircleDashed;
+  const Icon = ok
+    ? CheckCircle2
+    : check.status === "failed"
+      ? XCircle
+      : check.status === "partial"
+        ? CircleAlert
+        : CircleDashed;
   const tone = ok ? "text-ok" : check.status === "failed" ? "text-bad" : "text-warn";
-  const label = ok ? "Langkah terverifikasi" : check.status === "failed" ? "Pemeriksaan langkah gagal" : "Langkah belum terverifikasi penuh";
+  const label = ok
+    ? "Langkah terverifikasi"
+    : check.status === "failed"
+      ? "Pemeriksaan langkah gagal"
+      : "Langkah belum terverifikasi penuh";
   return (
     <div className={`mt-2 flex items-start gap-1.5 text-xs ${tone}`}>
       <Icon size={14} className="mt-px shrink-0" aria-hidden />
@@ -48,7 +58,9 @@ function StepBody({ step, level }: { step: Step; level: Level }) {
       </div>
       {step.rule && atLeast(level, "pelajar") && (
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
-          <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent-strong">{step.rule.name}</span>
+          <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent-strong">
+            {step.rule.name}
+          </span>
           {step.rule.formula && <Tex tex={step.rule.formula} />}
         </div>
       )}
@@ -75,7 +87,9 @@ function StepBody({ step, level }: { step: Step; level: Level }) {
       {step.check && <CheckMark check={step.check} level={level} />}
       {step.substeps && step.substeps.length > 0 && (
         <details className="mt-3 rounded-lg border border-border" open={atLeast(level, "advanced")}>
-          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-accent">Rincian ({step.substeps.length} sub-langkah)</summary>
+          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-accent">
+            Rincian ({step.substeps.length} sub-langkah)
+          </summary>
           <div className="border-t border-border px-3 py-3">
             <StepList steps={step.substeps} level={level} nested />
           </div>
@@ -85,8 +99,17 @@ function StepBody({ step, level }: { step: Step; level: Level }) {
   );
 }
 
-export function StepList({ steps, level, nested = false }: { steps: Step[]; level: Level; nested?: boolean }) {
-  if (steps.length === 0) return <p className="text-sm text-muted">Tidak ada langkah yang perlu ditampilkan.</p>;
+export function StepList({
+  steps,
+  level,
+  nested = false,
+}: {
+  steps: Step[];
+  level: Level;
+  nested?: boolean;
+}) {
+  if (steps.length === 0)
+    return <p className="text-sm text-muted">Tidak ada langkah yang perlu ditampilkan.</p>;
   return (
     <ol className={nested ? "space-y-4" : "space-y-5"}>
       {steps.map((s, i) => (

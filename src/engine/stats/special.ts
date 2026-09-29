@@ -71,9 +71,18 @@ export function normalCdf(x: number, mu = 0, sigma = 1): number {
   return 0.5 * erfc(-(x - mu) / (sigma * Math.SQRT2));
 }
 
-const A = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.38357751867269e2, -3.066479806614716e1, 2.506628277459239];
-const B = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1];
-const C = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+const A = [
+  -3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.38357751867269e2,
+  -3.066479806614716e1, 2.506628277459239,
+];
+const B = [
+  -5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1,
+  -1.328068155288572e1,
+];
+const C = [
+  -7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734,
+  4.374664141464968, 2.938163982698783,
+];
 const D = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416];
 
 /** Inverse standard normal CDF (quantile). */
@@ -81,20 +90,28 @@ export function normalInv(p: number): number {
   if (!(p > 0 && p < 1)) {
     if (p === 0) return -Infinity;
     if (p === 1) return Infinity;
-    throw new MathError("domain-error", "Peluang harus berada di antara 0 dan 1.", { module: "stats" });
+    throw new MathError("domain-error", "Peluang harus berada di antara 0 dan 1.", {
+      module: "stats",
+    });
   }
   const plow = 0.02425;
   let x: number;
   if (p < plow) {
     const q = Math.sqrt(-2 * Math.log(p));
-    x = (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1);
+    x =
+      (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) /
+      ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1);
   } else if (p <= 1 - plow) {
     const q = p - 0.5;
     const r = q * q;
-    x = ((((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5]) * q) / (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r + 1);
+    x =
+      ((((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5]) * q) /
+      (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r + 1);
   } else {
     const q = Math.sqrt(-2 * Math.log(1 - p));
-    x = -(((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1);
+    x =
+      -(((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) /
+      ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1);
   }
   // Halley refinement
   for (let k = 0; k < 2; k++) {
@@ -106,7 +123,11 @@ export function normalInv(p: number): number {
 }
 
 // Lanczos approximation for ln Γ(x), x > 0 (g = 7, n = 9)
-const LG = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+const LG = [
+  0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+  -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6,
+  1.5056327351493116e-7,
+];
 
 export function lnGamma(x: number): number {
   if (x <= 0) throw new MathError("domain-error", "lnΓ(x) hanya untuk x > 0.", { module: "stats" });
@@ -120,7 +141,10 @@ export function lnGamma(x: number): number {
 
 /** Regularized lower incomplete gamma P(a, x). */
 export function gammaP(a: number, x: number): number {
-  if (x < 0 || a <= 0) throw new MathError("domain-error", "Argumen fungsi gamma tak lengkap tidak valid.", { module: "stats" });
+  if (x < 0 || a <= 0)
+    throw new MathError("domain-error", "Argumen fungsi gamma tak lengkap tidak valid.", {
+      module: "stats",
+    });
   if (x === 0) return 0;
   if (x < a + 1) {
     let sum = 1 / a;
@@ -195,7 +219,10 @@ function betacf(a: number, b: number, x: number): number {
 
 /** Regularized incomplete beta I_x(a, b). */
 export function betaI(a: number, b: number, x: number): number {
-  if (x < 0 || x > 1) throw new MathError("domain-error", "x harus di [0, 1] untuk fungsi beta tak lengkap.", { module: "stats" });
+  if (x < 0 || x > 1)
+    throw new MathError("domain-error", "x harus di [0, 1] untuk fungsi beta tak lengkap.", {
+      module: "stats",
+    });
   if (x === 0 || x === 1) return x;
   const lbt = lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x);
   const bt = Math.exp(lbt);
@@ -205,14 +232,20 @@ export function betaI(a: number, b: number, x: number): number {
 
 /** Student t CDF with ν degrees of freedom. */
 export function tCdf(t: number, nu: number): number {
-  if (nu <= 0) throw new MathError("domain-error", "Derajat bebas harus positif.", { module: "stats" });
+  if (nu <= 0)
+    throw new MathError("domain-error", "Derajat bebas harus positif.", { module: "stats" });
   const x = nu / (nu + t * t);
   const tail = 0.5 * betaI(nu / 2, 0.5, x);
   return t >= 0 ? 1 - tail : tail;
 }
 
 export function tPdf(t: number, nu: number): number {
-  return Math.exp(lnGamma((nu + 1) / 2) - lnGamma(nu / 2) - 0.5 * Math.log(nu * Math.PI) - ((nu + 1) / 2) * Math.log(1 + (t * t) / nu));
+  return Math.exp(
+    lnGamma((nu + 1) / 2) -
+      lnGamma(nu / 2) -
+      0.5 * Math.log(nu * Math.PI) -
+      ((nu + 1) / 2) * Math.log(1 + (t * t) / nu),
+  );
 }
 
 export function chiSquareCdf(x: number, k: number): number {
@@ -227,7 +260,8 @@ export function fCdf(x: number, d1: number, d2: number): number {
 
 /** Invert a monotone CDF on (lo, hi) by bisection to full precision. */
 export function invertCdf(cdf: (x: number) => number, p: number, lo: number, hi: number): number {
-  if (!(p > 0 && p < 1)) throw new MathError("domain-error", "Peluang harus di antara 0 dan 1.", { module: "stats" });
+  if (!(p > 0 && p < 1))
+    throw new MathError("domain-error", "Peluang harus di antara 0 dan 1.", { module: "stats" });
   let a = lo;
   let b = hi;
   while (cdf(b) < p) {

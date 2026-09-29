@@ -1,4 +1,15 @@
-import { Atom, Binary, Calculator, FlaskConical, Landmark, Orbit, Ruler, Shapes, Sigma, Wrench } from "lucide-react";
+import {
+  Atom,
+  Binary,
+  Calculator,
+  FlaskConical,
+  Landmark,
+  Orbit,
+  Ruler,
+  Shapes,
+  Sigma,
+  Wrench,
+} from "lucide-react";
 import type { CategoryId } from "@/lib/calculators";
 
 const ICONS: Record<CategoryId, typeof Sigma> = {
@@ -17,7 +28,10 @@ const ICONS: Record<CategoryId, typeof Sigma> = {
 export function CategoryIcon({ id, size = 18 }: { id: CategoryId; size?: number }) {
   const Icon = ICONS[id];
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent-strong" aria-hidden>
+    <span
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent-strong"
+      aria-hidden
+    >
       <Icon size={size} />
     </span>
   );

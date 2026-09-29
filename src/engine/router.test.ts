@@ -74,18 +74,23 @@ describe("router error handling", () => {
     if (!r.ok) expect(r.error.kind).toBe("unsupported");
   });
   it("never throws on random input (fuzz)", () => {
-    const alphabet = fc.constantFrom(..."0123456789xyz+-*/^()[]{}|=<>!.,;πe√∫ sincolgtdqr".split(""));
+    const alphabet = fc.constantFrom(
+      ..."0123456789xyz+-*/^()[]{}|=<>!.,;πe√∫ sincolgtdqr".split(""),
+    );
     fc.assert(
-      fc.property(fc.array(alphabet, { maxLength: 30 }).map((a) => a.join("")), (s) => {
-        const r = solve(s, { timeMs: 1500 });
-        expect(typeof r.ok).toBe("boolean");
-        if (r.ok) {
-          expect(Array.isArray(r.solution.steps)).toBe(true);
-          expect(r.solution.answers.length).toBeGreaterThan(0);
-        } else {
-          expect(r.error.message.length).toBeGreaterThan(0);
-        }
-      }),
+      fc.property(
+        fc.array(alphabet, { maxLength: 30 }).map((a) => a.join("")),
+        (s) => {
+          const r = solve(s, { timeMs: 1500 });
+          expect(typeof r.ok).toBe("boolean");
+          if (r.ok) {
+            expect(Array.isArray(r.solution.steps)).toBe(true);
+            expect(r.solution.answers.length).toBeGreaterThan(0);
+          } else {
+            expect(r.error.message.length).toBeGreaterThan(0);
+          }
+        },
+      ),
       { numRuns: 400 },
     );
   });
@@ -138,7 +143,8 @@ describe("regressions (UI integration)", () => {
   it("error spans point into the raw input even after a command prefix", () => {
     const r = solve("sederhanakan (x + 1");
     expect(r.ok).toBe(false);
-    if (!r.ok && r.error.span) expect("sederhanakan (x + 1".slice(r.error.span.start, r.error.span.end)).toBe("(");
+    if (!r.ok && r.error.span)
+      expect("sederhanakan (x + 1".slice(r.error.span.start, r.error.span.end)).toBe("(");
   });
 });
 

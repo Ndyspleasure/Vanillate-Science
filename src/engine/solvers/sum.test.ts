@@ -11,7 +11,9 @@ describe("sigma sums", () => {
   it("closed forms for polynomial sums, proven by induction", () => {
     const s1 = ok("sum(k, k, 1, n)");
     expect(s1.answers[0].text.replace(/\s/g, "")).toMatch(/n\^2\/2\+n\/2|n\/2\+n\^2\/2/);
-    expect(s1.answers.some((a) => /n\*\(n\s*\+\s*1\)\/2|\(n\s*\+\s*1\)\*n\/2|1\/2/.test(a.text))).toBe(true);
+    expect(
+      s1.answers.some((a) => /n\*\(n\s*\+\s*1\)\/2|\(n\s*\+\s*1\)\*n\/2|1\/2/.test(a.text)),
+    ).toBe(true);
     expect(s1.verification.status).toBe("verified");
     const s2 = ok("sum(k^2, k, 1, n)");
     expect(s2.verification.status).toBe("verified");

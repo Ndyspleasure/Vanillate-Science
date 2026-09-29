@@ -55,7 +55,11 @@ export function SiteNav() {
         {open ? <X size={18} aria-hidden /> : <Menu size={18} aria-hidden />}
       </button>
       {open && (
-        <nav id="mobile-nav" aria-label="Navigasi utama (seluler)" className="absolute inset-x-0 top-full z-40 border-b border-border bg-surface shadow-lg md:hidden">
+        <nav
+          id="mobile-nav"
+          aria-label="Navigasi utama (seluler)"
+          className="absolute inset-x-0 top-full z-40 border-b border-border bg-surface shadow-lg md:hidden"
+        >
           <ul className="mx-auto flex max-w-6xl flex-col p-2">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>

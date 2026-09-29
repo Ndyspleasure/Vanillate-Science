@@ -52,7 +52,10 @@ describe("verify my work — carried errors", () => {
     expect(r.lines.map((l) => l.status)).toEqual(["error", "carried"]);
     const i = checkWork("integral x cos(x)", ["x sin(x) - cos(x) + C", "x sin(x) + cos(x) + C"]);
     expect(i.lines.map((l) => l.status)).toEqual(["error", "ok"]);
-    const nested = checkWork("integral x cos(x)", ["x sin(x) - integral sin(x)", "x sin(x) + cos(x) + C"]);
+    const nested = checkWork("integral x cos(x)", [
+      "x sin(x) - integral sin(x)",
+      "x sin(x) + cos(x) + C",
+    ]);
     expect(nested.lines[0].status).toBe("unchecked");
   });
 });

@@ -3,7 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
-import { CATEGORIES, CATEGORY_BY_ID, calculatorPath, calculatorsIn, type CategoryId } from "@/lib/calculators";
+import {
+  CATEGORIES,
+  CATEGORY_BY_ID,
+  calculatorPath,
+  calculatorsIn,
+  type CategoryId,
+} from "@/lib/calculators";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -12,7 +18,9 @@ export function generateStaticParams() {
   return CATEGORIES.map((c) => ({ category: c.id }));
 }
 
-export async function generateMetadata({ params }: PageProps<"/calculator/[category]">): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/calculator/[category]">): Promise<Metadata> {
   const { category } = await params;
   const cat = CATEGORY_BY_ID[category as CategoryId];
   if (!cat) return {};
@@ -54,8 +62,13 @@ export default async function CategoryPage({ params }: PageProps<"/calculator/[c
               .filter((c) => c.topic === t)
               .map((c) => (
                 <li key={c.slug}>
-                  <Link href={calculatorPath(c)} className="flex h-full flex-col rounded-xl border border-border bg-surface p-4 hover:border-accent">
-                    <span className="font-medium text-text">{c.title.replace(/^Kalkulator /, "")}</span>
+                  <Link
+                    href={calculatorPath(c)}
+                    className="flex h-full flex-col rounded-xl border border-border bg-surface p-4 hover:border-accent"
+                  >
+                    <span className="font-medium text-text">
+                      {c.title.replace(/^Kalkulator /, "")}
+                    </span>
                     <span className="mt-1 line-clamp-2 text-xs text-muted">{c.description}</span>
                   </Link>
                 </li>
@@ -70,7 +83,11 @@ export default async function CategoryPage({ params }: PageProps<"/calculator/[c
           name: cat.title,
           description: cat.description,
           url: absoluteUrl(`/calculator/${cat.id}`),
-          hasPart: list.map((c) => ({ "@type": "WebApplication", name: c.title, url: absoluteUrl(calculatorPath(c)) })),
+          hasPart: list.map((c) => ({
+            "@type": "WebApplication",
+            name: c.title,
+            url: absoluteUrl(calculatorPath(c)),
+          })),
         }}
       />
     </div>

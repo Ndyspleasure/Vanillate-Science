@@ -9,10 +9,23 @@ export interface TabItem {
 }
 
 /** WAI-ARIA tabs with roving focus (Arrow keys, Home, End). */
-export function Tabs({ items, active, onChange, label }: { items: TabItem[]; active: string; onChange: (id: string) => void; label: string }) {
+export function Tabs({
+  items,
+  active,
+  onChange,
+  label,
+}: {
+  items: TabItem[];
+  active: string;
+  onChange: (id: string) => void;
+  label: string;
+}) {
   const base = useId();
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const idx = Math.max(0, items.findIndex((t) => t.id === active));
+  const idx = Math.max(
+    0,
+    items.findIndex((t) => t.id === active),
+  );
   const current = items[idx];
 
   const onKey = (e: React.KeyboardEvent) => {
@@ -30,7 +43,12 @@ export function Tabs({ items, active, onChange, label }: { items: TabItem[]; act
 
   return (
     <div>
-      <div role="tablist" aria-label={label} className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1" onKeyDown={onKey}>
+      <div
+        role="tablist"
+        aria-label={label}
+        className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1"
+        onKeyDown={onKey}
+      >
         {items.map((t) => {
           const selected = t.id === current?.id;
           return (
@@ -49,13 +67,24 @@ export function Tabs({ items, active, onChange, label }: { items: TabItem[]; act
               className={`relative shrink-0 whitespace-nowrap px-3 py-2.5 text-sm font-medium transition-colors ${selected ? "text-accent-strong" : "text-muted hover:text-text"}`}
             >
               {t.label}
-              {selected && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded bg-accent" aria-hidden />}
+              {selected && (
+                <span
+                  className="absolute inset-x-2 -bottom-px h-0.5 rounded bg-accent"
+                  aria-hidden
+                />
+              )}
             </button>
           );
         })}
       </div>
       {current && (
-        <div role="tabpanel" id={`${base}-panel-${current.id}`} aria-labelledby={`${base}-tab-${current.id}`} tabIndex={0} className="pt-5 outline-none">
+        <div
+          role="tabpanel"
+          id={`${base}-panel-${current.id}`}
+          aria-labelledby={`${base}-tab-${current.id}`}
+          tabIndex={0}
+          className="pt-5 outline-none"
+        >
           {current.content}
         </div>
       )}

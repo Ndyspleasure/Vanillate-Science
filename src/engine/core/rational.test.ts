@@ -4,7 +4,10 @@ import { Rational, bigIntRoot, exactIntRoot } from "./rational";
 import { factorInteger, isProbablePrime, extractPower, extendedGcd, divisors } from "./numtheory";
 
 const arbRational = fc
-  .tuple(fc.bigInt({ min: -(10n ** 12n), max: 10n ** 12n }), fc.bigInt({ min: 1n, max: 10n ** 12n }))
+  .tuple(
+    fc.bigInt({ min: -(10n ** 12n), max: 10n ** 12n }),
+    fc.bigInt({ min: 1n, max: 10n ** 12n }),
+  )
   .map(([n, d]) => Rational.of(n, d));
 
 describe("Rational", () => {
@@ -29,9 +32,21 @@ describe("Rational", () => {
   });
 
   it("detects repeating decimals", () => {
-    expect(Rational.of(1, 3).toRepeatingDecimal()).toEqual({ integer: "0", nonRepeating: "", repeating: "3" });
-    expect(Rational.of(1, 6).toRepeatingDecimal()).toEqual({ integer: "0", nonRepeating: "1", repeating: "6" });
-    expect(Rational.of(1, 8).toRepeatingDecimal()).toEqual({ integer: "0", nonRepeating: "125", repeating: "" });
+    expect(Rational.of(1, 3).toRepeatingDecimal()).toEqual({
+      integer: "0",
+      nonRepeating: "",
+      repeating: "3",
+    });
+    expect(Rational.of(1, 6).toRepeatingDecimal()).toEqual({
+      integer: "0",
+      nonRepeating: "1",
+      repeating: "6",
+    });
+    expect(Rational.of(1, 8).toRepeatingDecimal()).toEqual({
+      integer: "0",
+      nonRepeating: "125",
+      repeating: "",
+    });
   });
 
   it("rounds half away from zero", () => {
@@ -108,11 +123,15 @@ describe("number theory", () => {
 
   it("extended gcd satisfies Bezout identity (property)", () => {
     fc.assert(
-      fc.property(fc.bigInt({ min: -(10n ** 9n), max: 10n ** 9n }), fc.bigInt({ min: -(10n ** 9n), max: 10n ** 9n }), (a, b) => {
-        const { g, x, y } = extendedGcd(a, b);
-        expect(a * x + b * y).toBe(g);
-        expect(g >= 0n).toBe(true);
-      }),
+      fc.property(
+        fc.bigInt({ min: -(10n ** 9n), max: 10n ** 9n }),
+        fc.bigInt({ min: -(10n ** 9n), max: 10n ** 9n }),
+        (a, b) => {
+          const { g, x, y } = extendedGcd(a, b);
+          expect(a * x + b * y).toBe(g);
+          expect(g >= 0n).toBe(true);
+        },
+      ),
     );
   });
 

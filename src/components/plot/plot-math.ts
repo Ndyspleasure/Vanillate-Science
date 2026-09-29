@@ -22,7 +22,8 @@ export function niceTicks(a: number, b: number, target: number): number[] {
   if (!(b > a) || !Number.isFinite(a) || !Number.isFinite(b)) return [];
   const step = niceStep(b - a, target);
   const out: number[] = [];
-  for (let k = Math.ceil(a / step); k * step <= b + step * 1e-9 && out.length < 60; k++) out.push(Number((k * step).toPrecision(12)));
+  for (let k = Math.ceil(a / step); k * step <= b + step * 1e-9 && out.length < 60; k++)
+    out.push(Number((k * step).toPrecision(12)));
   return out;
 }
 
@@ -54,7 +55,11 @@ export function robustRange(values: number[], fallback: [number, number]): [numb
  * domain) and, for function graphs, where consecutive samples jump from far above the
  * view to far below it (vertical asymptotes such as tan x at π/2).
  */
-export function splitSegments(points: number[], view: { x0: number; x1: number; y0: number; y1: number }, breakJumps: boolean): Array<Array<[number, number]>> {
+export function splitSegments(
+  points: number[],
+  view: { x0: number; x1: number; y0: number; y1: number },
+  breakJumps: boolean,
+): Array<Array<[number, number]>> {
   const span = view.y1 - view.y0;
   const lo = view.y0 - 2 * span;
   const hi = view.y1 + 2 * span;
@@ -72,7 +77,11 @@ export function splitSegments(points: number[], view: { x0: number; x1: number; 
       continue;
     }
     if (breakJumps && (x < view.x0 - wx || x > view.x1 + wx)) continue;
-    if (breakJumps && Number.isFinite(prevY) && ((prevY > view.y1 && y < view.y0) || (prevY < view.y0 && y > view.y1))) {
+    if (
+      breakJumps &&
+      Number.isFinite(prevY) &&
+      ((prevY > view.y1 && y < view.y0) || (prevY < view.y0 && y > view.y1))
+    ) {
       if (cur.length > 1) segs.push(cur);
       cur = [];
     }

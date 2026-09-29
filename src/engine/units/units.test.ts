@@ -7,7 +7,8 @@ import { Rational } from "../core/rational";
 import { convertValue, solveUnitConversion } from "./convert";
 import { COMMON_UNITS, dimEquals, DIMS, parseUnit } from "./units";
 
-const conv = (v: string, a: string, b: string) => toText(convertValue(num(Rational.parseDecimal(v)!), parseUnit(a), parseUnit(b)));
+const conv = (v: string, a: string, b: string) =>
+  toText(convertValue(num(Rational.parseDecimal(v)!), parseUnit(a), parseUnit(b)));
 
 describe("unit parsing", () => {
   it("parses compound units and dimensions", () => {
@@ -25,7 +26,8 @@ describe("unit parsing", () => {
     expect(() => parseUnit("furlongz")).toThrowError(/tidak dikenali/);
   });
   it("every common unit parses", () => {
-    for (const list of Object.values(COMMON_UNITS)) for (const u of list) expect(() => parseUnit(u)).not.toThrow();
+    for (const list of Object.values(COMMON_UNITS))
+      for (const u of list) expect(() => parseUnit(u)).not.toThrow();
   });
 });
 
@@ -36,7 +38,9 @@ describe("unit conversion", () => {
     expect(conv("1", "mi", "km")).toBe("201168/125000".replace("201168/125000", "25146/15625"));
     expect(conv("1", "kWh", "J")).toBe("3600000");
     expect(conv("1", "atm", "Pa")).toBe("101325");
-    expect(conv("1", "GiB", "MB")).toBe("268435456/250000".replace("268435456/250000", "16777216/15625"));
+    expect(conv("1", "GiB", "MB")).toBe(
+      "268435456/250000".replace("268435456/250000", "16777216/15625"),
+    );
   });
   it("converts angles exactly with π", () => {
     expect(conv("180", "°", "rad")).toBe("pi");
@@ -52,14 +56,27 @@ describe("unit conversion", () => {
     expect(() => conv("1", "m", "kg")).toThrowError(/Tidak dapat mengonversi/);
   });
   it("round-trips exactly (property)", () => {
-    const pairs = [["m", "ft"], ["kg", "lb"], ["J", "cal"], ["Pa", "psi"], ["°C", "°F"], ["L", "gal"], ["m/s", "mph"], ["W", "hp"]];
+    const pairs = [
+      ["m", "ft"],
+      ["kg", "lb"],
+      ["J", "cal"],
+      ["Pa", "psi"],
+      ["°C", "°F"],
+      ["L", "gal"],
+      ["m/s", "mph"],
+      ["W", "hp"],
+    ];
     fc.assert(
-      fc.property(fc.constantFrom(...pairs), fc.integer({ min: -10000, max: 10000 }), ([a, b], v) => {
-        const x = num(Rational.of(v, 7));
-        const there = convertValue(x, parseUnit(a), parseUnit(b));
-        const back = convertValue(there, parseUnit(b), parseUnit(a));
-        expect(Math.abs(evalReal(back) - v / 7)).toBeLessThan(1e-9 * Math.max(1, Math.abs(v)));
-      }),
+      fc.property(
+        fc.constantFrom(...pairs),
+        fc.integer({ min: -10000, max: 10000 }),
+        ([a, b], v) => {
+          const x = num(Rational.of(v, 7));
+          const there = convertValue(x, parseUnit(a), parseUnit(b));
+          const back = convertValue(there, parseUnit(b), parseUnit(a));
+          expect(Math.abs(evalReal(back) - v / 7)).toBeLessThan(1e-9 * Math.max(1, Math.abs(v)));
+        },
+      ),
     );
   });
   it("produces a verified solution", () => {

@@ -9,7 +9,13 @@ import { evalReal } from "./expr/evaluate";
 import type { Expr } from "./expr/types";
 import { parse } from "./parse/parser";
 import { toExpr } from "./parse/convert";
-import { previewInput, solve, type PreviewOutcome, type SolveOptions, type SolveOutcome } from "./router";
+import {
+  previewInput,
+  solve,
+  type PreviewOutcome,
+  type SolveOptions,
+  type SolveOutcome,
+} from "./router";
 import { solveFormula, type FormulaSolveInput } from "./science/formula-solver";
 import { solveUnitConversion } from "./units/convert";
 import { normalizeNumber, TOOLS, type Values } from "./forms";
@@ -41,24 +47,39 @@ export interface SampledCurve {
   error?: string;
 }
 
-export type SampleOutcome = { ok: true; curves: SampledCurve[] } | { ok: false; error: SerializedMathError };
+export type SampleOutcome =
+  { ok: true; curves: SampledCurve[] } | { ok: false; error: SerializedMathError };
 
-export type WorkOutcome = { ok: true; result: WorkCheckResult } | { ok: false; error: SerializedMathError };
+export type WorkOutcome =
+  { ok: true; result: WorkCheckResult } | { ok: false; error: SerializedMathError };
 
 export type EngineResponse = SolveOutcome | WorkOutcome | SampleOutcome | PreviewOutcome;
 
 export type { PreviewOutcome, SolveOutcome };
 
-function outcome(input: string, module: string, fn: () => import("./steps/types").Solution): SolveOutcome {
+function outcome(
+  input: string,
+  module: string,
+  fn: () => import("./steps/types").Solution,
+): SolveOutcome {
   const start = typeof performance !== "undefined" ? performance.now() : Date.now();
   try {
     const solution = withBudget({ timeMs: 6000 }, fn);
-    solution.meta.durationMs = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - start);
+    solution.meta.durationMs = Math.round(
+      (typeof performance !== "undefined" ? performance.now() : Date.now()) - start,
+    );
     return { ok: true, solution };
   } catch (e) {
     // BigInt("abc") and similar low-level parse failures are input errors, not engine bugs.
     if (e instanceof SyntaxError) {
-      return { ok: false, error: new MathError("invalid-input", "Format bilangan tidak valid.", { module, cause: e.message }).toJSON(), input };
+      return {
+        ok: false,
+        error: new MathError("invalid-input", "Format bilangan tidak valid.", {
+          module,
+          cause: e.message,
+        }).toJSON(),
+        input,
+      };
     }
     return { ok: false, error: toSerializedError(e, module), input };
   }
@@ -66,11 +87,15 @@ function outcome(input: string, module: string, fn: () => import("./steps/types"
 
 function parsePlotExpr(text: string): Expr {
   const p = parse(text);
-  if (p.statements.length !== 1) throw new MathError("invalid-input", "Masukkan satu ekspresi per fungsi.", { module: "plot" });
+  if (p.statements.length !== 1)
+    throw new MathError("invalid-input", "Masukkan satu ekspresi per fungsi.", { module: "plot" });
   let node = p.statements[0];
   // Accept "y = …", "f(x) = …", "r = …" by taking the right-hand side.
   if (node.k === "rel" && node.ops.length === 1 && node.ops[0] === "=") node = node.operands[1];
-  if (node.k === "rel") throw new MathError("invalid-input", "Grafik membutuhkan fungsi, bukan pertidaksamaan.", { module: "plot" });
+  if (node.k === "rel")
+    throw new MathError("invalid-input", "Grafik membutuhkan fungsi, bukan pertidaksamaan.", {
+      module: "plot",
+    });
   return toExpr(node);
 }
 
@@ -80,7 +105,8 @@ export function sample(req: SampleRequest): SampleOutcome {
   try {
     const n = Math.max(2, Math.min(MAX_SAMPLES, Math.floor(req.samples)));
     const [a, b] = req.range;
-    if (!Number.isFinite(a) || !Number.isFinite(b) || !(b > a)) throw new MathError("invalid-input", "Rentang grafik tidak valid.", { module: "plot" });
+    if (!Number.isFinite(a) || !Number.isFinite(b) || !(b > a))
+      throw new MathError("invalid-input", "Rentang grafik tidak valid.", { module: "plot" });
     const curves: SampledCurve[] = req.exprs.map((text, i) => {
       try {
         const fx = parsePlotExpr(text);
@@ -124,14 +150,30 @@ export function handleRequest(req: EngineRequest): EngineResponse {
       return previewInput(req.input, req.options);
     case "formula": {
       // Accept "3,5" and "1.250.000" style inputs like the other forms.
-      const values = Object.fromEntries(Object.entries(req.input.values).map(([k, q]) => [k, { ...q, value: normalizeNumber(q.value) }]));
-      return outcome(`${req.input.formulaId}: ${req.input.solveFor}`, "formula", () => solveFormula({ ...req.input, values }));
+      const values = Object.fromEntries(
+        Object.entries(req.input.values).map(([k, q]) => [
+          k,
+          { ...q, value: normalizeNumber(q.value) },
+        ]),
+      );
+      return outcome(`${req.input.formulaId}: ${req.input.solveFor}`, "formula", () =>
+        solveFormula({ ...req.input, values }),
+      );
     }
     case "units":
-      return outcome(`${req.value} ${req.from} → ${req.to}`, "units", () => solveUnitConversion(normalizeNumber(req.value), req.from, req.to));
+      return outcome(`${req.value} ${req.from} → ${req.to}`, "units", () =>
+        solveUnitConversion(normalizeNumber(req.value), req.from, req.to),
+      );
     case "tool": {
       const def = TOOLS[req.tool];
-      if (!def) return { ok: false, error: new MathError("unsupported", `Kalkulator '${req.tool}' tidak dikenal.`, { module: "api" }).toJSON(), input: req.tool };
+      if (!def)
+        return {
+          ok: false,
+          error: new MathError("unsupported", `Kalkulator '${req.tool}' tidak dikenal.`, {
+            module: "api",
+          }).toJSON(),
+          input: req.tool,
+        };
       return outcome(JSON.stringify(req.values), req.tool, () => def.run(req.values));
     }
     case "check-work":

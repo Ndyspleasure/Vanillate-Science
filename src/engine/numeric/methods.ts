@@ -23,7 +23,14 @@ export interface RootResult {
 export const DEFAULT_TOL = 1e-12;
 
 /** Bisection on [a, b] with f(a) f(b) < 0. */
-export function bisection(f: (x: number) => number, a: number, b: number, tol = DEFAULT_TOL, maxIter = 200, recordHistory = false): RootResult {
+export function bisection(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  tol = DEFAULT_TOL,
+  maxIter = 200,
+  recordHistory = false,
+): RootResult {
   let fa = f(a);
   const history: RootResult["history"] = [];
   let lo = a;
@@ -36,18 +43,41 @@ export function bisection(f: (x: number) => number, a: number, b: number, tol = 
     const fm = f(mid);
     if (recordHistory && history.length < 60) history.push({ iteration: i + 1, x: mid, fx: fm });
     if (fm === 0 || (hi - lo) / 2 < tol * Math.max(1, Math.abs(mid))) {
-      return { root: mid, iterations: i + 1, converged: true, residual: Math.abs(fm), errorEstimate: (hi - lo) / 2, method: "Bagi dua (bisection)", history: recordHistory ? history : undefined };
+      return {
+        root: mid,
+        iterations: i + 1,
+        converged: true,
+        residual: Math.abs(fm),
+        errorEstimate: (hi - lo) / 2,
+        method: "Bagi dua (bisection)",
+        history: recordHistory ? history : undefined,
+      };
     }
     if (Math.sign(fm) === Math.sign(fa)) {
       lo = mid;
       fa = fm;
     } else hi = mid;
   }
-  return { root: mid, iterations: i, converged: false, residual: Math.abs(f(mid)), errorEstimate: (hi - lo) / 2, method: "Bagi dua (bisection)", history: recordHistory ? history : undefined };
+  return {
+    root: mid,
+    iterations: i,
+    converged: false,
+    residual: Math.abs(f(mid)),
+    errorEstimate: (hi - lo) / 2,
+    method: "Bagi dua (bisection)",
+    history: recordHistory ? history : undefined,
+  };
 }
 
 /** Newton–Raphson with derivative df. */
-export function newton(f: (x: number) => number, df: (x: number) => number, x0: number, tol = DEFAULT_TOL, maxIter = 100, recordHistory = false): RootResult {
+export function newton(
+  f: (x: number) => number,
+  df: (x: number) => number,
+  x0: number,
+  tol = DEFAULT_TOL,
+  maxIter = 100,
+  recordHistory = false,
+): RootResult {
   let x = x0;
   const history: RootResult["history"] = [];
   let step = Infinity;
@@ -57,19 +87,49 @@ export function newton(f: (x: number) => number, df: (x: number) => number, x0: 
     const d = df(x);
     if (recordHistory && history.length < 60) history.push({ iteration: i, x, fx });
     if (!Number.isFinite(fx) || !Number.isFinite(d) || d === 0) {
-      return { root: x, iterations: i, converged: false, residual: Math.abs(fx), errorEstimate: step, method: "Newton-Raphson", history: recordHistory ? history : undefined };
+      return {
+        root: x,
+        iterations: i,
+        converged: false,
+        residual: Math.abs(fx),
+        errorEstimate: step,
+        method: "Newton-Raphson",
+        history: recordHistory ? history : undefined,
+      };
     }
     step = fx / d;
     x -= step;
     if (Math.abs(step) <= tol * Math.max(1, Math.abs(x))) {
-      return { root: x, iterations: i + 1, converged: true, residual: Math.abs(f(x)), errorEstimate: Math.abs(step), method: "Newton-Raphson", history: recordHistory ? history : undefined };
+      return {
+        root: x,
+        iterations: i + 1,
+        converged: true,
+        residual: Math.abs(f(x)),
+        errorEstimate: Math.abs(step),
+        method: "Newton-Raphson",
+        history: recordHistory ? history : undefined,
+      };
     }
   }
-  return { root: x, iterations: maxIter, converged: false, residual: Math.abs(f(x)), errorEstimate: Math.abs(step), method: "Newton-Raphson", history: recordHistory ? history : undefined };
+  return {
+    root: x,
+    iterations: maxIter,
+    converged: false,
+    residual: Math.abs(f(x)),
+    errorEstimate: Math.abs(step),
+    method: "Newton-Raphson",
+    history: recordHistory ? history : undefined,
+  };
 }
 
 /** Secant method. */
-export function secant(f: (x: number) => number, x0: number, x1: number, tol = DEFAULT_TOL, maxIter = 100): RootResult {
+export function secant(
+  f: (x: number) => number,
+  x0: number,
+  x1: number,
+  tol = DEFAULT_TOL,
+  maxIter = 100,
+): RootResult {
   let a = x0;
   let b = x1;
   let fa = f(a);
@@ -83,20 +143,63 @@ export function secant(f: (x: number) => number, x0: number, x1: number, tol = D
     b = c;
     fb = f(b);
     if (Math.abs(b - a) <= tol * Math.max(1, Math.abs(b))) {
-      return { root: b, iterations: i + 1, converged: true, residual: Math.abs(fb), errorEstimate: Math.abs(b - a), method: "Secant" };
+      return {
+        root: b,
+        iterations: i + 1,
+        converged: true,
+        residual: Math.abs(fb),
+        errorEstimate: Math.abs(b - a),
+        method: "Secant",
+      };
     }
   }
-  return { root: b, iterations: maxIter, converged: false, residual: Math.abs(fb), errorEstimate: Math.abs(b - a), method: "Secant" };
+  return {
+    root: b,
+    iterations: maxIter,
+    converged: false,
+    residual: Math.abs(fb),
+    errorEstimate: Math.abs(b - a),
+    method: "Secant",
+  };
 }
 
 /** Brent's method on a bracket [a, b] with f(a) f(b) <= 0. */
-export function brent(f: (x: number) => number, a: number, b: number, tol = DEFAULT_TOL, maxIter = 200): RootResult {
+export function brent(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  tol = DEFAULT_TOL,
+  maxIter = 200,
+): RootResult {
   let fa = f(a);
   let fb = f(b);
-  if (fa === 0) return { root: a, iterations: 0, converged: true, residual: 0, errorEstimate: 0, method: "Brent" };
-  if (fb === 0) return { root: b, iterations: 0, converged: true, residual: 0, errorEstimate: 0, method: "Brent" };
+  if (fa === 0)
+    return {
+      root: a,
+      iterations: 0,
+      converged: true,
+      residual: 0,
+      errorEstimate: 0,
+      method: "Brent",
+    };
+  if (fb === 0)
+    return {
+      root: b,
+      iterations: 0,
+      converged: true,
+      residual: 0,
+      errorEstimate: 0,
+      method: "Brent",
+    };
   if (Math.sign(fa) === Math.sign(fb)) {
-    return { root: NaN, iterations: 0, converged: false, residual: NaN, errorEstimate: NaN, method: "Brent" };
+    return {
+      root: NaN,
+      iterations: 0,
+      converged: false,
+      residual: NaN,
+      errorEstimate: NaN,
+      method: "Brent",
+    };
   }
   let c = a;
   let fc = fa;
@@ -121,7 +224,14 @@ export function brent(f: (x: number) => number, a: number, b: number, tol = DEFA
     const tol1 = 2 * Number.EPSILON * Math.abs(b) + 0.5 * tol;
     const xm = 0.5 * (c - b);
     if (Math.abs(xm) <= tol1 || fb === 0) {
-      return { root: b, iterations: i, converged: true, residual: Math.abs(fb), errorEstimate: Math.abs(xm), method: "Brent" };
+      return {
+        root: b,
+        iterations: i,
+        converged: true,
+        residual: Math.abs(fb),
+        errorEstimate: Math.abs(xm),
+        method: "Brent",
+      };
     }
     if (Math.abs(e) >= tol1 && Math.abs(fa) > Math.abs(fb)) {
       const s = fb / fa;
@@ -154,7 +264,14 @@ export function brent(f: (x: number) => number, a: number, b: number, tol = DEFA
     b += Math.abs(d) > tol1 ? d : xm > 0 ? tol1 : -tol1;
     fb = f(b);
   }
-  return { root: b, iterations: maxIter, converged: false, residual: Math.abs(fb), errorEstimate: Math.abs(c - b), method: "Brent" };
+  return {
+    root: b,
+    iterations: maxIter,
+    converged: false,
+    residual: Math.abs(fb),
+    errorEstimate: Math.abs(c - b),
+    method: "Brent",
+  };
 }
 
 export interface RealRootSearch {
@@ -168,7 +285,14 @@ export interface RealRootSearch {
  * Find real roots of f on [lo, hi] by sampling for sign changes (and near-zero minima for
  * even-multiplicity roots), then refining with Brent's method / golden-section.
  */
-export function findRealRoots(f: (x: number) => number, lo = -100, hi = 100, samples = 4000, maxRoots = 40, tol = DEFAULT_TOL): RealRootSearch {
+export function findRealRoots(
+  f: (x: number) => number,
+  lo = -100,
+  hi = 100,
+  samples = 4000,
+  maxRoots = 40,
+  tol = DEFAULT_TOL,
+): RealRootSearch {
   const roots: RootResult[] = [];
   const h = (hi - lo) / samples;
   let px = lo;
@@ -178,7 +302,8 @@ export function findRealRoots(f: (x: number) => number, lo = -100, hi = 100, sam
   let truncated = false;
   const addRoot = (r: RootResult) => {
     if (!r.converged || !Number.isFinite(r.root)) return;
-    if (roots.some((q) => Math.abs(q.root - r.root) <= 1e-7 * Math.max(1, Math.abs(r.root)))) return;
+    if (roots.some((q) => Math.abs(q.root - r.root) <= 1e-7 * Math.max(1, Math.abs(r.root))))
+      return;
     if (roots.length >= maxRoots) {
       truncated = true;
       return;
@@ -192,7 +317,15 @@ export function findRealRoots(f: (x: number) => number, lo = -100, hi = 100, sam
     xs.push(x);
     values.push(fx);
     if (Number.isFinite(pf) && Number.isFinite(fx)) {
-      if (pf === 0) addRoot({ root: px, iterations: 0, converged: true, residual: 0, errorEstimate: 0, method: "Evaluasi langsung" });
+      if (pf === 0)
+        addRoot({
+          root: px,
+          iterations: 0,
+          converged: true,
+          residual: 0,
+          errorEstimate: 0,
+          method: "Evaluasi langsung",
+        });
       else if (Math.sign(pf) !== Math.sign(fx) && fx !== 0) {
         const r = brent(f, px, x, tol);
         // reject poles: sign change across a vertical asymptote
@@ -203,13 +336,28 @@ export function findRealRoots(f: (x: number) => number, lo = -100, hi = 100, sam
     px = x;
     pf = fx;
   }
-  if (values[values.length - 1] === 0) addRoot({ root: hi, iterations: 0, converged: true, residual: 0, errorEstimate: 0, method: "Evaluasi langsung" });
+  if (values[values.length - 1] === 0)
+    addRoot({
+      root: hi,
+      iterations: 0,
+      converged: true,
+      residual: 0,
+      errorEstimate: 0,
+      method: "Evaluasi langsung",
+    });
   // tangent roots: local minima of |f| close to zero without sign change
   for (let k = 1; k < values.length - 1; k++) {
     const a = Math.abs(values[k - 1]);
     const b = Math.abs(values[k]);
     const c = Math.abs(values[k + 1]);
-    if (Number.isFinite(a) && Number.isFinite(b) && Number.isFinite(c) && b <= a && b <= c && Math.sign(values[k - 1]) === Math.sign(values[k + 1])) {
+    if (
+      Number.isFinite(a) &&
+      Number.isFinite(b) &&
+      Number.isFinite(c) &&
+      b <= a &&
+      b <= c &&
+      Math.sign(values[k - 1]) === Math.sign(values[k + 1])
+    ) {
       const r = goldenMinAbs(f, xs[k - 1], xs[k + 1], tol);
       const scale = Math.max(1, Math.abs(values[k - 1]), Math.abs(values[k + 1]));
       if (r.residual <= 1e-10 * scale) addRoot(r);
@@ -232,7 +380,14 @@ function goldenMinAbs(f: (x: number) => number, a: number, b: number, tol: numbe
     d = a + g * (b - a);
   }
   const x = (a + b) / 2;
-  return { root: x, iterations: i, converged: true, residual: Math.abs(f(x)), errorEstimate: Math.abs(b - a), method: "Minimasi |f| (akar ganda)" };
+  return {
+    root: x,
+    iterations: i,
+    converged: true,
+    residual: Math.abs(f(x)),
+    errorEstimate: Math.abs(b - a),
+    method: "Minimasi |f| (akar ganda)",
+  };
 }
 
 export interface IntegrationResult {
@@ -244,7 +399,13 @@ export interface IntegrationResult {
 }
 
 /** Adaptive Simpson quadrature with Richardson error estimate. */
-export function adaptiveSimpson(f: (x: number) => number, a: number, b: number, tol = 1e-10, maxDepth = 50): IntegrationResult {
+export function adaptiveSimpson(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  tol = 1e-10,
+  maxDepth = 50,
+): IntegrationResult {
   let evaluations = 0;
   let converged = true;
   const F = (x: number) => {
@@ -252,9 +413,19 @@ export function adaptiveSimpson(f: (x: number) => number, a: number, b: number, 
     tick("simpson");
     return f(x);
   };
-  const simpson = (fa: number, fm: number, fb: number, a0: number, b0: number) => ((b0 - a0) / 6) * (fa + 4 * fm + fb);
+  const simpson = (fa: number, fm: number, fb: number, a0: number, b0: number) =>
+    ((b0 - a0) / 6) * (fa + 4 * fm + fb);
   let totalError = 0;
-  const rec = (a0: number, b0: number, fa: number, fm: number, fb: number, whole: number, eps: number, depth: number): number => {
+  const rec = (
+    a0: number,
+    b0: number,
+    fa: number,
+    fm: number,
+    fb: number,
+    whole: number,
+    eps: number,
+    depth: number,
+  ): number => {
     const m = (a0 + b0) / 2;
     const lm = (a0 + m) / 2;
     const rm = (m + b0) / 2;
@@ -272,19 +443,41 @@ export function adaptiveSimpson(f: (x: number) => number, a: number, b: number, 
       totalError += Math.abs(delta) / 15;
       return left + right + delta / 15;
     }
-    return rec(a0, m, fa, flm, fm, left, eps / 2, depth - 1) + rec(m, b0, fm, frm, fb, right, eps / 2, depth - 1);
+    return (
+      rec(a0, m, fa, flm, fm, left, eps / 2, depth - 1) +
+      rec(m, b0, fm, frm, fb, right, eps / 2, depth - 1)
+    );
   };
   const fa = F(a);
   const fb = F(b);
   const fm = F((a + b) / 2);
   const value = rec(a, b, fa, fm, fb, simpson(fa, fm, fb, a, b), tol, maxDepth);
-  return { value, errorEstimate: totalError, evaluations, converged: converged && Number.isFinite(value), method: "Simpson adaptif" };
+  return {
+    value,
+    errorEstimate: totalError,
+    evaluations,
+    converged: converged && Number.isFinite(value),
+    method: "Simpson adaptif",
+  };
 }
 
 // Gauss–Kronrod 7-15 nodes and weights (Piessens et al., QUADPACK, 1983).
-const XGK = [0.991455371120812639206854697526329, 0.949107912342758524526189684047851, 0.864864423359769072789712788640926, 0.741531185599394439863864773280788, 0.586087235467691130294144845693013, 0.405845151377397166906606412076961, 0.207784955007898467600689403773245, 0.0];
-const WGK = [0.022935322010529224963732008058970, 0.063092092629978553290700663189204, 0.104790010322250183839876322541518, 0.140653259715525918745189590510238, 0.169004726639267902826583426598550, 0.190350578064785409913256402421014, 0.204432940075298892414161999234649, 0.209482141084727828012999174891714];
-const WG = [0.129484966168869693270611432679082, 0.279705391489276667901467771423780, 0.381830050505118944950369775488975, 0.417959183673469387755102040816327];
+const XGK = [
+  0.991455371120812639206854697526329, 0.949107912342758524526189684047851,
+  0.864864423359769072789712788640926, 0.741531185599394439863864773280788,
+  0.586087235467691130294144845693013, 0.405845151377397166906606412076961,
+  0.207784955007898467600689403773245, 0.0,
+];
+const WGK = [
+  0.02293532201052922496373200805897, 0.063092092629978553290700663189204,
+  0.104790010322250183839876322541518, 0.140653259715525918745189590510238,
+  0.16900472663926790282658342659855, 0.190350578064785409913256402421014,
+  0.204432940075298892414161999234649, 0.209482141084727828012999174891714,
+];
+const WG = [
+  0.129484966168869693270611432679082, 0.27970539148927666790146777142378,
+  0.381830050505118944950369775488975, 0.417959183673469387755102040816327,
+];
 
 function gk15(f: (x: number) => number, a: number, b: number): { value: number; error: number } {
   const c = (a + b) / 2;
@@ -303,7 +496,13 @@ function gk15(f: (x: number) => number, a: number, b: number): { value: number; 
 }
 
 /** Adaptive Gauss–Kronrod (G7-K15) quadrature. Handles infinite limits via substitution. */
-export function gaussKronrod(f: (x: number) => number, a: number, b: number, tol = 1e-11, maxIntervals = 2000): IntegrationResult {
+export function gaussKronrod(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  tol = 1e-11,
+  maxIntervals = 2000,
+): IntegrationResult {
   let g = f;
   let lo = a;
   let hi = b;
@@ -379,7 +578,13 @@ export function numericDerivative(f: (x: number) => number, x: number, order = 1
 }
 
 /** Classical fourth-order Runge–Kutta for y' = f(t, y) (vector form). */
-export function rungeKutta4(f: (t: number, y: number[]) => number[], t0: number, y0: number[], t1: number, steps: number): Array<{ t: number; y: number[] }> {
+export function rungeKutta4(
+  f: (t: number, y: number[]) => number[],
+  t0: number,
+  y0: number[],
+  t1: number,
+  steps: number,
+): Array<{ t: number; y: number[] }> {
   const h = (t1 - t0) / steps;
   const out = [{ t: t0, y: [...y0] }];
   let t = t0;

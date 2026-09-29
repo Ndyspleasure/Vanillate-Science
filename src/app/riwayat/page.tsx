@@ -11,8 +11,13 @@ export default function RiwayatPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">Riwayat & favorit</h1>
-        <p className="text-muted">Disimpan hanya di peramban Anda (localStorage) — tidak dikirim ke server. Menghapus data situs akan menghapus daftar ini.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+          Riwayat & favorit
+        </h1>
+        <p className="text-muted">
+          Disimpan hanya di peramban Anda (localStorage) — tidak dikirim ke server. Menghapus data
+          situs akan menghapus daftar ini.
+        </p>
       </header>
       <HistoryView />
     </div>

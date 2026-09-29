@@ -72,13 +72,16 @@ describe("Poly", () => {
 
   it("roots found numerically satisfy the polynomial (property)", () => {
     fc.assert(
-      fc.property(fc.array(fc.integer({ min: -9, max: 9 }), { minLength: 3, maxLength: 7 }), (cs) => {
-        if (cs[cs.length - 1] === 0) return;
-        const p = new Poly(cs.map((c) => Rational.of(c)));
-        if (p.degree < 1) return;
-        const { roots } = numericRoots(p);
-        expect(roots).toHaveLength(p.degree);
-      }),
+      fc.property(
+        fc.array(fc.integer({ min: -9, max: 9 }), { minLength: 3, maxLength: 7 }),
+        (cs) => {
+          if (cs[cs.length - 1] === 0) return;
+          const p = new Poly(cs.map((c) => Rational.of(c)));
+          if (p.degree < 1) return;
+          const { roots } = numericRoots(p);
+          expect(roots).toHaveLength(p.degree);
+        },
+      ),
       { numRuns: 60 },
     );
   });

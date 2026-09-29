@@ -72,7 +72,8 @@ const REAL_FUNCTIONS: Record<string, (...a: number[]) => number> = {
   acosh: Math.acosh,
   atanh: Math.atanh,
   ln: (x) => (x > 0 ? Math.log(x) : x === 0 ? -Infinity : NaN),
-  log: (x, b = 10) => (x > 0 && b > 0 && b !== 1 ? Math.log(x) / Math.log(b) : x === 0 ? -Infinity : NaN),
+  log: (x, b = 10) =>
+    x > 0 && b > 0 && b !== 1 ? Math.log(x) / Math.log(b) : x === 0 ? -Infinity : NaN,
   abs: Math.abs,
   sign: Math.sign,
   floor: Math.floor,
@@ -140,7 +141,8 @@ export interface Complex {
 
 export const c = (re: number, im = 0): Complex => ({ re, im });
 const cAdd = (a: Complex, b: Complex): Complex => c(a.re + b.re, a.im + b.im);
-const cMul = (a: Complex, b: Complex): Complex => c(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+const cMul = (a: Complex, b: Complex): Complex =>
+  c(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
 export const cDiv = (a: Complex, b: Complex): Complex => {
   const d = b.re * b.re + b.im * b.im;
   return c((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d);
@@ -164,8 +166,10 @@ function cPowInt(a: Complex, n: number): Complex {
 }
 
 function cPow(a: Complex, b: Complex, exact?: Rational): Complex {
-  if (exact && exact.isInteger() && Math.abs(exact.toNumber()) <= 1e6) return cPowInt(a, exact.toNumber());
-  if (exact && a.im === 0 && a.re < 0 && exact.den % 2n === 1n) return c(realRationalPow(a.re, exact));
+  if (exact && exact.isInteger() && Math.abs(exact.toNumber()) <= 1e6)
+    return cPowInt(a, exact.toNumber());
+  if (exact && a.im === 0 && a.re < 0 && exact.den % 2n === 1n)
+    return c(realRationalPow(a.re, exact));
   if (a.re === 0 && a.im === 0) return b.re > 0 ? c(0) : c(NaN, NaN);
   return cExp(cMul(b, cLog(a)));
 }

@@ -8,17 +8,36 @@
 import { MathError } from "../core/errors";
 import { makeSolution, REFERENCES } from "../steps/builder";
 import { aggregateVerification } from "../steps/format";
-import type { Answer, Reference, Solution, Step, TableData, VerificationCheck } from "../steps/types";
+import type {
+  Answer,
+  Reference,
+  Solution,
+  Step,
+  TableData,
+  VerificationCheck,
+} from "../steps/types";
 
 const DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const RFC4632: Reference = { name: "RFC 4632: Classless Inter-domain Routing (CIDR)", source: "IETF", url: "https://www.rfc-editor.org/rfc/rfc4632" };
-const RFC4648: Reference = { name: "RFC 4648: The Base16, Base32, and Base64 Data Encodings", source: "IETF", url: "https://www.rfc-editor.org/rfc/rfc4648" };
+const RFC4632: Reference = {
+  name: "RFC 4632: Classless Inter-domain Routing (CIDR)",
+  source: "IETF",
+  url: "https://www.rfc-editor.org/rfc/rfc4632",
+};
+const RFC4648: Reference = {
+  name: "RFC 4648: The Base16, Base32, and Base64 Data Encodings",
+  source: "IETF",
+  url: "https://www.rfc-editor.org/rfc/rfc4648",
+};
 
 function checkBase(b: number) {
-  if (!Number.isInteger(b) || b < 2 || b > 36) throw new MathError("invalid-input", "Basis harus bilangan bulat 2–36.", { module: "cs" });
+  if (!Number.isInteger(b) || b < 2 || b > 36)
+    throw new MathError("invalid-input", "Basis harus bilangan bulat 2–36.", { module: "cs" });
 }
 
-export function parseInBase(text: string, base: number): { int: bigint; frac: string; negative: boolean } {
+export function parseInBase(
+  text: string,
+  base: number,
+): { int: bigint; frac: string; negative: boolean } {
   checkBase(base);
   let s = text.trim().toUpperCase().replace(/[_\s]/g, "");
   const negative = s.startsWith("-");
@@ -31,14 +50,22 @@ export function parseInBase(text: string, base: number): { int: bigint; frac: st
   let v = 0n;
   for (const ch of ip || "0") {
     const d = DIGITS.indexOf(ch);
-    if (d < 0 || d >= base) throw new MathError("invalid-input", `Digit '${ch}' tidak valid untuk basis ${base}.`, { module: "cs", hint: `Basis ${base} memakai digit ${DIGITS.slice(0, base).split("").join(", ")}.` });
+    if (d < 0 || d >= base)
+      throw new MathError("invalid-input", `Digit '${ch}' tidak valid untuk basis ${base}.`, {
+        module: "cs",
+        hint: `Basis ${base} memakai digit ${DIGITS.slice(0, base).split("").join(", ")}.`,
+      });
     v = v * BigInt(base) + BigInt(d);
   }
   for (const ch of fp) {
     const d = DIGITS.indexOf(ch);
-    if (d < 0 || d >= base) throw new MathError("invalid-input", `Digit '${ch}' tidak valid untuk basis ${base}.`, { module: "cs" });
+    if (d < 0 || d >= base)
+      throw new MathError("invalid-input", `Digit '${ch}' tidak valid untuk basis ${base}.`, {
+        module: "cs",
+      });
   }
-  if (v.toString(2).length > 4096) throw new MathError("limit-exceeded", "Bilangan terlalu besar.", { module: "cs" });
+  if (v.toString(2).length > 4096)
+    throw new MathError("limit-exceeded", "Bilangan terlalu besar.", { module: "cs" });
   return { int: v, frac: fp, negative };
 }
 
@@ -55,16 +82,40 @@ export function toBase(v: bigint, base: number): string {
   return (neg ? "-" : "") + out;
 }
 
-export function solveBaseConversion(p: { value: string; from: number; to: number; fractionDigits?: number }): Solution {
+export function solveBaseConversion(p: {
+  value: string;
+  from: number;
+  to: number;
+  fractionDigits?: number;
+}): Solution {
   const { int, frac, negative } = parseInBase(p.value, p.from);
   checkBase(p.to);
   const steps: Step[] = [];
   const tables: TableData[] = [];
   // 1. to decimal
   if (p.from !== 10) {
-    const digits = (p.value.trim().toUpperCase().replace(/^-/, "").replace(/^0[XBO]/, "").split(".")[0] || "0").split("");
-    const terms = digits.map((d, k) => `${DIGITS.indexOf(d)} \\cdot ${p.from}^{${digits.length - 1 - k}}`);
-    steps.push({ title: `Ubah ke desimal (ekspansi posisi basis ${p.from})`, after: `${terms.join(" + ")} = ${int.toString()}`, operation: "positional", rule: { id: "positional", name: "Notasi posisi", formula: "(d_k \\ldots d_0)_b = \\sum d_i b^i" }, reason: "Setiap digit dikalikan pangkat basis sesuai posisinya." });
+    const digits = (
+      p.value
+        .trim()
+        .toUpperCase()
+        .replace(/^-/, "")
+        .replace(/^0[XBO]/, "")
+        .split(".")[0] || "0"
+    ).split("");
+    const terms = digits.map(
+      (d, k) => `${DIGITS.indexOf(d)} \\cdot ${p.from}^{${digits.length - 1 - k}}`,
+    );
+    steps.push({
+      title: `Ubah ke desimal (ekspansi posisi basis ${p.from})`,
+      after: `${terms.join(" + ")} = ${int.toString()}`,
+      operation: "positional",
+      rule: {
+        id: "positional",
+        name: "Notasi posisi",
+        formula: "(d_k \\ldots d_0)_b = \\sum d_i b^i",
+      },
+      reason: "Setiap digit dikalikan pangkat basis sesuai posisinya.",
+    });
   }
   // 2. integer part to target base by repeated division
   let result = toBase(int, p.to);
@@ -74,11 +125,25 @@ export function solveBaseConversion(p: { value: string; from: number; to: number
     while (x > 0n) {
       const qv = x / BigInt(p.to);
       const r = x % BigInt(p.to);
-      rows.push([x.toString(), qv.toString(), `${r.toString()}${Number(r) > 9 ? ` (${DIGITS[Number(r)]})` : ""}`]);
+      rows.push([
+        x.toString(),
+        qv.toString(),
+        `${r.toString()}${Number(r) > 9 ? ` (${DIGITS[Number(r)]})` : ""}`,
+      ]);
       x = qv;
     }
-    tables.push({ caption: `Pembagian berulang dengan ${p.to}`, headers: ["Bilangan", "Hasil bagi", "Sisa"], rows });
-    steps.push({ title: `Bagi berulang dengan ${p.to}, baca sisa dari bawah ke atas`, after: `${int.toString()}_{10} = ${result}_{${p.to}}`, operation: "repeated-division", rule: { id: "repeated-division", name: "Pembagian berulang", formula: "n = q \\cdot b + r" }, reason: "Sisa pembagian adalah digit, dari digit paling kanan ke kiri." });
+    tables.push({
+      caption: `Pembagian berulang dengan ${p.to}`,
+      headers: ["Bilangan", "Hasil bagi", "Sisa"],
+      rows,
+    });
+    steps.push({
+      title: `Bagi berulang dengan ${p.to}, baca sisa dari bawah ke atas`,
+      after: `${int.toString()}_{10} = ${result}_{${p.to}}`,
+      operation: "repeated-division",
+      rule: { id: "repeated-division", name: "Pembagian berulang", formula: "n = q \\cdot b + r" },
+      reason: "Sisa pembagian adalah digit, dari digit paling kanan ke kiri.",
+    });
   }
   // fraction part
   const notes: string[] = [];
@@ -113,21 +178,58 @@ export function solveBaseConversion(p: { value: string; from: number; to: number
       notes.push("Bagian pecahan berulang; digit dalam kurung berulang tak hingga.");
     } else {
       result += `.${out}`;
-      if (rem !== 0n) notes.push(`Bagian pecahan dipotong setelah ${maxDigits} digit (tidak berhenti).`);
+      if (rem !== 0n)
+        notes.push(`Bagian pecahan dipotong setelah ${maxDigits} digit (tidak berhenti).`);
     }
-    tables.push({ caption: "Perkalian berulang bagian pecahan", headers: ["Langkah", "Digit"], rows });
-    steps.push({ title: `Bagian pecahan: kalikan berulang dengan ${p.to}`, after: result, operation: "repeated-multiplication", reason: "Bagian bulat hasil perkalian menjadi digit berikutnya." });
+    tables.push({
+      caption: "Perkalian berulang bagian pecahan",
+      headers: ["Langkah", "Digit"],
+      rows,
+    });
+    steps.push({
+      title: `Bagian pecahan: kalikan berulang dengan ${p.to}`,
+      after: result,
+      operation: "repeated-multiplication",
+      reason: "Bagian bulat hasil perkalian menjadi digit berikutnya.",
+    });
   }
   if (negative) result = `-${result}`;
   const back = parseInBase(result.replace(/\(.*\)/, "").replace(/\.$/, ""), p.to);
-  const checks: VerificationCheck[] = [{ description: "Konversi balik bagian bulat menghasilkan nilai semula", passed: back.int === int, method: "Konversi balik eksak (BigInt)" }];
+  const checks: VerificationCheck[] = [
+    {
+      description: "Konversi balik bagian bulat menghasilkan nilai semula",
+      passed: back.int === int,
+      method: "Konversi balik eksak (BigInt)",
+    },
+  ];
   return makeSolution({
     kind: "computer-science",
     title: "Konversi basis bilangan",
     input: JSON.stringify(p),
     inputLatex: `${p.value}_{${p.from}} \\to (\\ldots)_{${p.to}}`,
-    answers: [{ label: `Basis ${p.to}`, latex: `${result.replace(/\((.*)\)/, "\\overline{$1}")}_{${p.to}}`, text: result, exact: true }, ...(p.to !== 10 && p.from !== 10 ? [{ label: "Desimal", latex: `${negative ? "-" : ""}${int.toString()}${frac ? ".\\ldots" : ""}`, text: `${negative ? "-" : ""}${int}`, exact: true } as Answer] : [])],
-    method: { name: "Melalui basis 10", description: "Ekspansi posisi ke desimal, lalu pembagian berulang (bagian bulat) dan perkalian berulang (bagian pecahan)." },
+    answers: [
+      {
+        label: `Basis ${p.to}`,
+        latex: `${result.replace(/\((.*)\)/, "\\overline{$1}")}_{${p.to}}`,
+        text: result,
+        exact: true,
+      },
+      ...(p.to !== 10 && p.from !== 10
+        ? [
+            {
+              label: "Desimal",
+              latex: `${negative ? "-" : ""}${int.toString()}${frac ? ".\\ldots" : ""}`,
+              text: `${negative ? "-" : ""}${int}`,
+              exact: true,
+            } as Answer,
+          ]
+        : []),
+    ],
+    method: {
+      name: "Melalui basis 10",
+      description:
+        "Ekspansi posisi ke desimal, lalu pembagian berulang (bagian bulat) dan perkalian berulang (bagian pecahan).",
+    },
     steps,
     verification: aggregateVerification(checks),
     module: "cs",
@@ -139,50 +241,123 @@ export function solveBaseConversion(p: { value: string; from: number; to: number
 
 export function solveTwosComplement(p: { value: string; bits: number }): Solution {
   const bits = p.bits;
-  if (![4, 8, 16, 32, 64, 128].includes(bits)) throw new MathError("invalid-input", "Jumlah bit harus 4, 8, 16, 32, 64, atau 128.", { module: "cs" });
+  if (![4, 8, 16, 32, 64, 128].includes(bits))
+    throw new MathError("invalid-input", "Jumlah bit harus 4, 8, 16, 32, 64, atau 128.", {
+      module: "cs",
+    });
   const v = BigInt(p.value.trim());
   const min = -(1n << BigInt(bits - 1));
   const max = (1n << BigInt(bits - 1)) - 1n;
-  if (v < min || v > max) throw new MathError("domain-error", `Nilai di luar rentang ${bits}-bit bertanda [${min}, ${max}].`, { module: "cs" });
+  if (v < min || v > max)
+    throw new MathError(
+      "domain-error",
+      `Nilai di luar rentang ${bits}-bit bertanda [${min}, ${max}].`,
+      { module: "cs" },
+    );
   const mask = (1n << BigInt(bits)) - 1n;
   const repr = v >= 0n ? v : (1n << BigInt(bits)) + v;
   const bin = repr.toString(2).padStart(bits, "0");
   const steps: Step[] = [];
   if (v < 0n) {
     const posBin = (-v).toString(2).padStart(bits, "0");
-    const inv = ((~(-v)) & mask).toString(2).padStart(bits, "0");
-    steps.push({ title: `Tulis |${v}| dalam ${bits} bit`, after: posBin, operation: "magnitude", reason: "Mulai dari nilai mutlaknya." });
-    steps.push({ title: "Balik semua bit (komplemen satu)", after: inv, operation: "invert", reason: "0 → 1 dan 1 → 0." });
-    steps.push({ title: "Tambahkan 1", after: bin, operation: "add-one", rule: { id: "twos-complement", name: "Komplemen dua", formula: "-x = \\overline{x} + 1" }, reason: "Hasilnya adalah representasi komplemen dua." });
-  } else steps.push({ title: "Bilangan non-negatif: biner biasa dengan bit tanda 0", after: bin, operation: "positive", reason: "Bit paling kiri = 0 menandakan positif." });
+    const inv = (~-v & mask).toString(2).padStart(bits, "0");
+    steps.push({
+      title: `Tulis |${v}| dalam ${bits} bit`,
+      after: posBin,
+      operation: "magnitude",
+      reason: "Mulai dari nilai mutlaknya.",
+    });
+    steps.push({
+      title: "Balik semua bit (komplemen satu)",
+      after: inv,
+      operation: "invert",
+      reason: "0 → 1 dan 1 → 0.",
+    });
+    steps.push({
+      title: "Tambahkan 1",
+      after: bin,
+      operation: "add-one",
+      rule: { id: "twos-complement", name: "Komplemen dua", formula: "-x = \\overline{x} + 1" },
+      reason: "Hasilnya adalah representasi komplemen dua.",
+    });
+  } else
+    steps.push({
+      title: "Bilangan non-negatif: biner biasa dengan bit tanda 0",
+      after: bin,
+      operation: "positive",
+      reason: "Bit paling kiri = 0 menandakan positif.",
+    });
   const decoded = bin[0] === "1" ? BigInt(`0b${bin}`) - (1n << BigInt(bits)) : BigInt(`0b${bin}`);
   return makeSolution({
     kind: "computer-science",
     title: "Komplemen dua",
     input: JSON.stringify(p),
     inputLatex: `${v}\\ (${bits}\\text{ bit})`,
-    answers: [{ label: "Biner", latex: `\\texttt{${bin.replace(/(.{4})(?!$)/g, "$1\\ ")}}`, text: bin, exact: true }, { label: "Heksadesimal", latex: `\\texttt{0x${repr.toString(16).toUpperCase().padStart(bits / 4, "0")}}`, text: `0x${repr.toString(16).toUpperCase().padStart(bits / 4, "0")}`, exact: true }],
-    method: { name: "Komplemen dua", description: "Representasi bilangan bertanda standar pada komputer." },
+    answers: [
+      {
+        label: "Biner",
+        latex: `\\texttt{${bin.replace(/(.{4})(?!$)/g, "$1\\ ")}}`,
+        text: bin,
+        exact: true,
+      },
+      {
+        label: "Heksadesimal",
+        latex: `\\texttt{0x${repr
+          .toString(16)
+          .toUpperCase()
+          .padStart(bits / 4, "0")}}`,
+        text: `0x${repr
+          .toString(16)
+          .toUpperCase()
+          .padStart(bits / 4, "0")}`,
+        exact: true,
+      },
+    ],
+    method: {
+      name: "Komplemen dua",
+      description: "Representasi bilangan bertanda standar pada komputer.",
+    },
     steps,
-    verification: aggregateVerification([{ description: "Decode kembali menghasilkan nilai semula", passed: decoded === v, method: "Konversi balik" }]),
+    verification: aggregateVerification([
+      {
+        description: "Decode kembali menghasilkan nilai semula",
+        passed: decoded === v,
+        method: "Konversi balik",
+      },
+    ]),
     module: "cs",
     references: [REFERENCES.rosen],
   });
 }
 
-export function solveBitwise(p: { a: string; b?: string; op: "and" | "or" | "xor" | "not" | "shl" | "shr"; bits: number }): Solution {
+export function solveBitwise(p: {
+  a: string;
+  b?: string;
+  op: "and" | "or" | "xor" | "not" | "shl" | "shr";
+  bits: number;
+}): Solution {
   const bits = p.bits;
   const mask = (1n << BigInt(bits)) - 1n;
   const parse = (s: string) => {
     const t = s.trim().toLowerCase();
     const v = t.startsWith("0x") ? BigInt(t) : t.startsWith("0b") ? BigInt(t) : BigInt(t);
-    if (v < 0n || v > mask) throw new MathError("domain-error", `Nilai harus 0–${mask} untuk ${bits} bit.`, { module: "cs" });
+    if (v < 0n || v > mask)
+      throw new MathError("domain-error", `Nilai harus 0–${mask} untuk ${bits} bit.`, {
+        module: "cs",
+      });
     return v;
   };
   const a = parse(p.a);
   const b = p.b !== undefined && p.b !== "" ? parse(p.b) : 0n;
   let r: bigint;
-  const sym = { and: "\\land", or: "\\lor", xor: "\\oplus", not: "\\lnot", shl: "\\ll", shr: "\\gg" }[p.op];
+  const sym = {
+    and: "\\land",
+    or: "\\lor",
+    xor: "\\oplus",
+    not: "\\lnot",
+    shl: "\\ll",
+    shr: "\\gg",
+  }[p.op];
   switch (p.op) {
     case "and":
       r = a & b;
@@ -204,22 +379,70 @@ export function solveBitwise(p: { a: string; b?: string; op: "and" | "or" | "xor
       break;
   }
   const bin = (x: bigint) => x.toString(2).padStart(bits, "0");
-  const rows = p.op === "not" ? [["A", bin(a)], ["¬A", bin(r)]] : p.op === "shl" || p.op === "shr" ? [["A", bin(a)], [`A ${p.op === "shl" ? "<<" : ">>"} ${b}`, bin(r)]] : [["A", bin(a)], ["B", bin(b)], [p.op.toUpperCase(), bin(r)]];
-  const bitCheck = p.op === "and" || p.op === "or" || p.op === "xor" ? [...bin(r)].every((c, k) => {
-    const x = bin(a)[k] === "1";
-    const y = bin(b)[k] === "1";
-    const z = p.op === "and" ? x && y : p.op === "or" ? x || y : x !== y;
-    return (c === "1") === z;
-  }) : true;
+  const rows =
+    p.op === "not"
+      ? [
+          ["A", bin(a)],
+          ["¬A", bin(r)],
+        ]
+      : p.op === "shl" || p.op === "shr"
+        ? [
+            ["A", bin(a)],
+            [`A ${p.op === "shl" ? "<<" : ">>"} ${b}`, bin(r)],
+          ]
+        : [
+            ["A", bin(a)],
+            ["B", bin(b)],
+            [p.op.toUpperCase(), bin(r)],
+          ];
+  const bitCheck =
+    p.op === "and" || p.op === "or" || p.op === "xor"
+      ? [...bin(r)].every((c, k) => {
+          const x = bin(a)[k] === "1";
+          const y = bin(b)[k] === "1";
+          const z = p.op === "and" ? x && y : p.op === "or" ? x || y : x !== y;
+          return (c === "1") === z;
+        })
+      : true;
   return makeSolution({
     kind: "computer-science",
     title: "Operasi bitwise",
     input: JSON.stringify(p),
     inputLatex: p.op === "not" ? `\\lnot ${a}` : `${a} ${sym} ${b}`,
-    answers: [{ label: "Hasil (desimal)", latex: r.toString(), text: r.toString(), exact: true }, { label: "Hasil (biner)", latex: `\\texttt{${bin(r)}}`, text: bin(r), exact: true }, { label: "Hasil (heksadesimal)", latex: `\\texttt{0x${r.toString(16).toUpperCase()}}`, text: `0x${r.toString(16).toUpperCase()}`, exact: true }],
-    method: { name: "Operasi bit per bit", description: "Setiap posisi bit diproses secara independen." },
-    steps: [{ title: "Sejajarkan bit dan operasikan per kolom", after: `\\begin{array}{r} ${rows.map(([l, v]) => `\\text{${l}}: & \\texttt{${v}}`).join(" \\\\ ")} \\end{array}`, operation: "bitwise", reason: p.op === "shl" ? "Geser ke kiri = kalikan 2ⁿ (bit yang keluar dibuang)." : p.op === "shr" ? "Geser ke kanan = bagi 2ⁿ (dibulatkan ke bawah)." : "Tabel kebenaran operasi diterapkan pada setiap kolom." }],
-    verification: aggregateVerification([{ description: "Pemeriksaan per bit dengan tabel kebenaran", passed: bitCheck, method: "Pemeriksaan independen per bit" }]),
+    answers: [
+      { label: "Hasil (desimal)", latex: r.toString(), text: r.toString(), exact: true },
+      { label: "Hasil (biner)", latex: `\\texttt{${bin(r)}}`, text: bin(r), exact: true },
+      {
+        label: "Hasil (heksadesimal)",
+        latex: `\\texttt{0x${r.toString(16).toUpperCase()}}`,
+        text: `0x${r.toString(16).toUpperCase()}`,
+        exact: true,
+      },
+    ],
+    method: {
+      name: "Operasi bit per bit",
+      description: "Setiap posisi bit diproses secara independen.",
+    },
+    steps: [
+      {
+        title: "Sejajarkan bit dan operasikan per kolom",
+        after: `\\begin{array}{r} ${rows.map(([l, v]) => `\\text{${l}}: & \\texttt{${v}}`).join(" \\\\ ")} \\end{array}`,
+        operation: "bitwise",
+        reason:
+          p.op === "shl"
+            ? "Geser ke kiri = kalikan 2ⁿ (bit yang keluar dibuang)."
+            : p.op === "shr"
+              ? "Geser ke kanan = bagi 2ⁿ (dibulatkan ke bawah)."
+              : "Tabel kebenaran operasi diterapkan pada setiap kolom.",
+      },
+    ],
+    verification: aggregateVerification([
+      {
+        description: "Pemeriksaan per bit dengan tabel kebenaran",
+        passed: bitCheck,
+        method: "Pemeriksaan independen per bit",
+      },
+    ]),
     module: "cs",
     tables: [{ caption: "Representasi biner", headers: ["", "Biner"], rows }],
     references: [REFERENCES.rosen],
@@ -229,7 +452,10 @@ export function solveBitwise(p: { a: string; b?: string; op: "and" | "or" | "xor
 function ipToInt(ip: string): number {
   const parts = ip.trim().split(".");
   if (parts.length !== 4 || parts.some((x) => !/^\d{1,3}$/.test(x) || Number(x) > 255)) {
-    throw new MathError("invalid-input", `Alamat IPv4 '${ip}' tidak valid.`, { module: "cs", hint: "Format: a.b.c.d dengan setiap bagian 0–255." });
+    throw new MathError("invalid-input", `Alamat IPv4 '${ip}' tidak valid.`, {
+      module: "cs",
+      hint: "Format: a.b.c.d dengan setiap bagian 0–255.",
+    });
   }
   return parts.reduce((acc, x) => ((acc << 8) | Number(x)) >>> 0, 0) >>> 0;
 }
@@ -240,16 +466,27 @@ function intToIp(n: number): string {
 
 export function solveSubnet(p: { address: string }): Solution {
   const m = /^\s*([\d.]+)\s*(?:\/\s*(\d{1,2})|\s+([\d.]+))\s*$/.exec(p.address);
-  if (!m) throw new MathError("invalid-input", "Masukkan alamat dengan prefix CIDR atau subnet mask, misalnya 192.168.1.10/24 atau 192.168.1.10 255.255.255.0.", { module: "cs" });
+  if (!m)
+    throw new MathError(
+      "invalid-input",
+      "Masukkan alamat dengan prefix CIDR atau subnet mask, misalnya 192.168.1.10/24 atau 192.168.1.10 255.255.255.0.",
+      { module: "cs" },
+    );
   const ip = ipToInt(m[1]);
   let prefix: number;
   if (m[2] !== undefined) {
     prefix = Number(m[2]);
-    if (prefix > 32) throw new MathError("invalid-input", "Prefix CIDR harus 0–32.", { module: "cs" });
+    if (prefix > 32)
+      throw new MathError("invalid-input", "Prefix CIDR harus 0–32.", { module: "cs" });
   } else {
     const maskInt = ipToInt(m[3]);
     const bin = maskInt.toString(2).padStart(32, "0");
-    if (!/^1*0*$/.test(bin)) throw new MathError("invalid-input", "Subnet mask tidak valid (bit 1 harus berurutan di kiri).", { module: "cs" });
+    if (!/^1*0*$/.test(bin))
+      throw new MathError(
+        "invalid-input",
+        "Subnet mask tidak valid (bit 1 harus berurutan di kiri).",
+        { module: "cs" },
+      );
     prefix = bin.indexOf("0") === -1 ? 32 : bin.indexOf("0");
   }
   const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
@@ -260,17 +497,61 @@ export function solveSubnet(p: { address: string }): Solution {
   const first = prefix >= 31 ? network : network + 1;
   const last = prefix >= 31 ? broadcast : broadcast - 1;
   const firstOctet = ip >>> 24;
-  const cls = firstOctet < 128 ? "A" : firstOctet < 192 ? "B" : firstOctet < 224 ? "C" : firstOctet < 240 ? "D (multicast)" : "E (eksperimental)";
-  const isPrivate = (ip >>> 24) === 10 || ((ip >>> 20) & 0xfff) === 0xac1 || ((ip >>> 16) & 0xffff) === 0xc0a8;
-  const bin = (x: number) => x.toString(2).padStart(32, "0").replace(/(.{8})(?!$)/g, "$1.");
+  const cls =
+    firstOctet < 128
+      ? "A"
+      : firstOctet < 192
+        ? "B"
+        : firstOctet < 224
+          ? "C"
+          : firstOctet < 240
+            ? "D (multicast)"
+            : "E (eksperimental)";
+  const isPrivate =
+    ip >>> 24 === 10 || ((ip >>> 20) & 0xfff) === 0xac1 || ((ip >>> 16) & 0xffff) === 0xc0a8;
+  const bin = (x: number) =>
+    x
+      .toString(2)
+      .padStart(32, "0")
+      .replace(/(.{8})(?!$)/g, "$1.");
   const answers: Answer[] = [
-    { label: "Alamat jaringan", latex: `\\texttt{${intToIp(network)}/${prefix}}`, text: `${intToIp(network)}/${prefix}`, exact: true },
-    { label: "Broadcast", latex: `\\texttt{${intToIp(broadcast)}}`, text: intToIp(broadcast), exact: true },
-    { label: "Rentang host", latex: `\\texttt{${intToIp(first)}} - \\texttt{${intToIp(last)}}`, text: `${intToIp(first)} – ${intToIp(last)}`, exact: true },
-    { label: "Jumlah host yang dapat dipakai", latex: String(usable), text: String(usable), exact: true },
+    {
+      label: "Alamat jaringan",
+      latex: `\\texttt{${intToIp(network)}/${prefix}}`,
+      text: `${intToIp(network)}/${prefix}`,
+      exact: true,
+    },
+    {
+      label: "Broadcast",
+      latex: `\\texttt{${intToIp(broadcast)}}`,
+      text: intToIp(broadcast),
+      exact: true,
+    },
+    {
+      label: "Rentang host",
+      latex: `\\texttt{${intToIp(first)}} - \\texttt{${intToIp(last)}}`,
+      text: `${intToIp(first)} – ${intToIp(last)}`,
+      exact: true,
+    },
+    {
+      label: "Jumlah host yang dapat dipakai",
+      latex: String(usable),
+      text: String(usable),
+      exact: true,
+    },
     { label: "Subnet mask", latex: `\\texttt{${intToIp(mask)}}`, text: intToIp(mask), exact: true },
-    { label: "Wildcard mask", latex: `\\texttt{${intToIp(~mask >>> 0)}}`, text: intToIp(~mask >>> 0), exact: true },
-    { label: "Kelas / jenis", latex: `\\text{${cls}, ${isPrivate ? "privat (RFC 1918)" : "publik/khusus"}}`, text: `Kelas ${cls}, ${isPrivate ? "privat (RFC 1918)" : "publik/khusus"}`, exact: true },
+    {
+      label: "Wildcard mask",
+      latex: `\\texttt{${intToIp(~mask >>> 0)}}`,
+      text: intToIp(~mask >>> 0),
+      exact: true,
+    },
+    {
+      label: "Kelas / jenis",
+      latex: `\\text{${cls}, ${isPrivate ? "privat (RFC 1918)" : "publik/khusus"}}`,
+      text: `Kelas ${cls}, ${isPrivate ? "privat (RFC 1918)" : "publik/khusus"}`,
+      exact: true,
+    },
   ];
   return makeSolution({
     kind: "computer-science",
@@ -278,14 +559,58 @@ export function solveSubnet(p: { address: string }): Solution {
     input: p.address,
     inputLatex: `\\texttt{${intToIp(ip)}/${prefix}}`,
     answers,
-    method: { name: "Operasi AND dengan subnet mask", description: "Alamat jaringan = IP AND mask; broadcast = jaringan OR (NOT mask)." },
+    method: {
+      name: "Operasi AND dengan subnet mask",
+      description: "Alamat jaringan = IP AND mask; broadcast = jaringan OR (NOT mask).",
+    },
     steps: [
-      { title: "Tulis IP dan mask dalam biner", after: `\\begin{array}{r} \\text{IP}: & \\texttt{${bin(ip)}} \\\\ \\text{mask}: & \\texttt{${bin(mask)}} \\end{array}`, operation: "binary", reason: `Prefix /${prefix} berarti ${prefix} bit pertama mask bernilai 1.` },
-      { title: "Alamat jaringan = IP AND mask", after: `\\texttt{${bin(network)}} = ${intToIp(network)}`, operation: "and", rule: { id: "network", name: "Alamat jaringan", formula: "\\text{net} = \\text{IP} \\land \\text{mask}" }, reason: "Bit host dinolkan." },
-      { title: "Broadcast = jaringan OR NOT mask", after: `\\texttt{${bin(broadcast)}} = ${intToIp(broadcast)}`, operation: "or", reason: "Semua bit host dijadikan 1." },
-      { title: "Jumlah host", after: `2^{32 - ${prefix}} ${prefix < 31 ? "- 2" : ""} = ${usable}`, operation: "hosts", reason: prefix < 31 ? "Alamat jaringan dan broadcast tidak dipakai untuk host." : prefix === 31 ? "/31 untuk tautan titik-ke-titik (RFC 3021): kedua alamat dipakai." : "/32 hanya satu host." },
+      {
+        title: "Tulis IP dan mask dalam biner",
+        after: `\\begin{array}{r} \\text{IP}: & \\texttt{${bin(ip)}} \\\\ \\text{mask}: & \\texttt{${bin(mask)}} \\end{array}`,
+        operation: "binary",
+        reason: `Prefix /${prefix} berarti ${prefix} bit pertama mask bernilai 1.`,
+      },
+      {
+        title: "Alamat jaringan = IP AND mask",
+        after: `\\texttt{${bin(network)}} = ${intToIp(network)}`,
+        operation: "and",
+        rule: {
+          id: "network",
+          name: "Alamat jaringan",
+          formula: "\\text{net} = \\text{IP} \\land \\text{mask}",
+        },
+        reason: "Bit host dinolkan.",
+      },
+      {
+        title: "Broadcast = jaringan OR NOT mask",
+        after: `\\texttt{${bin(broadcast)}} = ${intToIp(broadcast)}`,
+        operation: "or",
+        reason: "Semua bit host dijadikan 1.",
+      },
+      {
+        title: "Jumlah host",
+        after: `2^{32 - ${prefix}} ${prefix < 31 ? "- 2" : ""} = ${usable}`,
+        operation: "hosts",
+        reason:
+          prefix < 31
+            ? "Alamat jaringan dan broadcast tidak dipakai untuk host."
+            : prefix === 31
+              ? "/31 untuk tautan titik-ke-titik (RFC 3021): kedua alamat dipakai."
+              : "/32 hanya satu host.",
+      },
     ],
-    verification: aggregateVerification([{ description: "IP berada di dalam rentang jaringan", passed: ip >= network && ip <= broadcast, method: "Pemeriksaan rentang" }, { description: "Jaringan + ukuran blok − 1 = broadcast", passed: network + total - 1 === broadcast, method: "Aritmetika independen" }]),
+    verification: aggregateVerification([
+      {
+        description: "IP berada di dalam rentang jaringan",
+        passed: ip >= network && ip <= broadcast,
+        method: "Pemeriksaan rentang",
+      },
+      {
+        description: "Jaringan + ukuran blok − 1 = broadcast",
+        passed: network + total - 1 === broadcast,
+        method: "Aritmetika independen",
+      },
+    ]),
     module: "cs",
     references: [RFC4632],
   });
@@ -300,26 +625,53 @@ export function solveBase64(p: { text: string; mode: "encode" | "decode" }): Sol
     out = btoa(bin);
   } else {
     const clean = p.text.replace(/\s+/g, "");
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean) || clean.length % 4 !== 0) throw new MathError("invalid-input", "Teks Base64 tidak valid.", { module: "cs", cause: "Hanya karakter A–Z, a–z, 0–9, +, / dan padding '=' dengan panjang kelipatan 4." });
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean) || clean.length % 4 !== 0)
+      throw new MathError("invalid-input", "Teks Base64 tidak valid.", {
+        module: "cs",
+        cause: "Hanya karakter A–Z, a–z, 0–9, +, / dan padding '=' dengan panjang kelipatan 4.",
+      });
     const bin = atob(clean);
     const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
     out = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
   }
-  const back = p.mode === "encode" ? new TextDecoder().decode(Uint8Array.from(atob(out), (c) => c.charCodeAt(0))) : (() => {
-    const bytes = new TextEncoder().encode(out);
-    let bin = "";
-    bytes.forEach((b) => (bin += String.fromCharCode(b)));
-    return btoa(bin);
-  })();
+  const back =
+    p.mode === "encode"
+      ? new TextDecoder().decode(Uint8Array.from(atob(out), (c) => c.charCodeAt(0)))
+      : (() => {
+          const bytes = new TextEncoder().encode(out);
+          let bin = "";
+          bytes.forEach((b) => (bin += String.fromCharCode(b)));
+          return btoa(bin);
+        })();
   return makeSolution({
     kind: "computer-science",
     title: p.mode === "encode" ? "Encode Base64" : "Decode Base64",
     input: JSON.stringify(p),
     inputLatex: "\\text{teks}",
     answers: [{ label: "Hasil", latex: "\\text{(lihat teks)}", text: out, exact: true }],
-    method: { name: "Base64 (RFC 4648)", description: "Setiap 3 byte (24 bit) dipecah menjadi 4 kelompok 6 bit yang dipetakan ke alfabet Base64; teks dikodekan UTF-8." },
-    steps: [{ title: p.mode === "encode" ? "Ubah teks ke byte UTF-8 lalu kelompokkan per 6 bit" : "Petakan karakter ke 6 bit lalu gabungkan per 8 bit", after: "\\text{lihat hasil}", operation: "base64", reason: "Padding '=' menandai byte terakhir yang tidak lengkap." }],
-    verification: aggregateVerification([{ description: "Proses balik menghasilkan input semula", passed: p.mode === "encode" ? back === p.text : back === p.text.replace(/\s+/g, ""), method: "Round-trip" }]),
+    method: {
+      name: "Base64 (RFC 4648)",
+      description:
+        "Setiap 3 byte (24 bit) dipecah menjadi 4 kelompok 6 bit yang dipetakan ke alfabet Base64; teks dikodekan UTF-8.",
+    },
+    steps: [
+      {
+        title:
+          p.mode === "encode"
+            ? "Ubah teks ke byte UTF-8 lalu kelompokkan per 6 bit"
+            : "Petakan karakter ke 6 bit lalu gabungkan per 8 bit",
+        after: "\\text{lihat hasil}",
+        operation: "base64",
+        reason: "Padding '=' menandai byte terakhir yang tidak lengkap.",
+      },
+    ],
+    verification: aggregateVerification([
+      {
+        description: "Proses balik menghasilkan input semula",
+        passed: p.mode === "encode" ? back === p.text : back === p.text.replace(/\s+/g, ""),
+        method: "Round-trip",
+      },
+    ]),
     module: "cs",
     references: [RFC4648],
   });
@@ -329,12 +681,23 @@ export function solveBase64(p: { text: string; mode: "encode" | "decode" }): Sol
 // Boolean logic
 // ---------------------------------------------------------------------------
 
-type BNode = { k: "var"; name: string } | { k: "const"; value: boolean } | { k: "not"; a: BNode } | { k: "bin"; op: "and" | "or" | "xor" | "imp" | "iff"; a: BNode; b: BNode };
+type BNode =
+  | { k: "var"; name: string }
+  | { k: "const"; value: boolean }
+  | { k: "not"; a: BNode }
+  | { k: "bin"; op: "and" | "or" | "xor" | "imp" | "iff"; a: BNode; b: BNode };
 
 function tokenizeBool(s: string): string[] {
   const out: string[] = [];
   let i = 0;
-  const two: Record<string, string> = { "&&": "and", "||": "or", "->": "imp", "=>": "imp", "<->": "iff", "<=>": "iff" };
+  const two: Record<string, string> = {
+    "&&": "and",
+    "||": "or",
+    "->": "imp",
+    "=>": "imp",
+    "<->": "iff",
+    "<=>": "iff",
+  };
   while (i < s.length) {
     const ch = s[i];
     if (/\s/.test(ch)) {
@@ -353,14 +716,38 @@ function tokenizeBool(s: string): string[] {
       i += 2;
       continue;
     }
-    const map: Record<string, string> = { "∧": "and", "&": "and", "·": "and", "*": "and", "∨": "or", "|": "or", "+": "or", "¬": "not", "!": "not", "~": "not", "⊕": "xor", "^": "xor", "→": "imp", "⇒": "imp", "↔": "iff", "⇔": "iff", "(": "(", ")": ")", "'": "'" };
+    const map: Record<string, string> = {
+      "∧": "and",
+      "&": "and",
+      "·": "and",
+      "*": "and",
+      "∨": "or",
+      "|": "or",
+      "+": "or",
+      "¬": "not",
+      "!": "not",
+      "~": "not",
+      "⊕": "xor",
+      "^": "xor",
+      "→": "imp",
+      "⇒": "imp",
+      "↔": "iff",
+      "⇔": "iff",
+      "(": "(",
+      ")": ")",
+      "'": "'",
+    };
     if (map[ch]) {
       out.push(map[ch]);
       i++;
       continue;
     }
     const w = /^[A-Za-z_][A-Za-z0-9_]*/.exec(s.slice(i));
-    if (w && /^[A-Z]{2,}$/.test(w[0]) && !["AND", "OR", "NOT", "XOR", "IFF", "TRUE", "FALSE"].includes(w[0])) {
+    if (
+      w &&
+      /^[A-Z]{2,}$/.test(w[0]) &&
+      !["AND", "OR", "NOT", "XOR", "IFF", "TRUE", "FALSE"].includes(w[0])
+    ) {
       // juxtaposed single-letter variables: ABC = A ∧ B ∧ C
       out.push(w[0][0]);
       i += 1;
@@ -368,7 +755,21 @@ function tokenizeBool(s: string): string[] {
     }
     if (w) {
       const word = w[0].toLowerCase();
-      const kw: Record<string, string> = { and: "and", dan: "and", or: "or", atau: "or", not: "not", tidak: "not", xor: "xor", implies: "imp", iff: "iff", true: "1", false: "0", t: w[0] === "T" ? "1" : w[0], f: w[0] === "F" ? "0" : w[0] };
+      const kw: Record<string, string> = {
+        and: "and",
+        dan: "and",
+        or: "or",
+        atau: "or",
+        not: "not",
+        tidak: "not",
+        xor: "xor",
+        implies: "imp",
+        iff: "iff",
+        true: "1",
+        false: "0",
+        t: w[0] === "T" ? "1" : w[0],
+        f: w[0] === "F" ? "0" : w[0],
+      };
       out.push(kw[word] ?? w[0]);
       i += w[0].length;
       continue;
@@ -378,7 +779,9 @@ function tokenizeBool(s: string): string[] {
       i++;
       continue;
     }
-    throw new MathError("invalid-input", `Karakter '${ch}' tidak dikenali dalam ekspresi logika.`, { module: "logic" });
+    throw new MathError("invalid-input", `Karakter '${ch}' tidak dikenali dalam ekspresi logika.`, {
+      module: "logic",
+    });
   }
   return out;
 }
@@ -390,15 +793,22 @@ export function parseBool(s: string): BNode {
   const OPS = ["and", "or", "xor", "imp", "iff", "not", "(", ")", "'"];
   const primary = (): BNode => {
     const tok = t[pos++];
-    if (tok === undefined) throw new MathError("invalid-input", "Ekspresi logika tidak lengkap.", { module: "logic" });
+    if (tok === undefined)
+      throw new MathError("invalid-input", "Ekspresi logika tidak lengkap.", { module: "logic" });
     if (tok === "not") return { k: "not", a: postfix(primary()) };
     if (tok === "(") {
       const e = iff();
-      if (t[pos++] !== ")") throw new MathError("invalid-input", "Kurung buka tidak memiliki pasangan.", { module: "logic" });
+      if (t[pos++] !== ")")
+        throw new MathError("invalid-input", "Kurung buka tidak memiliki pasangan.", {
+          module: "logic",
+        });
       return postfix(e);
     }
     if (tok === "0" || tok === "1") return postfix({ k: "const", value: tok === "1" });
-    if (OPS.includes(tok)) throw new MathError("invalid-input", `Operator '${tok}' tidak diharapkan di sini.`, { module: "logic" });
+    if (OPS.includes(tok))
+      throw new MathError("invalid-input", `Operator '${tok}' tidak diharapkan di sini.`, {
+        module: "logic",
+      });
     return postfix({ k: "var", name: tok });
   };
   const postfix = (e: BNode): BNode => {
@@ -414,7 +824,7 @@ export function parseBool(s: string): BNode {
       if (peek() === "and") {
         pos++;
         e = { k: "bin", op: "and", a: e, b: primary() };
-      } else if (peek() && !OPS.includes(peek()) ) {
+      } else if (peek() && !OPS.includes(peek())) {
         e = { k: "bin", op: "and", a: e, b: primary() };
       } else if (peek() === "(" || peek() === "not") {
         e = { k: "bin", op: "and", a: e, b: primary() };
@@ -455,7 +865,8 @@ export function parseBool(s: string): BNode {
     return e;
   };
   const e = iff();
-  if (pos !== t.length) throw new MathError("invalid-input", `Token tak terduga '${t[pos]}'.`, { module: "logic" });
+  if (pos !== t.length)
+    throw new MathError("invalid-input", `Token tak terduga '${t[pos]}'.`, { module: "logic" });
   return e;
 }
 
@@ -507,7 +918,13 @@ function boolLatex(e: BNode, parent = 0): string {
       return `\\lnot ${e.a.k === "bin" ? `\\left(${boolLatex(e.a)}\\right)` : boolLatex(e.a)}`;
     case "bin": {
       const p = prec[e.op];
-      const sym = { and: "\\land", or: "\\lor", xor: "\\oplus", imp: "\\rightarrow", iff: "\\leftrightarrow" }[e.op];
+      const sym = {
+        and: "\\land",
+        or: "\\lor",
+        xor: "\\oplus",
+        imp: "\\rightarrow",
+        iff: "\\leftrightarrow",
+      }[e.op];
       const s = `${boolLatex(e.a, p)} ${sym} ${boolLatex(e.b, p + (e.op === "imp" ? 0 : 1))}`;
       return p < parent ? `\\left(${s}\\right)` : s;
     }
@@ -522,7 +939,10 @@ interface Implicant {
 /** Quine–McCluskey prime implicants + greedy cover after essential primes. */
 export function quineMcCluskey(minterms: number[], n: number): Implicant[] {
   if (minterms.length === 0) return [];
-  let groups: Implicant[] = minterms.map((m) => ({ bits: m.toString(2).padStart(n, "0"), minterms: [m] }));
+  let groups: Implicant[] = minterms.map((m) => ({
+    bits: m.toString(2).padStart(n, "0"),
+    minterms: [m],
+  }));
   const primes: Implicant[] = [];
   while (groups.length) {
     const used = new Set<number>();
@@ -543,7 +963,13 @@ export function quineMcCluskey(minterms: number[], n: number): Implicant[] {
           used.add(i);
           used.add(j);
           const bits = a.slice(0, diff) + "-" + a.slice(diff + 1);
-          if (!next.some((x) => x.bits === bits)) next.push({ bits, minterms: [...new Set([...groups[i].minterms, ...groups[j].minterms])].sort((x, y) => x - y) });
+          if (!next.some((x) => x.bits === bits))
+            next.push({
+              bits,
+              minterms: [...new Set([...groups[i].minterms, ...groups[j].minterms])].sort(
+                (x, y) => x - y,
+              ),
+            });
         }
       }
     }
@@ -565,7 +991,10 @@ export function quineMcCluskey(minterms: number[], n: number): Implicant[] {
     let bestCount = -1;
     for (const p of primes) {
       const c = p.minterms.filter((m) => remaining.has(m)).length;
-      if (c > bestCount || (c === bestCount && p.bits.split("-").length > best.bits.split("-").length)) {
+      if (
+        c > bestCount ||
+        (c === bestCount && p.bits.split("-").length > best.bits.split("-").length)
+      ) {
         best = p;
         bestCount = c;
       }
@@ -577,19 +1006,28 @@ export function quineMcCluskey(minterms: number[], n: number): Implicant[] {
 }
 
 function implicantLatex(imp: Implicant, vars: string[]): string {
-  const lits = imp.bits.split("").map((b, k) => (b === "1" ? vars[k] : b === "0" ? `\\lnot ${vars[k]}` : "")).filter(Boolean);
+  const lits = imp.bits
+    .split("")
+    .map((b, k) => (b === "1" ? vars[k] : b === "0" ? `\\lnot ${vars[k]}` : ""))
+    .filter(Boolean);
   return lits.length ? lits.join(" \\land ") : "1";
 }
 
 function implicantText(imp: Implicant, vars: string[]): string {
-  const lits = imp.bits.split("").map((b, k) => (b === "1" ? vars[k] : b === "0" ? `¬${vars[k]}` : "")).filter(Boolean);
+  const lits = imp.bits
+    .split("")
+    .map((b, k) => (b === "1" ? vars[k] : b === "0" ? `¬${vars[k]}` : ""))
+    .filter(Boolean);
   return lits.length ? lits.join("∧") : "1";
 }
 
 export function solveBoolean(p: { expression: string }): Solution {
   const e = parseBool(p.expression);
   const vars = [...boolVars(e)].sort();
-  if (vars.length > 10) throw new MathError("limit-exceeded", "Maksimal 10 variabel (1024 baris tabel kebenaran).", { module: "logic" });
+  if (vars.length > 10)
+    throw new MathError("limit-exceeded", "Maksimal 10 variabel (1024 baris tabel kebenaran).", {
+      module: "logic",
+    });
   const n = vars.length;
   const rows: string[][] = [];
   const minterms: number[] = [];
@@ -600,15 +1038,32 @@ export function solveBoolean(p: { expression: string }): Solution {
     if (val) minterms.push(m);
     rows.push([...vars.map((v) => (env[v] ? "1" : "0")), val ? "1" : "0"]);
   }
-  const kind = minterms.length === 1 << n ? "tautologi" : minterms.length === 0 ? "kontradiksi" : "kontingensi";
+  const kind =
+    minterms.length === 1 << n
+      ? "tautologi"
+      : minterms.length === 0
+        ? "kontradiksi"
+        : "kontingensi";
   const primes = quineMcCluskey(minterms, n);
-  const minimal = kind === "tautologi" ? "1" : kind === "kontradiksi" ? "0" : primes.map((pi) => `(${implicantLatex(pi, vars)})`).join(" \\lor ");
-  const minimalText = kind === "tautologi" ? "1" : kind === "kontradiksi" ? "0" : primes.map((pi) => `(${implicantText(pi, vars)})`).join(" ∨ ");
+  const minimal =
+    kind === "tautologi"
+      ? "1"
+      : kind === "kontradiksi"
+        ? "0"
+        : primes.map((pi) => `(${implicantLatex(pi, vars)})`).join(" \\lor ");
+  const minimalText =
+    kind === "tautologi"
+      ? "1"
+      : kind === "kontradiksi"
+        ? "0"
+        : primes.map((pi) => `(${implicantText(pi, vars)})`).join(" ∨ ");
   // verify minimal form
   let ok = true;
   for (let m = 0; m < 1 << n; m++) {
     const bits = m.toString(2).padStart(n, "0");
-    const covered = primes.some((pi) => pi.bits.split("").every((b, k) => b === "-" || b === bits[k]));
+    const covered = primes.some((pi) =>
+      pi.bits.split("").every((b, k) => b === "-" || b === bits[k]),
+    );
     if (covered !== minterms.includes(m)) ok = false;
   }
   if (kind !== "kontingensi") ok = true;
@@ -621,18 +1076,63 @@ export function solveBoolean(p: { expression: string }): Solution {
     answers: [
       { label: "Jenis", latex: `\\text{${kind}}`, text: kind, exact: true },
       { label: "Bentuk minimal (SOP)", latex: minimal, text: minimalText, exact: true },
-      { label: "Bentuk kanonik (jumlah minterm)", latex: `\\sum m(${minterms.join(", ")})`, text: `Σm(${minterms.join(", ")})`, exact: true },
+      {
+        label: "Bentuk kanonik (jumlah minterm)",
+        latex: `\\sum m(${minterms.join(", ")})`,
+        text: `Σm(${minterms.join(", ")})`,
+        exact: true,
+      },
     ],
-    method: { name: "Tabel kebenaran dan metode Quine–McCluskey", description: "Evaluasi semua kombinasi nilai, lalu gabungkan minterm yang berbeda satu bit untuk mendapat implikan prima." },
+    method: {
+      name: "Tabel kebenaran dan metode Quine–McCluskey",
+      description:
+        "Evaluasi semua kombinasi nilai, lalu gabungkan minterm yang berbeda satu bit untuk mendapat implikan prima.",
+    },
     steps: [
-      { title: "Susun tabel kebenaran", after: `2^{${n}} = ${1 << n}\\ \\text{baris}`, operation: "truth-table", reason: "Setiap kombinasi nilai variabel dievaluasi." },
-      { title: "Minterm (baris bernilai 1)", after: dnf, operation: "minterms", reason: "Bentuk normal disjungtif kanonik." },
-      { title: "Implikan prima terpilih", after: kind === "kontingensi" ? primes.map((pi) => `${pi.bits.replace(/-/g, "\\text{-}")}\\ (${implicantLatex(pi, vars)})`).join(",\\ ") : `\\text{${kind}}`, operation: "prime-implicants", rule: { id: "qm", name: "Metode Quine–McCluskey", formula: "XY + X\\bar{Y} = X" }, reason: "Implikan esensial dipilih dahulu, lalu sisa minterm ditutup dengan implikan yang menutup paling banyak." },
+      {
+        title: "Susun tabel kebenaran",
+        after: `2^{${n}} = ${1 << n}\\ \\text{baris}`,
+        operation: "truth-table",
+        reason: "Setiap kombinasi nilai variabel dievaluasi.",
+      },
+      {
+        title: "Minterm (baris bernilai 1)",
+        after: dnf,
+        operation: "minterms",
+        reason: "Bentuk normal disjungtif kanonik.",
+      },
+      {
+        title: "Implikan prima terpilih",
+        after:
+          kind === "kontingensi"
+            ? primes
+                .map(
+                  (pi) => `${pi.bits.replace(/-/g, "\\text{-}")}\\ (${implicantLatex(pi, vars)})`,
+                )
+                .join(",\\ ")
+            : `\\text{${kind}}`,
+        operation: "prime-implicants",
+        rule: { id: "qm", name: "Metode Quine–McCluskey", formula: "XY + X\\bar{Y} = X" },
+        reason:
+          "Implikan esensial dipilih dahulu, lalu sisa minterm ditutup dengan implikan yang menutup paling banyak.",
+      },
     ],
-    verification: aggregateVerification([{ description: "Tabel kebenaran bentuk minimal identik dengan ekspresi asli", passed: ok, method: "Pemeriksaan semua baris" }]),
+    verification: aggregateVerification([
+      {
+        description: "Tabel kebenaran bentuk minimal identik dengan ekspresi asli",
+        passed: ok,
+        method: "Pemeriksaan semua baris",
+      },
+    ]),
     module: "logic",
-    tables: n <= 6 ? [{ caption: "Tabel kebenaran", headers: [...vars, "hasil"], rows }] : undefined,
-    notes: primes.length > 0 && kind === "kontingensi" ? ["Pemilihan penutup setelah implikan esensial bersifat greedy; bentuk yang ditampilkan valid dan umumnya minimal, tetapi untuk kasus tertentu mungkin ada bentuk lain dengan jumlah literal sama atau lebih sedikit."] : [],
+    tables:
+      n <= 6 ? [{ caption: "Tabel kebenaran", headers: [...vars, "hasil"], rows }] : undefined,
+    notes:
+      primes.length > 0 && kind === "kontingensi"
+        ? [
+            "Pemilihan penutup setelah implikan esensial bersifat greedy; bentuk yang ditampilkan valid dan umumnya minimal, tetapi untuk kasus tertentu mungkin ada bentuk lain dengan jumlah literal sama atau lebih sedikit.",
+          ]
+        : [],
     references: [REFERENCES.rosen],
   });
 }

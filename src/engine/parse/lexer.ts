@@ -39,14 +39,53 @@ export interface Token {
 }
 
 const SUPERSCRIPTS: Record<string, string> = {
-  "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-", "⁺": "+",
+  "⁰": "0",
+  "¹": "1",
+  "²": "2",
+  "³": "3",
+  "⁴": "4",
+  "⁵": "5",
+  "⁶": "6",
+  "⁷": "7",
+  "⁸": "8",
+  "⁹": "9",
+  "⁻": "-",
+  "⁺": "+",
 };
 
 const GREEK: Record<string, string> = {
-  α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", ζ: "zeta", η: "eta", θ: "theta",
-  ι: "iota", κ: "kappa", λ: "lambda", μ: "mu", ν: "nu", ξ: "xi", ρ: "rho", σ: "sigma",
-  τ: "tau", υ: "upsilon", φ: "phi", χ: "chi", ψ: "psi", ω: "omega",
-  Γ: "Gamma", Δ: "Delta", Θ: "Theta", Λ: "Lambda", Ξ: "Xi", Π: "Pi", Σ: "Sigma", Φ: "Phi", Ψ: "Psi", Ω: "Omega",
+  α: "alpha",
+  β: "beta",
+  γ: "gamma",
+  δ: "delta",
+  ε: "epsilon",
+  ζ: "zeta",
+  η: "eta",
+  θ: "theta",
+  ι: "iota",
+  κ: "kappa",
+  λ: "lambda",
+  μ: "mu",
+  ν: "nu",
+  ξ: "xi",
+  ρ: "rho",
+  σ: "sigma",
+  τ: "tau",
+  υ: "upsilon",
+  φ: "phi",
+  χ: "chi",
+  ψ: "psi",
+  ω: "omega",
+  Γ: "Gamma",
+  Δ: "Delta",
+  Θ: "Theta",
+  Λ: "Lambda",
+  Ξ: "Xi",
+  Π: "Pi",
+  Σ: "Sigma",
+  Φ: "Phi",
+  Ψ: "Psi",
+  Ω: "Omega",
 };
 
 export function tokenize(input: string): Token[] {
@@ -254,6 +293,12 @@ export function tokenize(input: string): Token[] {
     }
     i++;
   }
-  tokens.push({ type: "eof", value: "", start: input.length, end: input.length, spaceBefore: space });
+  tokens.push({
+    type: "eof",
+    value: "",
+    start: input.length,
+    end: input.length,
+    spaceBefore: space,
+  });
   return tokens;
 }

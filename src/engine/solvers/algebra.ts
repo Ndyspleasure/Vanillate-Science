@@ -66,8 +66,13 @@ function likeTermStep(node: SNode): Step | null {
     title: "Kelompokkan suku-suku sejenis",
     after: combined.replace(/\+ -/g, "- "),
     operation: "group-like-terms",
-    rule: { id: "like-terms", name: "Sifat komutatif dan asosiatif penjumlahan", formula: "ax + bx = (a + b)x" },
-    reason: "Suku sejenis memiliki bagian variabel yang sama sehingga koefisiennya dapat dijumlahkan.",
+    rule: {
+      id: "like-terms",
+      name: "Sifat komutatif dan asosiatif penjumlahan",
+      formula: "ax + bx = (a + b)x",
+    },
+    reason:
+      "Suku sejenis memiliki bagian variabel yang sama sehingga koefisiennya dapat dijumlahkan.",
   };
 }
 
@@ -96,7 +101,11 @@ export function simplifyRational(e: Expr): RationalSimplification | null {
       before: toLatex(e),
       after: fracLatex(P.toExpr(x), Q.toExpr(x)),
       operation: "combine-fractions",
-      rule: { id: "fraction-add", name: "Penjumlahan pecahan aljabar", formula: "\\frac{a}{b} + \\frac{c}{d} = \\frac{ad + bc}{bd}" },
+      rule: {
+        id: "fraction-add",
+        name: "Penjumlahan pecahan aljabar",
+        formula: "\\frac{a}{b} + \\frac{c}{d} = \\frac{ad + bc}{bd}",
+      },
       reason: "Pecahan dijumlahkan setelah penyebutnya disamakan.",
       check: checkRewrite(e, mul(P.toExpr(x), pow(Q.toExpr(x), MINUS_ONE))),
     });
@@ -125,13 +134,20 @@ export function simplifyRational(e: Expr): RationalSimplification | null {
   const Pn = P.divmod(G).q;
   const Qn = Q.divmod(G).q;
   // normalize sign/leading coefficient
-  const result = Qn.degree === 0 ? Pn.scale(Qn.coeff(0).inv()).toExpr(x) : mul(Pn.toExpr(x), pow(Qn.toExpr(x), MINUS_ONE));
+  const result =
+    Qn.degree === 0
+      ? Pn.scale(Qn.coeff(0).inv()).toExpr(x)
+      : mul(Pn.toExpr(x), pow(Qn.toExpr(x), MINUS_ONE));
   steps.push({
     title: "Coret faktor persekutuan",
     before: fracLatex(P.toExpr(x), Q.toExpr(x)),
     after: toLatex(result),
     operation: "cancel-common-factor",
-    rule: { id: "cancel", name: "Pembatalan faktor persekutuan", formula: "\\frac{a \\cdot c}{b \\cdot c} = \\frac{a}{b},\\ c \\ne 0" },
+    rule: {
+      id: "cancel",
+      name: "Pembatalan faktor persekutuan",
+      formula: "\\frac{a \\cdot c}{b \\cdot c} = \\frac{a}{b},\\ c \\ne 0",
+    },
     reason: `Faktor persekutuan $${toLatex(G.toExpr(x))}$ dicoret dari pembilang dan penyebut.`,
     assumptions: [`${toLatex(G.toExpr(x))} \\ne 0`],
     check: checkRewrite(mul(P.toExpr(x), pow(Q.toExpr(x), MINUS_ONE)), result),
@@ -162,20 +178,30 @@ export function solveSimplify(input: string, node: SNode, warnings: string[] = [
         formula: "a x^m \\cdot b x^n = ab\\,x^{m+n},\\quad ax + bx = (a+b)x",
         conditions: "Variabel diasumsikan bilangan real; x^0 = 1 untuk x ≠ 0.",
       },
-      reason: "Suku sejenis dijumlahkan, faktor sejenis digabung dengan menjumlahkan pangkat, dan bilangan dihitung secara eksak.",
+      reason:
+        "Suku sejenis dijumlahkan, faktor sejenis digabung dengan menjumlahkan pangkat, dan bilangan dihitung secara eksak.",
     });
   }
   let result = canonical;
   const assumptions: string[] = [];
   const hasDenominator = numerDenom(canonical).denom;
-  const rational = freeSymbols(hasDenominator).size > 0 || canonical.type === "add" ? simplifyRational(canonical) : null;
+  const rational =
+    freeSymbols(hasDenominator).size > 0 || canonical.type === "add"
+      ? simplifyRational(canonical)
+      : null;
   if (rational && rational.steps.length && freeSymbols(numerDenom(canonical).denom).size > 0) {
     steps.push(...rational.steps);
     result = rational.result;
-    if (rational.restrictions.length) assumptions.push(`Syarat (domain): ${rational.restrictions.map((r) => `$${r}$`).join(", ")}`);
+    if (rational.restrictions.length)
+      assumptions.push(`Syarat (domain): ${rational.restrictions.map((r) => `$${r}$`).join(", ")}`);
   }
   if (steps.length === 0) {
-    steps.push({ title: "Ekspresi sudah dalam bentuk paling sederhana", after: canonLatex, operation: "identity", reason: "Tidak ada suku sejenis, faktor sejenis, atau konstanta yang dapat digabung lagi." });
+    steps.push({
+      title: "Ekspresi sudah dalam bentuk paling sederhana",
+      after: canonLatex,
+      operation: "identity",
+      reason: "Tidak ada suku sejenis, faktor sejenis, atau konstanta yang dapat digabung lagi.",
+    });
   }
   const vars = allVars(canonical);
   const checks: VerificationCheck[] = [verifyAgainstInput(node, result, vars)];
@@ -183,11 +209,29 @@ export function solveSimplify(input: string, node: SNode, warnings: string[] = [
   try {
     const ex = expand(result);
     if (exprKey(ex) !== exprKey(result)) {
-      alternatives.push({ name: "Bentuk dijabarkan", description: "Semua perkalian didistribusikan.", steps: [{ title: "Jabarkan", after: toLatex(ex), operation: "expand", reason: "Sifat distributif diterapkan pada setiap perkalian.", check: checkRewrite(result, ex) }], answers: [exactAnswer(ex)] });
+      alternatives.push({
+        name: "Bentuk dijabarkan",
+        description: "Semua perkalian didistribusikan.",
+        steps: [
+          {
+            title: "Jabarkan",
+            after: toLatex(ex),
+            operation: "expand",
+            reason: "Sifat distributif diterapkan pada setiap perkalian.",
+            check: checkRewrite(result, ex),
+          },
+        ],
+        answers: [exactAnswer(ex)],
+      });
     }
     const f = factorExpression(result);
     if (f && exprKey(f.factored) !== exprKey(result)) {
-      alternatives.push({ name: "Bentuk faktor", description: "Ekspresi ditulis sebagai hasil kali faktor-faktornya.", steps: f.steps, answers: [exactAnswer(f.factored)] });
+      alternatives.push({
+        name: "Bentuk faktor",
+        description: "Ekspresi ditulis sebagai hasil kali faktor-faktornya.",
+        steps: f.steps,
+        answers: [exactAnswer(f.factored)],
+      });
     }
   } catch {
     // alternatives are optional
@@ -198,7 +242,11 @@ export function solveSimplify(input: string, node: SNode, warnings: string[] = [
     input,
     inputLatex,
     answers: [exactAnswer(result, "Bentuk sederhana")],
-    method: { name: "Penyederhanaan aljabar", description: "Menggabungkan suku sejenis, menyederhanakan pangkat dan akar, serta mencoret faktor persekutuan." },
+    method: {
+      name: "Penyederhanaan aljabar",
+      description:
+        "Menggabungkan suku sejenis, menyederhanakan pangkat dan akar, serta mencoret faktor persekutuan.",
+    },
     steps,
     verification: aggregateVerification(checks),
     module: "algebra",
@@ -206,46 +254,82 @@ export function solveSimplify(input: string, node: SNode, warnings: string[] = [
     notes: warnings,
     alternatives,
     references: [REFERENCES.cohen, REFERENCES.openstaxAlgebra],
-    plot: vars.length === 1 ? { kind: "function", variable: vars[0], functions: [{ expr: exactAnswer(result).text, label: exactAnswer(result).text }] } : undefined,
+    plot:
+      vars.length === 1
+        ? {
+            kind: "function",
+            variable: vars[0],
+            functions: [{ expr: exactAnswer(result).text, label: exactAnswer(result).text }],
+          }
+        : undefined,
   });
 }
 
 function distributionStep(e: Expr): Step | null {
   // (a + b)(c + d) -> ac + ad + bc + bd (unsimplified)
   if (e.type === "mul") {
-    const sums = e.factors.filter((f) => f.type === "add" || (f.type === "pow" && f.base.type === "add" && f.exp.type === "num" && f.exp.value.isInteger() && f.exp.value.isPositive()));
+    const sums = e.factors.filter(
+      (f) =>
+        f.type === "add" ||
+        (f.type === "pow" &&
+          f.base.type === "add" &&
+          f.exp.type === "num" &&
+          f.exp.value.isInteger() &&
+          f.exp.value.isPositive()),
+    );
     if (sums.length >= 1) {
       const others = e.factors.filter((f) => !sums.includes(f));
       const first = sums[0];
       if (first.type === "add" && (sums.length >= 2 || others.length >= 1)) {
-        const second = sums.length >= 2 ? sums[1] : others.length === 1 ? others[0] : rawMul(others);
+        const second =
+          sums.length >= 2 ? sums[1] : others.length === 1 ? others[0] : rawMul(others);
         const secondTerms = second.type === "add" ? second.terms : [second];
         const products: Expr[] = [];
         for (const a of first.terms) for (const b of secondTerms) products.push(rawMul([a, b]));
         const shown = rawAdd(products);
         return {
-          title: sums.length >= 2 ? "Kalikan setiap suku pada kurung pertama dengan setiap suku pada kurung kedua" : "Distribusikan perkalian",
+          title:
+            sums.length >= 2
+              ? "Kalikan setiap suku pada kurung pertama dengan setiap suku pada kurung kedua"
+              : "Distribusikan perkalian",
           before: toLatex(e),
           after: toLatex(shown),
           operation: "distribute",
-          rule: { id: "distributive", name: "Sifat distributif", formula: "(a + b)(c + d) = ac + ad + bc + bd" },
+          rule: {
+            id: "distributive",
+            name: "Sifat distributif",
+            formula: "(a + b)(c + d) = ac + ad + bc + bd",
+          },
           reason: "Setiap suku dikalikan dengan setiap suku lainnya (sifat distributif).",
         };
       }
     }
   }
-  if (e.type === "pow" && e.base.type === "add" && e.base.terms.length === 2 && e.exp.type === "num" && e.exp.value.isInteger()) {
+  if (
+    e.type === "pow" &&
+    e.base.type === "add" &&
+    e.base.terms.length === 2 &&
+    e.exp.type === "num" &&
+    e.exp.value.isInteger()
+  ) {
     const n = Number(e.exp.value.num);
     if (n >= 2 && n <= 12) {
       const [a, b] = e.base.terms;
       const terms: string[] = [];
-      for (let k = 0; k <= n; k++) terms.push(`\\binom{${n}}{${k}}\\left(${toLatex(a)}\\right)^{${n - k}}\\left(${toLatex(b)}\\right)^{${k}}`);
+      for (let k = 0; k <= n; k++)
+        terms.push(
+          `\\binom{${n}}{${k}}\\left(${toLatex(a)}\\right)^{${n - k}}\\left(${toLatex(b)}\\right)^{${k}}`,
+        );
       return {
         title: `Gunakan teorema binomial untuk pangkat ${n}`,
         before: toLatex(e),
         after: terms.join(" + "),
         operation: "binomial-theorem",
-        rule: { id: "binomial", name: "Teorema binomial", formula: "(a + b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k} b^{k}" },
+        rule: {
+          id: "binomial",
+          name: "Teorema binomial",
+          formula: "(a + b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k} b^{k}",
+        },
         reason: "Koefisien setiap suku diambil dari segitiga Pascal / kombinasi C(n, k).",
       };
     }
@@ -271,21 +355,38 @@ export function solveExpand(input: string, node: SNode, warnings: string[] = [])
     before: steps.length ? undefined : toLatex(e),
     after: toLatex(expanded),
     operation: "collect-like-terms",
-    rule: { id: "like-terms", name: "Menggabungkan suku sejenis", formula: "ax^n + bx^n = (a + b)x^n" },
-    reason: "Hasil perkalian disederhanakan lalu suku-suku dengan variabel dan pangkat yang sama dijumlahkan.",
+    rule: {
+      id: "like-terms",
+      name: "Menggabungkan suku sejenis",
+      formula: "ax^n + bx^n = (a + b)x^n",
+    },
+    reason:
+      "Hasil perkalian disederhanakan lalu suku-suku dengan variabel dan pangkat yang sama dijumlahkan.",
     check: checkRewrite(e, expanded),
   });
   const vars = allVars(e);
-  const checks: VerificationCheck[] = [verifyAgainstInput(node, expanded, vars, "Bandingkan bentuk jabaran dengan soal asli")];
+  const checks: VerificationCheck[] = [
+    verifyAgainstInput(node, expanded, vars, "Bandingkan bentuk jabaran dengan soal asli"),
+  ];
   const eq = checkEquivalent(e, expanded);
-  checks.push({ description: "Selisih bentuk awal dan bentuk jabaran sama dengan nol", passed: eq.equivalent, method: eq.method === "symbolic" ? "Kesetaraan simbolik" : "Kesetaraan numerik", detail: eq.detail });
+  checks.push({
+    description: "Selisih bentuk awal dan bentuk jabaran sama dengan nol",
+    passed: eq.equivalent,
+    method: eq.method === "symbolic" ? "Kesetaraan simbolik" : "Kesetaraan numerik",
+    detail: eq.detail,
+  });
   return makeSolution({
     kind: "expand",
     title: "Menjabarkan ekspresi",
     input,
     inputLatex,
     answers: [exactAnswer(expanded, "Bentuk jabaran")],
-    method: { name: "Sifat distributif", description: "Setiap perkalian terhadap penjumlahan didistribusikan, pangkat dijabarkan dengan teorema binomial, lalu suku sejenis digabung.", formula: "a(b + c) = ab + ac" },
+    method: {
+      name: "Sifat distributif",
+      description:
+        "Setiap perkalian terhadap penjumlahan didistribusikan, pangkat dijabarkan dengan teorema binomial, lalu suku sejenis digabung.",
+      formula: "a(b + c) = ab + ac",
+    },
     steps,
     verification: aggregateVerification(checks),
     module: "algebra",
@@ -317,14 +418,19 @@ export function solveFactor(input: string, node: SNode, warnings: string[] = [])
     detail: eq.detail,
   });
   const notes = [...warnings];
-  if (f.irreducibleRemainder) notes.push("Sebagian faktor tidak dapat difaktorkan lebih lanjut atas bilangan rasional.");
+  if (f.irreducibleRemainder)
+    notes.push("Sebagian faktor tidak dapat difaktorkan lebih lanjut atas bilangan rasional.");
   return makeSolution({
     kind: "factor",
     title: "Faktorisasi",
     input,
     inputLatex,
     answers: [exactAnswer(f.factored, "Bentuk faktor")],
-    method: { name: "Faktorisasi polinomial", description: "FPB, pola khusus (selisih kuadrat, pangkat tiga), metode AC untuk kuadrat, dan teorema akar rasional dengan pembagian sintetik." },
+    method: {
+      name: "Faktorisasi polinomial",
+      description:
+        "FPB, pola khusus (selisih kuadrat, pangkat tiga), metode AC untuk kuadrat, dan teorema akar rasional dengan pembagian sintetik.",
+    },
     steps: f.steps,
     verification: aggregateVerification(checks),
     module: "algebra",
@@ -345,17 +451,28 @@ function substituteRaw(e: Expr, values: Record<string, Expr>): Expr {
     case "mul":
       return rawMul(e.factors.map((f) => substituteRaw(f, values)));
     case "pow":
-      return { type: "pow", base: substituteRaw(e.base, values), exp: substituteRaw(e.exp, values) };
+      return {
+        type: "pow",
+        base: substituteRaw(e.base, values),
+        exp: substituteRaw(e.exp, values),
+      };
     case "fn":
       return { type: "fn", name: e.name, args: e.args.map((a) => substituteRaw(a, values)) };
   }
 }
 
 /** Evaluate an expression at given values of its variables. */
-export function solveEvaluateAt(input: string, node: SNode, values: Record<string, Expr>, warnings: string[] = []): Solution {
+export function solveEvaluateAt(
+  input: string,
+  node: SNode,
+  values: Record<string, Expr>,
+  warnings: string[] = [],
+): Solution {
   const e = toExpr(node);
   const inputLatex = syntaxToLatex(node);
-  const subLatex = Object.entries(values).map(([k, v]) => `${toLatex(rawSym(k))} = ${toLatex(v)}`).join(",\\ ");
+  const subLatex = Object.entries(values)
+    .map(([k, v]) => `${toLatex(rawSym(k))} = ${toLatex(v)}`)
+    .join(",\\ ");
   const result = substituteSymbols(e, values);
   const steps: Step[] = [
     {
@@ -380,7 +497,12 @@ export function solveEvaluateAt(input: string, node: SNode, values: Record<strin
   const exactValue = evalReal(result);
   if (Number.isFinite(independent) && Number.isFinite(exactValue)) {
     const ok = Math.abs(independent - exactValue) <= 1e-9 * Math.max(1, Math.abs(exactValue));
-    checks.push({ description: "Evaluasi numerik independen dari soal asli pada nilai yang diberikan", passed: ok, method: "Evaluasi numerik independen", detail: `${independent.toPrecision(12)} vs ${exactValue.toPrecision(12)}` });
+    checks.push({
+      description: "Evaluasi numerik independen dari soal asli pada nilai yang diberikan",
+      passed: ok,
+      method: "Evaluasi numerik independen",
+      detail: `${independent.toPrecision(12)} vs ${exactValue.toPrecision(12)}`,
+    });
   }
   return makeSolution({
     kind: "simplify",
@@ -388,7 +510,10 @@ export function solveEvaluateAt(input: string, node: SNode, values: Record<strin
     input,
     inputLatex: `${inputLatex}\\quad\\text{untuk}\\ ${subLatex}`,
     answers: [exactAnswer(result, "Nilai")],
-    method: { name: "Substitusi", description: "Ganti variabel dengan nilainya lalu hitung secara eksak." },
+    method: {
+      name: "Substitusi",
+      description: "Ganti variabel dengan nilainya lalu hitung secara eksak.",
+    },
     steps,
     verification: aggregateVerification(checks),
     module: "algebra",

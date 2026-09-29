@@ -36,12 +36,22 @@ function position(e: ElementView): { row: number; col: number } {
 }
 
 export function PeriodicTable({ elements }: { elements: ElementView[] }) {
-  const [selected, setSelected] = useState<ElementView | null>(elements.find((e) => e.symbol === "C") ?? null);
+  const [selected, setSelected] = useState<ElementView | null>(
+    elements.find((e) => e.symbol === "C") ?? null,
+  );
   const categories = Object.keys(CATEGORY_STYLE);
   return (
     <div className="space-y-5">
       <div className="overflow-x-auto rounded-2xl border border-border bg-surface p-3">
-        <div className="grid min-w-[760px] gap-1" style={{ gridTemplateColumns: "repeat(18, minmax(0, 1fr))", gridTemplateRows: "repeat(10, auto)" }} role="grid" aria-label="Tabel periodik unsur">
+        <div
+          className="grid min-w-[760px] gap-1"
+          style={{
+            gridTemplateColumns: "repeat(18, minmax(0, 1fr))",
+            gridTemplateRows: "repeat(10, auto)",
+          }}
+          role="grid"
+          aria-label="Tabel periodik unsur"
+        >
           {elements.map((e) => {
             const { row, col } = position(e);
             const active = selected?.z === e.z;
@@ -60,10 +70,16 @@ export function PeriodicTable({ elements }: { elements: ElementView[] }) {
               </button>
             );
           })}
-          <div style={{ gridRow: 6, gridColumn: 3 }} className="flex items-center justify-center text-[10px] text-muted">
+          <div
+            style={{ gridRow: 6, gridColumn: 3 }}
+            className="flex items-center justify-center text-[10px] text-muted"
+          >
             57–71
           </div>
-          <div style={{ gridRow: 7, gridColumn: 3 }} className="flex items-center justify-center text-[10px] text-muted">
+          <div
+            style={{ gridRow: 7, gridColumn: 3 }}
+            className="flex items-center justify-center text-[10px] text-muted"
+          >
             89–103
           </div>
         </div>
@@ -76,15 +92,21 @@ export function PeriodicTable({ elements }: { elements: ElementView[] }) {
         ))}
       </ul>
       {selected && (
-        <section aria-live="polite" className="grid gap-4 rounded-2xl border border-border bg-surface p-5 sm:grid-cols-[auto_1fr]">
-          <div className={`flex h-28 w-28 flex-col items-center justify-center rounded-xl ${CATEGORY_STYLE[selected.category]}`}>
+        <section
+          aria-live="polite"
+          className="grid gap-4 rounded-2xl border border-border bg-surface p-5 sm:grid-cols-[auto_1fr]"
+        >
+          <div
+            className={`flex h-28 w-28 flex-col items-center justify-center rounded-xl ${CATEGORY_STYLE[selected.category]}`}
+          >
             <span className="text-xs">{selected.z}</span>
             <span className="text-4xl font-bold">{selected.symbol}</span>
             <span className="text-xs">{selected.weight}</span>
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-text">
-              {selected.name} <span className="text-base font-normal text-muted">({selected.nameEn})</span>
+              {selected.name}{" "}
+              <span className="text-base font-normal text-muted">({selected.nameEn})</span>
             </h2>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
               <div>
@@ -94,7 +116,8 @@ export function PeriodicTable({ elements }: { elements: ElementView[] }) {
               <div>
                 <dt className="text-muted">Massa atom</dt>
                 <dd className="font-mono text-text">
-                  {selected.standard ? selected.weight : `[${selected.weight}]`}{selected.standard ? "" : " (nomor massa isotop berumur panjang)"}
+                  {selected.standard ? selected.weight : `[${selected.weight}]`}
+                  {selected.standard ? "" : " (nomor massa isotop berumur panjang)"}
                 </dd>
               </div>
               <div>
@@ -110,7 +133,10 @@ export function PeriodicTable({ elements }: { elements: ElementView[] }) {
                 <dd className="font-mono text-text">{selected.group ?? "blok f"}</dd>
               </div>
             </dl>
-            <Link href={`/calculator/chemistry/massa-molar?formula=${encodeURIComponent(selected.symbol)}`} className="inline-block text-sm font-medium text-accent hover:underline">
+            <Link
+              href={`/calculator/chemistry/massa-molar?formula=${encodeURIComponent(selected.symbol)}`}
+              className="inline-block text-sm font-medium text-accent hover:underline"
+            >
               Hitung massa molar senyawa dengan {selected.symbol} →
             </Link>
           </div>

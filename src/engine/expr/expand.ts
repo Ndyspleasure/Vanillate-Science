@@ -51,7 +51,13 @@ export function expandPower(base: Expr, n: number): Expr {
     const out: Expr[] = [];
     for (let k = 0; k <= n; k++) {
       tick("expand-binomial");
-      out.push(mul(rawNum(Rational.of(binomial(BigInt(n), BigInt(k)))), expandedPow(a, n - k), expandedPow(b, k)));
+      out.push(
+        mul(
+          rawNum(Rational.of(binomial(BigInt(n), BigInt(k)))),
+          expandedPow(a, n - k),
+          expandedPow(b, k),
+        ),
+      );
     }
     return add(...out.map((t) => expand(t)));
   }
@@ -95,7 +101,10 @@ export function expand(e: Expr): Expr {
       if (x.type === "num" && x.value.isInteger() && base.type === "add") {
         const n = Number(x.value.num);
         if (n > 0) {
-          if (n > 1000) throw new MathError("limit-exceeded", "Pangkat terlalu besar untuk dijabarkan.", { module: "expand" });
+          if (n > 1000)
+            throw new MathError("limit-exceeded", "Pangkat terlalu besar untuk dijabarkan.", {
+              module: "expand",
+            });
           return expandPower(base, n);
         }
         if (n < 0) {
@@ -114,7 +123,8 @@ export function numerDenom(e: Expr): { numer: Expr; denom: Expr } {
   if (e.type === "pow" && e.exp.type === "num" && e.exp.value.isNegative()) {
     return { numer: ONE, denom: pow(e.base, rawNum(e.exp.value.neg())) };
   }
-  if (e.type === "num") return { numer: rawNum(Rational.of(e.value.num)), denom: rawNum(Rational.of(e.value.den)) };
+  if (e.type === "num")
+    return { numer: rawNum(Rational.of(e.value.num)), denom: rawNum(Rational.of(e.value.den)) };
   if (e.type === "mul") {
     const nums: Expr[] = [];
     const dens: Expr[] = [];
@@ -141,7 +151,9 @@ export function together(e: Expr): { numer: Expr; denom: Expr } {
   const factorList = (d: Expr): Array<{ base: Expr; exp: Rational }> => {
     const fs = d.type === "mul" ? d.factors : [d];
     return fs.map((f) =>
-      f.type === "pow" && f.exp.type === "num" ? { base: f.base, exp: f.exp.value } : { base: f, exp: Rational.ONE },
+      f.type === "pow" && f.exp.type === "num"
+        ? { base: f.base, exp: f.exp.value }
+        : { base: f, exp: Rational.ONE },
     );
   };
   for (const p of parts) {
@@ -165,7 +177,10 @@ export function together(e: Expr): { numer: Expr; denom: Expr } {
       }
     }
   }
-  const common = mul(rawNum(Rational.of(numericLcm)), ...[...denomFactors.values()].map((f) => pow(f.base, rawNum(f.exp))));
+  const common = mul(
+    rawNum(Rational.of(numericLcm)),
+    ...[...denomFactors.values()].map((f) => pow(f.base, rawNum(f.exp))),
+  );
   const numerTerms = parts.map((p) => expand(mul(p.numer, common, pow(p.denom, MINUS_ONE))));
   return { numer: add(...numerTerms), denom: common };
 }

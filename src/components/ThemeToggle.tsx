@@ -9,7 +9,9 @@ type Theme = "light" | "dark" | "system";
 export const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("vs-theme")||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.setAttribute("data-theme",d?"dark":"light");}catch(e){}})();`;
 
 function apply(theme: Theme) {
-  const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const dark =
+    theme === "dark" ||
+    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
 }
 
@@ -50,7 +52,12 @@ export function ThemeToggle() {
     apply(next);
   };
 
-  const label = theme === "system" ? "Tema: mengikuti sistem" : theme === "light" ? "Tema: terang" : "Tema: gelap";
+  const label =
+    theme === "system"
+      ? "Tema: mengikuti sistem"
+      : theme === "light"
+        ? "Tema: terang"
+        : "Tema: gelap";
   const Icon = theme === "system" ? Monitor : theme === "light" ? Sun : Moon;
   return (
     <button

@@ -27,7 +27,10 @@ test.describe("solver", () => {
     const first = page.getByRole("tab", { name: "Jawaban" });
     await first.focus();
     await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("tab", { name: /Langkah/ })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: /Langkah/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await page.keyboard.press("End");
     await expect(page.getByRole("tab").last()).toHaveAttribute("aria-selected", "true");
   });
@@ -60,7 +63,9 @@ test.describe("solver", () => {
     await page.getByRole("button", { name: "Tombol" }).click();
     await page.getByRole("button", { name: "akar kuadrat" }).click();
     await page.keyboard.type("16");
-    await expect(page.getByRole("textbox", { name: "Soal matematika atau sains" })).toHaveValue("sqrt(16)");
+    await expect(page.getByRole("textbox", { name: "Soal matematika atau sains" })).toHaveValue(
+      "sqrt(16)",
+    );
   });
 
   test("explanation level changes the amount of detail", async ({ page }) => {

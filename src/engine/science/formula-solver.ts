@@ -20,7 +20,17 @@ import type { Answer, Solution, Step, VerificationCheck } from "../steps/types";
 import { solveCore } from "../solvers/equation";
 import { isolate, PERIOD_SYMBOL } from "../solvers/isolate";
 import { fromSI, parseQuantity, toSI } from "../units/convert";
-import { dimEquals, dimMul, dimPow, dimToLatex, dimToString, DIMLESS, isDimensionless, parseUnit, type Dim } from "../units/units";
+import {
+  dimEquals,
+  dimMul,
+  dimPow,
+  dimToLatex,
+  dimToString,
+  DIMLESS,
+  isDimensionless,
+  parseUnit,
+  type Dim,
+} from "../units/units";
 import { CONSTANTS } from "./constants";
 import { FORMULA_BY_ID, type Constraint, type FormulaDef, type FormulaVariable } from "./formulas";
 
@@ -43,7 +53,10 @@ export function dimensionOf(e: Expr, dims: Record<string, Dim>): Dim {
       return DIMLESS;
     case "sym":
       if (e.name === "pi" || e.name === "e") return DIMLESS;
-      if (!(e.name in dims)) throw new MathError("internal", `Dimensi variabel ${e.name} tidak diketahui.`, { module: "formula" });
+      if (!(e.name in dims))
+        throw new MathError("internal", `Dimensi variabel ${e.name} tidak diketahui.`, {
+          module: "formula",
+        });
       return dims[e.name];
     case "add": {
       const ds = e.terms.map((t) => dimensionOf(t, dims));
@@ -62,17 +75,29 @@ export function dimensionOf(e: Expr, dims: Record<string, Dim>): Dim {
     case "pow": {
       const bd = dimensionOf(e.base, dims);
       const ed = dimensionOf(e.exp, dims);
-      if (!isDimensionless(ed)) throw new MathError("dimension-mismatch", "Eksponen harus tak berdimensi.", { module: "formula" });
+      if (!isDimensionless(ed))
+        throw new MathError("dimension-mismatch", "Eksponen harus tak berdimensi.", {
+          module: "formula",
+        });
       if (isDimensionless(bd)) return DIMLESS;
       const k = evalReal(e.exp);
-      if (!Number.isFinite(k)) throw new MathError("dimension-mismatch", "Besaran berdimensi dipangkatkan dengan eksponen variabel.", { module: "formula" });
+      if (!Number.isFinite(k))
+        throw new MathError(
+          "dimension-mismatch",
+          "Besaran berdimensi dipangkatkan dengan eksponen variabel.",
+          { module: "formula" },
+        );
       return dimPow(bd, k);
     }
     case "fn": {
       if (e.name === "abs") return dimensionOf(e.args[0], dims);
       for (const a of e.args) {
         if (!isDimensionless(dimensionOf(a, dims))) {
-          throw new MathError("dimension-mismatch", `Argumen fungsi ${e.name} harus tak berdimensi.`, { module: "formula" });
+          throw new MathError(
+            "dimension-mismatch",
+            `Argumen fungsi ${e.name} harus tak berdimensi.`,
+            { module: "formula" },
+          );
         }
       }
       return DIMLESS;
@@ -113,11 +138,21 @@ function constraintOk(c: Constraint | undefined, v: number): { ok: boolean; reas
     case "nonnegative":
       return v >= -1e-15 ? { ok: true } : { ok: false, reason: "besaran ini tidak boleh negatif" };
     case "unit-interval":
-      return v >= -1e-15 && v <= 1 + 1e-12 ? { ok: true } : { ok: false, reason: "nilai harus di antara 0 dan 1 (0–100%); nilai di luar rentang tidak mungkin secara fisis" };
+      return v >= -1e-15 && v <= 1 + 1e-12
+        ? { ok: true }
+        : {
+            ok: false,
+            reason:
+              "nilai harus di antara 0 dan 1 (0–100%); nilai di luar rentang tidak mungkin secara fisis",
+          };
     case "angle":
-      return v >= -1e-12 && v <= Math.PI + 1e-12 ? { ok: true } : { ok: false, reason: "sudut di luar rentang 0°–180°" };
+      return v >= -1e-12 && v <= Math.PI + 1e-12
+        ? { ok: true }
+        : { ok: false, reason: "sudut di luar rentang 0°–180°" };
     case "below-c":
-      return Math.abs(v) < 299792458 ? { ok: true } : { ok: false, reason: "kelajuan tidak boleh ≥ kecepatan cahaya" };
+      return Math.abs(v) < 299792458
+        ? { ok: true }
+        : { ok: false, reason: "kelajuan tidak boleh ≥ kecepatan cahaya" };
     default:
       return { ok: true };
   }
@@ -131,7 +166,10 @@ function varLatex(fv: FormulaVariable): string {
 function quantityLatex(e: Expr): string {
   if (e.type === "num" && e.value.hasTerminatingDecimal()) {
     const v = e.value.toNumber();
-    const s = Math.abs(v) >= 1e6 || (Math.abs(v) < 1e-3 && v !== 0) ? formatNumber(v, 12) : e.value.toFixedString(12);
+    const s =
+      Math.abs(v) >= 1e6 || (Math.abs(v) < 1e-3 && v !== 0)
+        ? formatNumber(v, 12)
+        : e.value.toFixedString(12);
     return numberLatex(s);
   }
   const v = evalReal(e);
@@ -151,12 +189,26 @@ export function formulaLatex(def: FormulaDef): string {
 
 export function solveFormula(input: FormulaSolveInput): Solution {
   const def = FORMULA_BY_ID[input.formulaId];
-  if (!def) throw new MathError("invalid-input", `Rumus '${input.formulaId}' tidak ditemukan.`, { module: "formula" });
+  if (!def)
+    throw new MathError("invalid-input", `Rumus '${input.formulaId}' tidak ditemukan.`, {
+      module: "formula",
+    });
   const target = def.variables.find((fv) => fv.s === input.solveFor);
-  if (!target) throw new MathError("invalid-input", `Variabel '${input.solveFor}' tidak ada dalam rumus ${def.name}.`, { module: "formula" });
-  if (target.constant) throw new MathError("invalid-input", `${target.name} adalah konstanta dan tidak dapat dicari.`, { module: "formula" });
+  if (!target)
+    throw new MathError(
+      "invalid-input",
+      `Variabel '${input.solveFor}' tidak ada dalam rumus ${def.name}.`,
+      { module: "formula" },
+    );
+  if (target.constant)
+    throw new MathError(
+      "invalid-input",
+      `${target.name} adalah konstanta dan tidak dapat dicari.`,
+      { module: "formula" },
+    );
   const parsed = parse(def.equation).statements[0];
-  if (parsed.k !== "rel") throw new MathError("internal", "Rumus tidak valid.", { module: "formula" });
+  if (parsed.k !== "rel")
+    throw new MathError("internal", "Rumus tidak valid.", { module: "formula" });
   const L = toExpr(parsed.operands[0]);
   const R = toExpr(parsed.operands[1]);
   const symLatex = formulaVariablesLatex(def);
@@ -174,12 +226,29 @@ export function solveFormula(input: FormulaSolveInput): Solution {
     const dl = dimensionOf(L, dims);
     const dr = dimensionOf(R, dims);
     dimOk = dimEquals(dl, dr);
-    checks.push({ description: "Analisis dimensi rumus: dimensi ruas kiri = dimensi ruas kanan", latex: `${dimToLatex(dl)} = ${dimToLatex(dr)}`, passed: dimOk, method: "Analisis dimensi" });
+    checks.push({
+      description: "Analisis dimensi rumus: dimensi ruas kiri = dimensi ruas kanan",
+      latex: `${dimToLatex(dl)} = ${dimToLatex(dr)}`,
+      passed: dimOk,
+      method: "Analisis dimensi",
+    });
   } catch (e) {
     dimOk = false;
-    checks.push({ description: "Analisis dimensi rumus", passed: false, method: "Analisis dimensi", detail: e instanceof Error ? e.message : String(e) });
+    checks.push({
+      description: "Analisis dimensi rumus",
+      passed: false,
+      method: "Analisis dimensi",
+      detail: e instanceof Error ? e.message : String(e),
+    });
   }
-  steps.push({ title: "Tulis rumus", after: eqL(L, R), operation: "formula", rule: { id: def.id, name: def.name, formula: eqL(L, R) }, reason: def.description, assumptions: def.assumptions });
+  steps.push({
+    title: "Tulis rumus",
+    after: eqL(L, R),
+    operation: "formula",
+    rule: { id: def.id, name: def.name, formula: eqL(L, R) },
+    reason: def.description,
+    assumptions: def.assumptions,
+  });
 
   // Symbolic rearrangement
   let rearranged: Expr | null = null;
@@ -188,16 +257,36 @@ export function solveFormula(input: FormulaSolveInput): Solution {
     if (iso && iso.branches.length) {
       const branch = iso.branches.find((b) => !b.periodic) ?? iso.branches[0];
       rearranged = branch.value;
-      steps.push({ title: `Susun ulang rumus untuk ${target.name}`, after: `${varLatex(target)} = ${toLatex(rearranged, opts)}${branch.periodic ? ",\\ k \\in \\mathbb{Z}" : ""}`, operation: "rearrange", reason: iso.branches.length > 1 ? "Operasi invers diterapkan pada kedua ruas; ada lebih dari satu cabang solusi, dipilih berdasarkan batasan fisis setelah substitusi." : "Operasi invers diterapkan pada kedua ruas hingga variabel yang dicari terisolasi.", substeps: branch.steps.map((s) => ({ ...s, before: s.before, after: s.after })) });
+      steps.push({
+        title: `Susun ulang rumus untuk ${target.name}`,
+        after: `${varLatex(target)} = ${toLatex(rearranged, opts)}${branch.periodic ? ",\\ k \\in \\mathbb{Z}" : ""}`,
+        operation: "rearrange",
+        reason:
+          iso.branches.length > 1
+            ? "Operasi invers diterapkan pada kedua ruas; ada lebih dari satu cabang solusi, dipilih berdasarkan batasan fisis setelah substitusi."
+            : "Operasi invers diterapkan pada kedua ruas hingga variabel yang dicari terisolasi.",
+        substeps: branch.steps.map((s) => ({ ...s, before: s.before, after: s.after })),
+      });
       try {
         const dRe = dimensionOf(rearranged, dims);
-        checks.push({ description: `Dimensi rumus hasil penyusunan ulang cocok dengan dimensi ${target.name}`, latex: `${dimToLatex(dRe)} = ${dimToLatex(dims[target.s])}`, passed: dimEquals(dRe, dims[target.s]), method: "Analisis dimensi" });
+        checks.push({
+          description: `Dimensi rumus hasil penyusunan ulang cocok dengan dimensi ${target.name}`,
+          latex: `${dimToLatex(dRe)} = ${dimToLatex(dims[target.s])}`,
+          passed: dimEquals(dRe, dims[target.s]),
+          method: "Analisis dimensi",
+        });
       } catch {
         // periodic parameter etc.
       }
     }
   } else {
-    steps.push({ title: "Variabel muncul lebih dari sekali", after: eqL(L, R), operation: "no-rearrange", reason: "Rumus tidak disusun ulang secara umum; persamaan diselesaikan setelah nilai-nilai disubstitusikan." });
+    steps.push({
+      title: "Variabel muncul lebih dari sekali",
+      after: eqL(L, R),
+      operation: "no-rearrange",
+      reason:
+        "Rumus tidak disusun ulang secara umum; persamaan diselesaikan setelah nilai-nilai disubstitusikan.",
+    });
   }
 
   // Inputs to SI
@@ -210,33 +299,75 @@ export function solveFormula(input: FormulaSolveInput): Solution {
       const c = CONSTANTS[fv.constant];
       const u = parseUnit(c.unit);
       values[fv.s] = toSI(num(parseQuantity(c.value)), u);
-      conversions.push(`${varLatex(fv)} = ${numberLatex(formatNumber(Number(c.value), 11))}\\ ${u.latex}\\ \\text{(${c.name}; ${c.source})}`);
+      conversions.push(
+        `${varLatex(fv)} = ${numberLatex(formatNumber(Number(c.value), 11))}\\ ${u.latex}\\ \\text{(${c.name}; ${c.source})}`,
+      );
       continue;
     }
-    const given = input.values[fv.s] ?? (fv.defaultValue !== undefined ? { value: fv.defaultValue, unit: fv.unit } : undefined);
+    const given =
+      input.values[fv.s] ??
+      (fv.defaultValue !== undefined ? { value: fv.defaultValue, unit: fv.unit } : undefined);
     if (!given || given.value.trim() === "") {
-      throw new MathError("invalid-input", `Nilai ${fv.name} (${fv.s}) belum diisi.`, { module: "formula", hint: `Masukkan semua besaran kecuali ${target.name}.` });
+      throw new MathError("invalid-input", `Nilai ${fv.name} (${fv.s}) belum diisi.`, {
+        module: "formula",
+        hint: `Masukkan semua besaran kecuali ${target.name}.`,
+      });
     }
     const q = parseQuantity(given.value);
     const u = parseUnit(given.unit ?? fv.unit);
     if (!dimEquals(u.dim, dims[fv.s])) {
-      throw new MathError("dimension-mismatch", `Satuan '${given.unit}' tidak sesuai untuk ${fv.name}.`, { module: "formula", cause: `${fv.name} berdimensi ${dimToString(dims[fv.s])}, tetapi satuan yang diberikan berdimensi ${dimToString(u.dim)}.` });
+      throw new MathError(
+        "dimension-mismatch",
+        `Satuan '${given.unit}' tidak sesuai untuk ${fv.name}.`,
+        {
+          module: "formula",
+          cause: `${fv.name} berdimensi ${dimToString(dims[fv.s])}, tetapi satuan yang diberikan berdimensi ${dimToString(u.dim)}.`,
+        },
+      );
     }
     const si = toSI(num(q), u);
     values[fv.s] = si;
     if (input.values[fv.s]) sigs.push(significantFigures(given.value));
     const siUnit = parseUnit(fv.unit);
-    const sameAsSI = u.atoms.length === siUnit.atoms.length && evalReal(u.factor) === 1 && !u.offset;
-    conversions.push(`${varLatex(fv)} = ${numberLatex(given.value)}${u.latex ? `\\ ${u.latex}` : ""}${sameAsSI ? "" : ` = ${quantityLatex(si)}\\ \\text{(SI)}`}`);
+    const sameAsSI =
+      u.atoms.length === siUnit.atoms.length && evalReal(u.factor) === 1 && !u.offset;
+    conversions.push(
+      `${varLatex(fv)} = ${numberLatex(given.value)}${u.latex ? `\\ ${u.latex}` : ""}${sameAsSI ? "" : ` = ${quantityLatex(si)}\\ \\text{(SI)}`}`,
+    );
   }
-  steps.push({ title: "Nilai yang diketahui (dalam satuan SI)", after: conversions.join(" \\\\ "), operation: "given", rule: { id: "si", name: "Konversi ke SI", formula: "x_{\\mathrm{SI}} = x \\cdot f" }, reason: "Semua besaran dikonversi ke satuan SI koheren agar rumus berlaku tanpa faktor tambahan." });
+  steps.push({
+    title: "Nilai yang diketahui (dalam satuan SI)",
+    after: conversions.join(" \\\\ "),
+    operation: "given",
+    rule: { id: "si", name: "Konversi ke SI", formula: "x_{\\mathrm{SI}} = x \\cdot f" },
+    reason:
+      "Semua besaran dikonversi ke satuan SI koheren agar rumus berlaku tanpa faktor tambahan.",
+  });
 
   // Substitute and solve
   const Ls = substituteSymbols(L, values);
   const Rs = substituteSymbols(R, values);
-  steps.push({ title: "Substitusikan nilai", after: `${toLatex(Ls, opts)} = ${toLatex(Rs, opts)}`, operation: "substitute", reason: "Ganti setiap besaran yang diketahui dengan nilainya." });
+  steps.push({
+    title: "Substitusikan nilai",
+    after: `${toLatex(Ls, opts)} = ${toLatex(Rs, opts)}`,
+    operation: "substitute",
+    reason: "Ganti setiap besaran yang diketahui dengan nilainya.",
+  });
   const att = solveCore(Ls, Rs, target.s);
-  steps.push({ title: `Selesaikan untuk ${target.name}`, after: att.roots.length ? att.roots.map((r) => `${varLatex(target)} = ${r.expr ? toLatex(r.expr, opts) : formatNumber(r.approx!.re)}`).join(",\\ ") : "\\varnothing", operation: "solve", reason: att.method.name, substeps: att.steps });
+  steps.push({
+    title: `Selesaikan untuk ${target.name}`,
+    after: att.roots.length
+      ? att.roots
+          .map(
+            (r) =>
+              `${varLatex(target)} = ${r.expr ? toLatex(r.expr, opts) : formatNumber(r.approx!.re)}`,
+          )
+          .join(",\\ ")
+      : "\\varnothing",
+    operation: "solve",
+    reason: att.method.name,
+    substeps: att.steps,
+  });
 
   // candidate values (expand periodic families)
   type Cand = { expr?: Expr; value: number };
@@ -258,29 +389,57 @@ export function solveFormula(input: FormulaSolveInput): Solution {
   const rejected: string[] = [];
   for (const c of cands) {
     const ok = constraintOk(target.constraint, c.value);
-    if (ok.ok && !accepted.some((a) => Math.abs(a.value - c.value) <= 1e-12 * Math.max(1, Math.abs(c.value)))) accepted.push(c);
-    else if (!ok.ok && target.constraint !== "angle") rejected.push(`${formatNumber(c.value, 8)} (${ok.reason})`);
+    if (
+      ok.ok &&
+      !accepted.some((a) => Math.abs(a.value - c.value) <= 1e-12 * Math.max(1, Math.abs(c.value)))
+    )
+      accepted.push(c);
+    else if (!ok.ok && target.constraint !== "angle")
+      rejected.push(`${formatNumber(c.value, 8)} (${ok.reason})`);
   }
   if (rejected.length) {
-    steps.push({ title: "Saring berdasarkan batasan fisis", after: accepted.map((a) => `${varLatex(target)} = ${a.expr ? toLatex(a.expr, opts) : formatNumber(a.value)}`).join(",\\ ") || "\\varnothing", operation: "filter-constraints", reason: `Ditolak: ${rejected.join("; ")}.` });
+    steps.push({
+      title: "Saring berdasarkan batasan fisis",
+      after:
+        accepted
+          .map(
+            (a) =>
+              `${varLatex(target)} = ${a.expr ? toLatex(a.expr, opts) : formatNumber(a.value)}`,
+          )
+          .join(",\\ ") || "\\varnothing",
+      operation: "filter-constraints",
+      reason: `Ditolak: ${rejected.join("; ")}.`,
+    });
   }
   if (accepted.length === 0) {
-    throw new MathError("no-solution", `Tidak ada nilai ${target.name} yang memenuhi rumus dan batasan fisis.`, {
-      module: "formula",
-      cause: rejected.length ? `Kandidat ditolak: ${rejected.join("; ")}.` : "Persamaan tidak memiliki solusi real untuk data ini.",
-      hint: "Periksa kembali nilai masukan dan satuannya.",
-    });
+    throw new MathError(
+      "no-solution",
+      `Tidak ada nilai ${target.name} yang memenuhi rumus dan batasan fisis.`,
+      {
+        module: "formula",
+        cause: rejected.length
+          ? `Kandidat ditolak: ${rejected.join("; ")}.`
+          : "Persamaan tidak memiliki solusi real untuk data ini.",
+        hint: "Periksa kembali nilai masukan dan satuannya.",
+      },
+    );
   }
 
   const outUnit = parseUnit(input.outputUnit ?? target.unit);
   if (!dimEquals(outUnit.dim, dims[target.s])) {
-    throw new MathError("dimension-mismatch", `Satuan keluaran '${input.outputUnit}' tidak sesuai untuk ${target.name}.`, { module: "formula" });
+    throw new MathError(
+      "dimension-mismatch",
+      `Satuan keluaran '${input.outputUnit}' tidak sesuai untuk ${target.name}.`,
+      { module: "formula" },
+    );
   }
   const minSig = sigs.length ? Math.min(...sigs) : 4;
   const answers: Answer[] = [];
   accepted.forEach((c, idx) => {
     const outExpr = c.expr ? fromSI(c.expr, outUnit) : null;
-    const outVal = outExpr ? evalReal(outExpr) : (c.value - evalReal(outUnit.offset ?? ZERO)) / evalReal(outUnit.factor);
+    const outVal = outExpr
+      ? evalReal(outExpr)
+      : (c.value - evalReal(outUnit.offset ?? ZERO)) / evalReal(outUnit.factor);
     const isAngle = target.constraint === "angle" && outUnit.atoms[0]?.unit.symbol === "°";
     const label = `${target.name}${accepted.length > 1 ? ` (${idx + 1})` : ""}`;
     answers.push({
@@ -292,7 +451,12 @@ export function solveFormula(input: FormulaSolveInput): Solution {
       unit: outUnit.latex,
     });
     if (outExpr && outExpr.type !== "num") {
-      answers.push({ label: `${label} — bentuk eksak`, latex: `${toLatex(outExpr, opts)}${outUnit.latex ? `\\ ${outUnit.latex}` : ""}`, text: `${toText(outExpr)}${outUnit.text ? ` ${outUnit.text}` : ""}`, exact: true });
+      answers.push({
+        label: `${label} — bentuk eksak`,
+        latex: `${toLatex(outExpr, opts)}${outUnit.latex ? `\\ ${outUnit.latex}` : ""}`,
+        text: `${toText(outExpr)}${outUnit.text ? ` ${outUnit.text}` : ""}`,
+        exact: true,
+      });
     }
     // verification: substitute back
     const env: Record<string, number> = {};
@@ -301,26 +465,54 @@ export function solveFormula(input: FormulaSolveInput): Solution {
     const lv = evalReal(L, env);
     const rv = evalReal(R, env);
     const rel = Math.abs(lv - rv) / Math.max(1e-300, Math.abs(lv), Math.abs(rv));
-    checks.push({ description: `Substitusi ${target.name} = ${formatNumber(c.value, 8)} (SI) kembali ke rumus`, latex: `${formatNumber(lv, 10)} \\approx ${formatNumber(rv, 10)}`, passed: rel < 1e-9 || (Math.abs(lv) < 1e-300 && Math.abs(rv) < 1e-300), method: "Substitusi numerik", detail: `Selisih relatif ${rel.toExponential(2)}` });
+    checks.push({
+      description: `Substitusi ${target.name} = ${formatNumber(c.value, 8)} (SI) kembali ke rumus`,
+      latex: `${formatNumber(lv, 10)} \\approx ${formatNumber(rv, 10)}`,
+      passed: rel < 1e-9 || (Math.abs(lv) < 1e-300 && Math.abs(rv) < 1e-300),
+      method: "Substitusi numerik",
+      detail: `Selisih relatif ${rel.toExponential(2)}`,
+    });
     const cOk = constraintOk(target.constraint, c.value);
-    if (target.constraint && target.constraint !== "any") checks.push({ description: `Batasan fisis ${target.name}`, passed: cOk.ok, method: "Pemeriksaan batasan fisis" });
+    if (target.constraint && target.constraint !== "any")
+      checks.push({
+        description: `Batasan fisis ${target.name}`,
+        passed: cOk.ok,
+        method: "Pemeriksaan batasan fisis",
+      });
     if (isAngle) void 0;
   });
   if (!dimOk) {
-    throw new MathError("verification-failure", "Rumus tidak konsisten secara dimensi (kesalahan data rumus).", { module: "formula", details: { formula: def.id } });
+    throw new MathError(
+      "verification-failure",
+      "Rumus tidak konsisten secara dimensi (kesalahan data rumus).",
+      { module: "formula", details: { formula: def.id } },
+    );
   }
   const notes: string[] = [];
-  if (sigs.length) notes.push(`Hasil juga dibulatkan ke ${minSig} angka penting sesuai data masukan paling sedikit angka pentingnya.`);
+  if (sigs.length)
+    notes.push(
+      `Hasil juga dibulatkan ke ${minSig} angka penting sesuai data masukan paling sedikit angka pentingnya.`,
+    );
   const inexact = def.variables.filter((fv) => fv.constant && !CONSTANTS[fv.constant].exact);
-  if (inexact.length) notes.push(`Konstanta terukur digunakan (${inexact.map((fv) => CONSTANTS[fv.constant!].name).join(", ")}); hasil membawa ketidakpastiannya.`);
-  if (accepted.length > 1) notes.push("Ada lebih dari satu nilai yang memenuhi; pilih sesuai konteks soal.");
+  if (inexact.length)
+    notes.push(
+      `Konstanta terukur digunakan (${inexact.map((fv) => CONSTANTS[fv.constant!].name).join(", ")}); hasil membawa ketidakpastiannya.`,
+    );
+  if (accepted.length > 1)
+    notes.push("Ada lebih dari satu nilai yang memenuhi; pilih sesuai konteks soal.");
   return makeSolution({
     kind: "formula",
     title: def.name,
     input: JSON.stringify(input),
     inputLatex: eqL(L, R),
     answers,
-    method: { name: rearranged ? "Penyusunan ulang rumus dan substitusi" : "Substitusi lalu penyelesaian persamaan", description: def.description, formula: eqL(L, R) },
+    method: {
+      name: rearranged
+        ? "Penyusunan ulang rumus dan substitusi"
+        : "Substitusi lalu penyelesaian persamaan",
+      description: def.description,
+      formula: eqL(L, R),
+    },
     steps,
     verification: aggregateVerification(checks),
     module: "formula",

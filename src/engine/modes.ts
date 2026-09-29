@@ -1,5 +1,16 @@
 /** Solver modes (dependency-free so UI code can import it without pulling in the engine). */
-export type Mode = "auto" | "simplify" | "expand" | "factor" | "derivative" | "integral" | "extrema" | "taylor" | "isprime" | "divisors" | "statistics";
+export type Mode =
+  | "auto"
+  | "simplify"
+  | "expand"
+  | "factor"
+  | "derivative"
+  | "integral"
+  | "extrema"
+  | "taylor"
+  | "isprime"
+  | "divisors"
+  | "statistics";
 
 export const MODE_LABELS: Record<Mode, string> = {
   auto: "Otomatis",

@@ -15,22 +15,58 @@ export interface ParsedFormula {
 }
 
 function fail(text: string, cause: string): MathError {
-  return new MathError("invalid-input", `Rumus kimia '${text}' tidak valid.`, { module: "chemistry", cause, hint: "Contoh: H2O, Ca(OH)2, CuSO4·5H2O, SO4^2-, Fe^3+." });
+  return new MathError("invalid-input", `Rumus kimia '${text}' tidak valid.`, {
+    module: "chemistry",
+    cause,
+    hint: "Contoh: H2O, Ca(OH)2, CuSO4·5H2O, SO4^2-, Fe^3+.",
+  });
 }
 
 export function parseFormula(input: string): ParsedFormula {
-  let text = input.trim().replace(/\((s|l|g|aq)\)$/i, "").replace(/\s+/g, "");
+  let text = input
+    .trim()
+    .replace(/\((s|l|g|aq)\)$/i, "")
+    .replace(/\s+/g, "");
   if (!text) throw fail(input, "Rumus kosong.");
   if (text === "e" || text === "e-" || text === "e^-" || text === "e⁻") {
-    return { text: "e⁻", counts: new Map(), charge: -1, latex: "\\mathrm{e^{-}}", isElectron: true };
+    return {
+      text: "e⁻",
+      counts: new Map(),
+      charge: -1,
+      latex: "\\mathrm{e^{-}}",
+      isElectron: true,
+    };
   }
   // Charge notation (unambiguous rules):
   //   "Fe^3+", "SO4^2-", "Fe+3", "SO4 2-", "Fe³⁺"  -> explicit charge magnitude
   //   "NH4+", "OH-", "Na+"                          -> digits before the sign are subscripts, charge ±1
   let charge = 0;
-  const SUP: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "-" };
-  const raw = input.trim().replace(/\((s|l|g|aq)\)$/i, "").trim();
-  let body = raw.replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*[⁺⁻])$/, (m) => `^${m.split("").map((c) => SUP[c]).join("")}`);
+  const SUP: Record<string, string> = {
+    "⁰": "0",
+    "¹": "1",
+    "²": "2",
+    "³": "3",
+    "⁴": "4",
+    "⁵": "5",
+    "⁶": "6",
+    "⁷": "7",
+    "⁸": "8",
+    "⁹": "9",
+    "⁺": "+",
+    "⁻": "-",
+  };
+  const raw = input
+    .trim()
+    .replace(/\((s|l|g|aq)\)$/i, "")
+    .trim();
+  let body = raw.replace(
+    /([⁰¹²³⁴⁵⁶⁷⁸⁹]*[⁺⁻])$/,
+    (m) =>
+      `^${m
+        .split("")
+        .map((c) => SUP[c])
+        .join("")}`,
+  );
   const spaced = /^(.*\S)\s+(\d*)([+-])$/.exec(body);
   let m: RegExpExecArray | null;
   if (spaced) {
@@ -79,7 +115,11 @@ export function parseFormula(input: string): ParsedFormula {
           return counts;
         }
         const m = /^[A-Z][a-z]?/.exec(part.slice(i));
-        if (!m) throw fail(input, `Karakter '${ch}' tidak dikenali (simbol unsur diawali huruf kapital).`);
+        if (!m)
+          throw fail(
+            input,
+            `Karakter '${ch}' tidak dikenali (simbol unsur diawali huruf kapital).`,
+          );
         let sym = m[0];
         if (!ELEMENT_BY_SYMBOL[sym] && sym.length === 2 && ELEMENT_BY_SYMBOL[sym[0]]) sym = sym[0];
         if (!ELEMENT_BY_SYMBOL[sym]) throw fail(input, `'${m[0]}' bukan simbol unsur.`);
@@ -103,15 +143,33 @@ export function parseFormula(input: string): ParsedFormula {
     latexParts.push(`${mult > 1 ? mult : ""}${part.replace(/(\d+)/g, "_{$1}")}`);
   }
   if (total.size === 0) throw fail(input, "Tidak ada unsur.");
-  const chargeLatex = charge === 0 ? "" : `^{${Math.abs(charge) > 1 ? Math.abs(charge) : ""}${charge > 0 ? "+" : "-"}}`;
+  const chargeLatex =
+    charge === 0
+      ? ""
+      : `^{${Math.abs(charge) > 1 ? Math.abs(charge) : ""}${charge > 0 ? "+" : "-"}}`;
   const latex = `\\mathrm{${latexParts.join("\\cdot ")}${chargeLatex}}`;
   const display = `${text}${charge === 0 ? "" : `${Math.abs(charge) > 1 ? Math.abs(charge) : ""}${charge > 0 ? "+" : "−"}`}`;
   return { text: display, counts: total, charge, latex, isElectron: false };
 }
 
-export function molarMass(f: ParsedFormula): { value: Rational; rows: Array<{ symbol: string; count: number; weight: string; subtotal: Rational; standard: boolean }> } {
+export function molarMass(f: ParsedFormula): {
+  value: Rational;
+  rows: Array<{
+    symbol: string;
+    count: number;
+    weight: string;
+    subtotal: Rational;
+    standard: boolean;
+  }>;
+} {
   let value = Rational.ZERO;
-  const rows: Array<{ symbol: string; count: number; weight: string; subtotal: Rational; standard: boolean }> = [];
+  const rows: Array<{
+    symbol: string;
+    count: number;
+    weight: string;
+    subtotal: Rational;
+    standard: boolean;
+  }> = [];
   for (const [sym, n] of f.counts) {
     const el = ELEMENT_BY_SYMBOL[sym];
     const w = Rational.parseDecimal(el.weight)!;
